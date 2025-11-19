@@ -1,0 +1,33 @@
+html, body {
+font-size: 18px;
+font-family: 'Montserrat', sans-serif;
+}
+
+/* Appearance of the single story section */
+section {
+
+}
+
+/* Legend styling */
+#legend {
+  position: absolute; /* Absolute positioned elements are removed from the
+  normal flow and can overlap elements. Our legend container will be displayed
+  over the map container */
+  width: 300px;
+  background: white;
+  padding: 10px;
+  opacity: 0.9;
+  border-width: 2px;
+  border-style: solid;
+}
+
+/* Finding styling */
+.finding-1 {
+box-shadow: 0 -8px 0 YellowGreen inset;
+-webkit-box-shadow: 0 -8px 0 YellowGreen inset;
+}
+
+.finding-2 {
+box-shadow: 0 -7px teal inset;
+-webkit-box-shadow: 0 -7px 0 teal inset;
+}
