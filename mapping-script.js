@@ -1,34 +1,57 @@
+// This script will run after the page loads and criteria are selected
+// The map initialization is triggered from criteria-selector.js
+
 var width = 450;
 var height = 250;
+var svg, g_map, g_labels, g_cities, s, projection, path, zoom;
 
-// Create the main SVG container
-var svg = d3.select("#mapContainer") 
-    .append("svg") 
-    .attr("preserveAspectRatio", "xMidYMid meet")
-    .attr("viewBox", [0, 0, width, height])
-    .attr("title", "Which Spain is calling you?");
+// Global variable to store user criteria weights (set by criteria-selector.js)
+var userCriteriaWeights = {};
 
-// Define SVG Groups for layered drawing
-var g_map = svg.append("g").attr("class", "map-features");
-var g_labels = svg.append("g").attr("class", "map-labels");
-var g_cities = svg.append("g").attr("class", "map-cities"); 
-var s = svg.append("g").attr("class", "scale-bar"); 
+function initializeMap() {
+  // Get the user criteria from window and convert to a more usable format
+  if (window.userCriteria) {
+    console.log('User criteria loaded:', window.userCriteria);
+    
+    // Create a weights object for easy access: { 'gdp': 50.00, 'housing': 25.00, ... }
+    window.userCriteria.forEach(criterion => {
+      userCriteriaWeights[criterion.id] = parseFloat(criterion.weight);
+    });
+    
+    console.log('Criteria weights ready for calculations:', userCriteriaWeights);
+  }
+  // Create the main SVG container
+  svg = d3.select("#mapContainer") 
+      .append("svg") 
+      .attr("preserveAspectRatio", "xMidYMid meet")
+      .attr("viewBox", [0, 0, width, height])
+      .attr("title", "Which Spain is calling you?");
 
-// Define Projection and Path Generator
-var projection = d3.geoEquirectangular()
-    .scale(1)
-    .translate([0, 0]);
+  // Define SVG Groups for layered drawing
+  g_map = svg.append("g").attr("class", "map-features");
+  g_labels = svg.append("g").attr("class", "map-labels");
+  g_cities = svg.append("g").attr("class", "map-cities"); 
+  s = svg.append("g").attr("class", "scale-bar"); 
 
-var path = d3.geoPath()
-    .projection(projection);
+  // Define Projection and Path Generator
+  projection = d3.geoEquirectangular()
+      .scale(1)
+      .translate([0, 0]);
 
-// --- D3 ZOOM CONTROL ---
-var zoom = d3.zoom()
-  .scaleExtent([0.5, 8])
-  .on("zoom", zoomed);
+  path = d3.geoPath()
+      .projection(projection);
 
-// Apply the zoom behavior to the SVG element
-svg.call(zoom);
+  // --- D3 ZOOM CONTROL ---
+  zoom = d3.zoom()
+    .scaleExtent([0.5, 8])
+    .on("zoom", zoomed);
+
+  // Apply the zoom behavior to the SVG element
+  svg.call(zoom);
+
+  // Load the map data
+  loadMapData();
+}
 
 // --- ADAPTIVE SCALE BAR HELPER ---
 /**
@@ -127,7 +150,7 @@ function updateScaleBar(transform) {
         .attr("x2", xPos + dynamicScaleLength)
         .attr("y2", yPos)
         .attr("stroke", "black")
-        .attr("stroke-width", 1 ); // Slightly thicker line
+        .attr("stroke-width", 1); // Slightly thicker line
 
     // Add the scale text
     s.append("text")
@@ -142,55 +165,72 @@ function updateScaleBar(transform) {
     s.append("line").attr("x1", xPos + dynamicScaleLength).attr("y1", yPos - 5).attr("x2", xPos + dynamicScaleLength).attr("y2", yPos + 5).attr("stroke", "black");
 }
 
-// --- DATA LOADING (remains unchanged) ---
-// --- 1. Load and Draw Spain Boundaries and Labels (Spain.geojson: Polygons) ---
-d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/Spain.geojson") 
-    .then(function (features) {
-        projection.fitSize([width, height], features);
-        
-        g_map.selectAll("path")
-            .data(features.features)
-            .enter()
-            .append("path")
-            .attr("d", path)
-            .attr("fill", "#cccccc")
-            .attr("stroke", "#333333")
-            .attr("stroke-width", 0.1);
+// --- DATA LOADING ---
+function loadMapData() {
+  // --- 1. Load and Draw Spain Boundaries and Labels (Spain.geojson: Polygons) ---
+  d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/Spain.geojson") 
+      .then(function (features) {
+          // CRITICAL: Set the projection FIRST before drawing anything
+          projection.fitSize([width, height], features);
+          
+          // Draw the map polygons
+          g_map.selectAll("path")
+              .data(features.features)
+              .enter()
+              .append("path")
+              .attr("d", path)
+              .attr("fill", "#cccccc")
+              .attr("stroke", "#333333")
+              .attr("stroke-width", 0.1);
 
-        g_labels.selectAll("text")
-            .data(features.features)
-            .enter()
-            .append("text")
-            .attr('x', function (d) { return projection(d3.geoCentroid(d))[0]; })
-            .attr('y', function (d) { return projection(d3.geoCentroid(d))[1]; })
-            .text(function (d) { return d.properties.TrunkSize; })
-            .attr('font-size', '10px')
-            .attr("fill", "#6b9023")
-            .attr("opacity", 1);
+          // Draw the labels
+          g_labels.selectAll("text")
+              .data(features.features)
+              .enter()
+              .append("text")
+              .attr('x', function (d) { return projection(d3.geoCentroid(d))[0]; })
+              .attr('y', function (d) { return projection(d3.geoCentroid(d))[1]; })
+              .text(function (d) { return d.properties.TrunkSize; })
+              .attr('font-size', '10px')
+              .attr("fill", "#6b9023")
+              .attr("opacity", 1);
 
-        // Initialize scale bar after projection is set
-        updateScaleBar(d3.zoomIdentity); 
-    })
-    .catch(function (error) {
-        console.error("Error loading or processing Spain.geojson:", error);
-        alert("There was a problem loading the Spain.geojson dataset. Check the console for details.");
-    });
+          // Initialize scale bar after projection is set
+          updateScaleBar(d3.zoomIdentity); 
+          
+          // IMPORTANT: Load cities AFTER projection is properly set
+          loadCities();
+      })
+      .catch(function (error) {
+          console.error("Error loading or processing Spain.geojson:", error);
+          alert("There was a problem loading the Spain.geojson dataset. Check the console for details.");
+      });
+}
 
-// --- 2. Load and Draw Cities (cities.geojson: Points) ---
-d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson") 
-    .then(function (cities) {
-        g_cities.selectAll("circle")
-            .data(cities.features)
-            .enter()
-            .append("circle")
-            .attr('cx', function (d) { return projection(d.geometry.coordinates)[0]; })
-            .attr('cy', function (d) { return projection(d.geometry.coordinates)[1]; })
-            .attr("r", 1)
-            .attr("fill", "blue")
-            .attr("stroke", "white")
-            .attr("stroke-width", 0.25);
-    })
-    .catch(function (error) {
-        console.error("Error loading or processing cities.geojson:", error);
-        alert("There are some problems with the cities dataset. Check the console for details.");
-    });
+// --- Load cities separately after map projection is established ---
+function loadCities() {
+  d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson") 
+      .then(function (cities) {
+          // Now the projection is correctly set, so cities will be positioned properly
+          g_cities.selectAll("circle")
+              .data(cities.features)
+              .enter()
+              .append("circle")
+              .attr('cx', function (d) { 
+                  const coords = projection(d.geometry.coordinates);
+                  return coords ? coords[0] : 0;
+              })
+              .attr('cy', function (d) { 
+                  const coords = projection(d.geometry.coordinates);
+                  return coords ? coords[1] : 0;
+              })
+              .attr("r", 1)
+              .attr("fill", "blue")
+              .attr("stroke", "white")
+              .attr("stroke-width", 0.25);
+      })
+      .catch(function (error) {
+          console.error("Error loading or processing cities.geojson:", error);
+          alert("There are some problems with the cities dataset. Check the console for details.");
+      });
+}

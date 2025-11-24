@@ -1,18 +1,335 @@
 html, body {
-font-size: 18px;
-font-family: 'Montserrat', sans-serif;
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+  font-family: 'Montserrat', sans-serif;
+  overflow-x: hidden;
 }
 
-/* Appearance of the single story section */
-section {
+/* ===== CRITERIA SELECTOR STYLES ===== */
 
+/* Popup Overlay */
+#criteriaOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#criteriaOverlay.hidden {
+  animation: fadeOut 0.5s ease;
+  pointer-events: none;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Popup Container */
+.criteria-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: slideUp 0.6s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.criteria-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.criteria-header h1 {
+  color: #667eea;
+  margin: 0 0 10px 0;
+  font-size: 2em;
+}
+
+.criteria-header p {
+  color: #666;
+  margin: 5px 0;
+  font-size: 1em;
+}
+
+.step-indicator {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #764ba2;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.selection-count {
+  text-align: center;
+  margin-top: 15px;
+  color: #667eea;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
+/* Criteria Grid */
+.criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.criterion-card {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  position: relative;
+}
+
+.criterion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.criterion-card.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  animation: pulse 0.3s ease;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.criterion-icon {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.criterion-name {
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.selection-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #ffd700;
+  color: #333;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Ranking Section */
+.ranking-section {
+  display: none;
+  animation: slideUp 0.5s ease;
+}
+
+.ranking-section.active {
+  display: block;
+}
+
+.ranking-item {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+  cursor: move;
+  position: relative;
+}
+
+.ranking-item:hover {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ranking-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.drag-handle {
+  color: #999;
+  font-size: 1.2em;
+  cursor: grab;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.delete-btn {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.5em;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.delete-btn:hover {
+  background: #cc0000;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.ranking-number {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5em;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.ranking-icon {
+  font-size: 2em;
+  flex-shrink: 0;
+}
+
+.ranking-details {
+  flex-grow: 1;
+}
+
+.ranking-name {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.ranking-weight {
+  color: #667eea;
+  font-size: 0.9em;
+}
+
+/* Button */
+.action-button {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.action-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondary-button {
+  background: #6c757d;
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+}
+
+.secondary-button:hover {
+  box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+}
+
+.button-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.button-group .action-button {
+  margin-top: 0;
+}
+
+/* ===== MAP SECTION STYLES ===== */
+
+/* Map Section - hidden initially */
+#mapSection {
+  display: none;
+}
+
+#mapSection.active {
+  display: block;
 }
 
 /* Legend styling */
 #legend {
-  position: absolute; /* Absolute positioned elements are removed from the
-  normal flow and can overlap elements. Our legend container will be displayed
-  over the map container */
+  position: absolute;
   width: 300px;
   background: white;
   padding: 10px;
@@ -23,11 +340,11 @@ section {
 
 /* Finding styling */
 .finding-1 {
-box-shadow: 0 -8px 0 YellowGreen inset;
--webkit-box-shadow: 0 -8px 0 YellowGreen inset;
+  box-shadow: 0 -8px 0 YellowGreen inset;
+  -webkit-box-shadow: 0 -8px 0 YellowGreen inset;
 }
 
 .finding-2 {
-box-shadow: 0 -7px teal inset;
--webkit-box-shadow: 0 -7px 0 teal inset;
+  box-shadow: 0 -7px teal inset;
+  -webkit-box-shadow: 0 -7px 0 teal inset;
 }

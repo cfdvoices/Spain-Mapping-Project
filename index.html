@@ -1,29 +1,52 @@
 <!DOCTYPE html>
-<html lang="en"> <!-- Define the natural language of the page -->
+<html lang="en">
 <head>
-   <meta charset="UTF-8"> <!-- Declare the document’s character encoding -->
+   <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1">
-   <!-- Ensure responsive website rendering - set the viewport width to the
-   width of the screen, control the zoom level when the page is first loaded -->
-   <title> Which Spain is calling you? </title>
-   <!-- Set the title of the story to be displayed in: the browser toolbar, when
-   it is added to favorites, in search engine results -->
+   <title>Which Spain is calling you?</title>
    <link rel="stylesheet" href="style.css">
    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-<section>
+
+<!-- Criteria Selection Overlay -->
+<div id="criteriaOverlay">
+  <div class="criteria-container">
+    <div class="criteria-header">
+      <h1>🇪🇸 Which Spain is calling you?</h1>
+      <p>Discover your perfect Spanish destination</p>
+    </div>
+
+    <!-- Step 1: Selection -->
+    <div id="selectionStep">
+      <div class="step-indicator">Step 1: Select your top 3 criteria</div>
+      <div class="criteria-grid" id="criteriaGrid"></div>
+      <button class="action-button" id="continueToRanking" disabled>Continue to Ranking →</button>
+    </div>
+
+    <!-- Step 2: Ranking -->
+    <div id="rankingStep" class="ranking-section">
+      <div class="step-indicator">Step 2: Rank by importance</div>
+      <div id="rankingList"></div>
+      <button class="action-button" id="exploreMap">Explore Spain! 🗺️</button>
+    </div>
+  </div>
+</div>
+
+<!-- Map Section -->
+<section id="mapSection">
     <div id="legend">
       <h2>Which Spain is calling you?</h2>
       <p>A tool to decide where to travel or where to migrate!</p>
       <br>My <span class="finding-1">first finding</span> is that &#127797;
       <br>My <span class="finding-2">second finding</span> is &#127794;
     </div>
-    <div id="mapContainer">
-    </div>
+    <div id="mapContainer"></div>
 </section>
-  <!-- Add our D3 mapping script to the webpage -->
-  <script src="mapping-script.js"></script>
-  </body>
 
+<!-- Load criteria selector first, then map script -->
+<script src="criteria-selector.js"></script>
+<script src="mapping-script.js"></script>
+
+</body>
 </html>
