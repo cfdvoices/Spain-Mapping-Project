@@ -1,52 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1">
-   <title>Which Spain is calling you?</title>
-   <link rel="stylesheet" href="style.css">
-   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Which Spain is calling you?</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
+
 <body>
 
-<!-- Criteria Selection Overlay -->
-<div id="criteriaOverlay">
-  <div class="criteria-container">
-    <div class="criteria-header">
-      <h1>🇪🇸 Which Spain is calling you?</h1>
-      <p>Discover your perfect Spanish destination</p>
-    </div>
+  <!-- Criteria Selection Overlay -->
+  <div id="criteriaOverlay">
+    <div class="criteria-container">
+      <div class="criteria-header">
+        <h1><img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Spain"
+            class="flag-icon"><br>Which Spain is calling you?</h1>
+        <p>Discover your perfect Spanish destination</p>
+      </div>
 
-    <!-- Step 1: Selection -->
-    <div id="selectionStep">
-      <div class="step-indicator">Step 1: Select your top 3 criteria</div>
-      <div class="criteria-grid" id="criteriaGrid"></div>
-      <button class="action-button" id="continueToRanking" disabled>Continue to Ranking →</button>
-    </div>
+      <!-- Step 1: Selection -->
+      <div id="selectionStep">
+        <div class="step-indicator">Step 1: Select at least 3 criteria</div>
+        <div class="criteria-grid" id="criteriaGrid"></div>
+        <button class="action-button" id="continueToRanking" disabled>Continue to Ranking →</button>
+      </div>
 
-    <!-- Step 2: Ranking -->
-    <div id="rankingStep" class="ranking-section">
-      <div class="step-indicator">Step 2: Rank by importance</div>
-      <div id="rankingList"></div>
-      <button class="action-button" id="exploreMap">Explore Spain! 🗺️</button>
+      <!-- Step 2: Ranking -->
+      <div id="rankingStep" class="ranking-section">
+        <div class="step-indicator">Step 2: Rank by importance</div>
+        <div id="rankingList"></div>
+        <button class="action-button" id="exploreMap">Explore Spain! &#x1F1EA;&#x1F1F8;</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Map Section -->
-<section id="mapSection">
+  <!-- Map Section -->
+  <section id="mapSection">
     <div id="legend">
-      <h2>Which Spain is calling you?</h2>
-      <p>A tool to decide where to travel or where to migrate!</p>
-      <br>My <span class="finding-1">first finding</span> is that &#127797;
-      <br>My <span class="finding-2">second finding</span> is &#127794;
+      <h2> <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Spain"
+          class="flag-icon" alignment="centered"><br><br>Which Spain is calling you?</h2>
+      <p>A tool to decide where to travel or where to migrate!✈️</p>
+      <br>My <span class="finding-1">first finding</span> is that 🌥
+      <br>My <span class="finding-2">second finding</span> is 🌲
     </div>
     <div id="mapContainer"></div>
-</section>
+  </section>
 
-<!-- Load criteria selector first, then map script -->
-<script src="criteria-selector.js"></script>
-<script src="mapping-script.js"></script>
+  <!-- CONTROLS (Hidden initially, shown with map) -->
+  <div id="controls" style="display: none; padding: 20px; margin: 20px 0; text-align: center;">
+    <button onclick="window.zoomIn()" style="padding: 10px 20px; font-size: 16px; margin: 0 5px; cursor: pointer;">Zoom In (+)</button>
+    <button onclick="window.zoomOut()" style="padding: 10px 20px; font-size: 16px; margin: 0 5px; cursor: pointer;">Zoom Out (-)</button>
+    <button onclick="window.zoomReset()" style="padding: 10px 20px; font-size: 16px; margin: 0 5px; cursor: pointer;">Reset View</button>
+  </div>
+
+  <!-- Load criteria selector first, then map script -->
+  <script src="criteria-selector.js"></script>
+  <script src="mapping-script.js"></script>
 
 </body>
+
 </html>
