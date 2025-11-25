@@ -3,234 +3,329 @@
 
 var width = 450;
 var height = 250;
-var svg, g_map, g_labels, g_cities, s, projection, path, zoom;
+var svg, g_map, g_prov, g_labels, g_cities, s, projection, path, zoom;
 
-// Global variable to store user criteria weights (set by criteria-selector.js)
+var div = d3.select("body")
+    .append("div")
+    .attr("id", "tooltip")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+// Global variable to store user criteria weights
 var userCriteriaWeights = {};
 
 function initializeMap() {
-  // Get the user criteria from window and convert to a more usable format
-  if (window.userCriteria) {
-    console.log('User criteria loaded:', window.userCriteria);
-    
-    // Create a weights object for easy access: { 'gdp': 50.00, 'housing': 25.00, ... }
-    window.userCriteria.forEach(criterion => {
-      userCriteriaWeights[criterion.id] = parseFloat(criterion.weight);
-    });
-    
-    console.log('Criteria weights ready for calculations:', userCriteriaWeights);
-  }
-  // Create the main SVG container
-  svg = d3.select("#mapContainer") 
-      .append("svg") 
-      .attr("preserveAspectRatio", "xMidYMid meet")
-      .attr("viewBox", [0, 0, width, height])
-      .attr("title", "Which Spain is calling you?");
+    // Get the user criteria from window
+    if (window.userCriteria) {
+        console.log('User criteria loaded:', window.userCriteria);
+        window.userCriteria.forEach(criterion => {
+            userCriteriaWeights[criterion.id] = parseFloat(criterion.weight);
+        });
+    }
 
-  // Define SVG Groups for layered drawing
-  g_map = svg.append("g").attr("class", "map-features");
-  g_labels = svg.append("g").attr("class", "map-labels");
-  g_cities = svg.append("g").attr("class", "map-cities"); 
-  s = svg.append("g").attr("class", "scale-bar"); 
+    // Create the main SVG container
+    svg = d3.select("#mapContainer")
+        .append("svg")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .attr("viewBox", [0, 0, width, height])
+        .attr("title", "Which Spain is calling you?");
 
-  // Define Projection and Path Generator
-  projection = d3.geoEquirectangular()
-      .scale(1)
-      .translate([0, 0]);
+    // Define SVG Groups for layered drawing (Order matters: first appended is bottom layer)
+    g_map = svg.append("g").attr("class", "layer-regions");   // Regions (Background)
+    g_prov = svg.append("g").attr("class", "layer-provinces"); // Provinces (Middle)
+    g_labels = svg.append("g").attr("class", "layer-labels"); // Text
+    g_cities = svg.append("g").attr("class", "layer-cities"); // Cities (Top)
+    s = svg.append("g").attr("class", "scale-bar");
 
-  path = d3.geoPath()
-      .projection(projection);
+    // Define Projection and Path Generator
+    projection = d3.geoEquirectangular()
+        .scale(1)
+        .translate([0, 0]);
 
-  // --- D3 ZOOM CONTROL ---
-  zoom = d3.zoom()
-    .scaleExtent([0.5, 8])
-    .on("zoom", zoomed);
+    path = d3.geoPath().projection(projection);
 
-  // Apply the zoom behavior to the SVG element
-  svg.call(zoom);
+    // --- D3 ZOOM CONTROL ---
+    zoom = d3.zoom()
+        .scaleExtent([0.5, 8])
+        .on("zoom", zoomed);
 
-  // Load the map data
-  loadMapData();
+    svg.call(zoom);
+
+    // Load ALL data centrally
+    loadAllMapData();
 }
 
 // --- ADAPTIVE SCALE BAR HELPER ---
-/**
- * Calculates the appropriate, round distance (e.g., 50m, 1km) for the scale bar.
- * @param {number} pixelLengthPerMeter - The number of pixels one meter currently occupies on the screen.
- * @returns {object} An object containing the round distance in meters and the formatted label.
- */
 function getAdaptiveScaleDistance(pixelLengthPerMeter) {
-    // Target pixel length for the scale bar (e.g., 100-150 pixels)
     const targetPixelLength = 120;
-    
-    // Calculate the distance in meters that would give the target pixel length
     let idealDistanceMeters = targetPixelLength / pixelLengthPerMeter;
-    
-    // Find the nearest power of 10 base (e.g., 100, 1000, 10000)
     let powerOfTen = Math.pow(10, Math.floor(Math.log10(idealDistanceMeters)));
-    
-    // Define preferred round numbers (multiples of 1, 2, 5)
     let roundFactors = [1, 2, 5];
     let bestDistance = powerOfTen;
 
-    // Find the closest round distance
     for (const factor of roundFactors) {
         let candidate = factor * powerOfTen;
-        if (candidate <= idealDistanceMeters * 1.5) { // Ensure we don't jump too high
+        if (candidate <= idealDistanceMeters * 1.5) {
             bestDistance = candidate;
         }
     }
-    
+
     let label;
     if (bestDistance >= 1000) {
-        // Format as kilometers
         label = (bestDistance / 1000) + ' km';
     } else {
-        // Format as meters
         label = bestDistance + ' m';
     }
-
     return { distance: bestDistance, label: label };
 }
 
 // --- ZOOM FUNCTION ---
 function zoomed(event) {
-  // Apply transformation to all feature groups
-  g_map.attr("transform", event.transform);
-  g_labels.attr("transform", event.transform);
-  g_cities.attr("transform", event.transform); 
-
-  // Update the scale bar with the current transform
-  updateScaleBar(event.transform);
+    g_map.attr("transform", event.transform);
+    g_prov.attr("transform", event.transform); // Make sure to transform provinces
+    g_labels.attr("transform", event.transform);
+    g_cities.attr("transform", event.transform);
+    updateScaleBar(event.transform);
 }
 
-// --- SCALE BAR FUNCTION (ADAPTIVE) ---
+// --- SCALE BAR FUNCTION ---
 function updateScaleBar(transform) {
-    // Spain's rough center coordinates (approx. 40.4° N, 3.7° W - Madrid)
-    const centerLngLat = [-3.7, 40.4]; 
+    const centerLngLat = [-3.7, 40.4];
     const latitude = centerLngLat[1];
-    
-    // 1. Calculate the base pixel length for a reference distance (e.g., 1 meter)
     const referenceDistanceMeters = 1;
-
-    // Distance in meters that corresponds to 1 degree of longitude at this latitude
     const distPerDegreeLng = 111320 * Math.cos(latitude * Math.PI / 180);
-
-    // Degrees of longitude (dLng) that correspond to 1 meter
     const dLng = referenceDistanceMeters / distPerDegreeLng;
-
-    // Project the point 1m East
+    
     const projectedCenter = projection(centerLngLat);
     const point1mEast = projection([centerLngLat[0] + dLng, latitude]);
     
-    // Base pixel length for 1 meter (before zoom)
+    // Check if projection is ready to avoid NaN errors
+    if (!projectedCenter || !point1mEast) return;
+
     const basePixelLengthPerMeter = point1mEast[0] - projectedCenter[0];
-
-    // Current pixel length for 1 meter (after zoom)
     const currentPixelLengthPerMeter = basePixelLengthPerMeter * transform.k;
-
-    // 2. Determine the adaptive distance and label
     const adaptive = getAdaptiveScaleDistance(currentPixelLengthPerMeter);
-
-    // 3. Calculate the new length in pixels for the adaptive distance
     const dynamicScaleLength = adaptive.distance * currentPixelLengthPerMeter;
 
-    // 4. Draw the Scale Bar
-    
-    // Position of the scale bar (e.g., bottom left corner)
     const xPos = 20;
     const yPos = height - 20;
-
-    s.html(""); // Clear previous scale bar elements
-
-    // Draw the scale line
+    
+    s.html(""); 
     s.append("line")
-        .attr("x1", xPos)
-        .attr("y1", yPos)
-        .attr("x2", xPos + dynamicScaleLength)
-        .attr("y2", yPos)
-        .attr("stroke", "black")
-        .attr("stroke-width", 1); // Slightly thicker line
-
-    // Add the scale text
+        .attr("x1", xPos).attr("y1", yPos)
+        .attr("x2", xPos + dynamicScaleLength).attr("y2", yPos)
+        .attr("stroke", "black").attr("stroke-width", 1);
+    
     s.append("text")
-        .attr("x", xPos + dynamicScaleLength / 2)
-        .attr("y", yPos - 8)
-        .attr("text-anchor", "middle")
-        .attr("font-size", "8px")
-        .text(adaptive.label); // Use the adaptive label
+        .attr("x", xPos + dynamicScaleLength / 2).attr("y", yPos - 8)
+        .attr("text-anchor", "middle").attr("font-size", "8px")
+        .text(adaptive.label);
 
-    // Add the boundary tick marks
     s.append("line").attr("x1", xPos).attr("y1", yPos - 5).attr("x2", xPos).attr("y2", yPos + 5).attr("stroke", "black");
     s.append("line").attr("x1", xPos + dynamicScaleLength).attr("y1", yPos - 5).attr("x2", xPos + dynamicScaleLength).attr("y2", yPos + 5).attr("stroke", "black");
 }
 
-// --- DATA LOADING ---
-function loadMapData() {
-  // --- 1. Load and Draw Spain Boundaries and Labels (Spain.geojson: Polygons) ---
-  d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/Spain.geojson") 
-      .then(function (features) {
-          // CRITICAL: Set the projection FIRST before drawing anything
-          projection.fitSize([width, height], features);
-          
-          // Draw the map polygons
-          g_map.selectAll("path")
-              .data(features.features)
-              .enter()
-              .append("path")
-              .attr("d", path)
-              .attr("fill", "#cccccc")
-              .attr("stroke", "#333333")
-              .attr("stroke-width", 0.1);
+// --- CENTRALIZED DATA LOADING ---
+function loadAllMapData() {
+    // We use Promise.all to wait for BOTH files to arrive before doing any drawing
+    Promise.all([
+        d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/Spain.geojson"),
+        d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/spainprovinces.geojson")
+    ]).then(function([regionData, provinceData]) {
+        
+        // 1. CRITICAL: Set the projection using the main country shape (Spain.geojson)
+        // This ensures the math is ready before we draw any paths
+        projection.fitSize([width, height], regionData);
 
-          // Draw the labels
-          g_labels.selectAll("text")
-              .data(features.features)
-              .enter()
-              .append("text")
-              .attr('x', function (d) { return projection(d3.geoCentroid(d))[0]; })
-              .attr('y', function (d) { return projection(d3.geoCentroid(d))[1]; })
-              .text(function (d) { return d.properties.TrunkSize; })
-              .attr('font-size', '10px')
-              .attr("fill", "#6b9023")
-              .attr("opacity", 1);
+        // 2. Draw the Regions (Spain.geojson) - Background Layer
+        g_map.selectAll("path")
+            .data(regionData.features)
+            .enter()
+            .append("path")
+            .attr("d", path)
+            .attr("fill", "#e0e0e0") // Lighter gray for background
+            .attr("stroke", "none"); 
 
-          // Initialize scale bar after projection is set
-          updateScaleBar(d3.zoomIdentity); 
-          
-          // IMPORTANT: Load cities AFTER projection is properly set
-          loadCities();
-      })
-      .catch(function (error) {
-          console.error("Error loading or processing Spain.geojson:", error);
-          alert("There was a problem loading the Spain.geojson dataset. Check the console for details.");
-      });
+        // 3. Draw the Provinces (spainprovinces.geojson) - Detail Layer
+        g_prov.selectAll("path")
+            .data(provinceData.features)
+            .enter()
+            .append("path")
+            .attr("d", path)
+            .attr("fill", "none")      // Transparent fill so we see regions behind (or set a color)
+            .attr("stroke", "#333333") // Dark lines for borders
+            .attr("stroke-width", 0.2) // Thinner lines for detail
+            .attr("class", "province-boundary");
+
+        // 4. Draw Region Labels (from Spain.geojson)
+        g_labels.selectAll("text")
+            .data(regionData.features)
+            .enter()
+            .append("text")
+            .attr('x', function (d) { return projection(d3.geoCentroid(d))[0]; })
+            .attr('y', function (d) { return projection(d3.geoCentroid(d))[1]; })
+            .text(function (d) { return d.properties.TrunkSize; }) // Ensure 'TrunkSize' exists in your properties!
+            .attr('font-size', '8px')
+            .attr("text-anchor", "middle")
+            .attr("fill", "#6b9023")
+            .attr("opacity", 1);
+
+        // 5. Initialize Scale Bar
+        updateScaleBar(d3.zoomIdentity);
+
+        // 6. Finally, load cities (now that projection is set)
+        loadCities();
+
+    }).catch(function(error) {
+        console.error("Error loading map data:", error);
+    });
 }
 
-// --- Load cities separately after map projection is established ---
 function loadCities() {
-  d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson") 
-      .then(function (cities) {
-          // Now the projection is correctly set, so cities will be positioned properly
-          g_cities.selectAll("circle")
-              .data(cities.features)
-              .enter()
-              .append("circle")
-              .attr('cx', function (d) { 
-                  const coords = projection(d.geometry.coordinates);
-                  return coords ? coords[0] : 0;
-              })
-              .attr('cy', function (d) { 
-                  const coords = projection(d.geometry.coordinates);
-                  return coords ? coords[1] : 0;
-              })
-              .attr("r", 1)
-              .attr("fill", "blue")
-              .attr("stroke", "white")
-              .attr("stroke-width", 0.25);
-      })
-      .catch(function (error) {
-          console.error("Error loading or processing cities.geojson:", error);
-          alert("There are some problems with the cities dataset. Check the console for details.");
-      });
+    d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
+        .then(function (cities) {
+
+            const cityCircles = g_cities.selectAll("circle")
+                .data(cities.features)
+                .enter()
+                .append("circle")
+                .attr("class", "city-point")
+                .attr('cx', function (d) {
+                    const coords = projection(d.geometry.coordinates);
+                    return coords ? coords[0] : 0;
+                })
+                .attr('cy', function (d) {
+                    const coords = projection(d.geometry.coordinates);
+                    return coords ? coords[1] : 0;
+                })
+                .attr("r", 2)
+                .attr("fill", "red")
+                .attr("stroke", "white")
+                .attr("stroke-width", 0.5)
+                .style("cursor", "pointer");
+
+
+            /* ------------------------------
+               CITY TOOLTIP (mouseover)
+            --------------------------------*/
+            cityCircles.on("mouseover", function (event, d) {
+
+                d3.select(this)
+                    .raise()
+                    .transition()
+                    .duration(200)
+                    .attr("r", 4)
+                    .attr("fill", "orange");
+
+                // Tooltip fade-in
+                div.transition()
+                    .duration(50)
+                    .style("opacity", 0.9);
+
+                // Compute correct mouse position inside container
+                const container = document.getElementById("mapContainer");
+                const box = container.getBoundingClientRect();
+                const x = event.pageX - box.left - window.scrollX;
+                const y = event.pageY - box.top - window.scrollY;
+
+                // Tooltip content using d.properties.city
+                div.html(
+                    "<table>" +
+                    "<tr><th colspan='2'>" + d.properties.city + "</th></tr>" +
+                    "<tr><td><strong>Latitude:</strong></td><td>" + d.geometry.coordinates[1] + "</td></tr>" +
+                    "<tr><td><strong>Longitude:</strong></td><td>" + d.geometry.coordinates[0] + "</td></tr>" +
+                    "</table>"
+                )
+                .style("left", (x + 20) + "px")
+                .style("top", (y - 20) + "px")
+                .style("position", "absolute");
+            });
+
+
+            /* ------------------------------
+               CITY TOOLTIP OUT (mouseout)
+            --------------------------------*/
+            cityCircles.on("mouseout", function () {
+
+                d3.select(this)
+                    .transition()
+                    .duration(300)
+                    .attr("r", 2)
+                    .attr("fill", "red");
+
+                div.transition()
+                    .duration(300)
+                    .style("opacity", 0);
+            });
+
+        })
+        .catch(function (error) {
+            console.error("Error loading cities:", error);
+        });
 }
+
+        // TREE HOVER ANIMATION WITH TOOLTIP (mouseover)
+    treeCircles.on("mouseover", function (event, d) {
+      d3.select(this)
+        .raise()
+        .transition()
+        .duration(200)
+        .attr("r", 2.5)
+        .style("fill", "cyan") // Changed to style for consistency
+        .attr("stroke-width", 0.3)
+        .attr("fill-opacity", 0.9);
+
+      // TOOLTIP ANIMATION
+      div.transition()
+        .duration(10)
+        .style("opacity", .9);
+
+      // Display the data-driven text in the tooltip
+      const mapContainer = document.getElementById('mapContainer');
+      if (mapContainer) {
+        const containerRect = mapContainer.getBoundingClientRect();
+        const relativeX = event.pageX - containerRect.left - window.scrollX;
+        const relativeY = event.pageY - containerRect.top - window.scrollY;
+
+        div.html(
+          "<table>" +
+          "<tr>" +
+          "<th>Attribute</th>" +
+          "<th>Individual " + d.properties.TreeID + "</th>" +
+          "</tr>" +
+          "<tr>" +
+          "<td>Species: </td>" +
+          "<td>" + d.properties.TreeType + "</td>" +
+          "</tr>" +
+          "<td>Planting Year: </td>" +
+          "<td>" + d.properties.PlantingYear + "</td>" +
+          "</table>"
+        )
+          .style("left", (relativeX + 25) + "px")
+          .style("right", "auto")
+          .style("top", (relativeY - 30) + "px")
+          .style("bottom", "auto")
+          .style("position", "absolute");
+      }
+    });
+
+    // TREE HOVER ANIMATION (mouseout)
+    treeCircles.on("mouseout", function (event, d) {
+      d3.select(this)
+        .transition()
+        .duration(500)
+        .attr("r", 2)
+        .style("fill", function () {
+          if (d.properties.PlantingYear == 2019) { return t1.url() }
+          else if (d.properties.PlantingYear == 2020) { return t2.url() }
+          else if (d.properties.PlantingYear == 2021) { return t3.url() }
+          else { return "gray" }
+        })
+        .attr("stroke-width", 0.5)
+        .attr("fill-opacity", 0.75);
+
+      // HIDE TOOLTIP
+      div.transition()
+        .duration(500)
+        .style("opacity", 0);
+    });
