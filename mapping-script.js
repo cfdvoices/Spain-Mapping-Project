@@ -10,59 +10,6 @@ var div = d3.select("body")
     .attr("class", "tooltip")
     .style("opacity", 0);
 
-// LEGEND SETUP
-var legendWidth = 250
-var legendHeight = 300
-var legend = d3.select("#legend")
-    .append("svg")
-    .attr("width", legendWidth)
-    .attr("height", legendHeight - 200)
-
-var labels = ["Tilia cordata", "Acer negundo", "Pinus sylvestris"]
-let legendColor = d3.scaleOrdinal()
-    .domain(labels)
-    .range(["DarkGreen", "GreenYellow", "Yellow"])
-
-var rectangleWidth = 20
-var rectangleHeight = 15
-var symbolGap = 15
-var symbolLabelGap = 35
-
-//Properties of the legend symbols
-legend.selectAll("legend-symbols")
-    .data(labels)
-    .enter()
-    .append("rect")
-    .attr("x", 0)
-    .attr("y", function (d, i) {
-        return i * (rectangleHeight + symbolGap) + 20
-    })
-    .attr("width", rectangleWidth)
-    .attr("height", rectangleHeight)
-    .attr("stroke", "black")
-    .attr("stroke-width", 1)
-    .style("fill", function (d) {
-        return legendColor(d)
-    })
-
-//Properties of the legend labels
-legend.selectAll("legend-labels")
-    .data(labels)
-    .enter()
-    .append("text")
-    .attr("x", symbolLabelGap + rectangleHeight)
-    .attr("y", function (d, i) {
-        return i * (rectangleHeight + symbolGap) + (rectangleHeight / 2) + 20
-    })
-    .style("fill", "black")
-    .text(function (d) {
-        return d
-    })
-    .attr("font-size", "14px")
-    .attr("font-style", "italic")
-    .attr("text-anchor", "left")
-    .style("alignment-baseline", "middle")
-
 // Global variable to store user criteria weights
 var userCriteriaWeights = {};
 
