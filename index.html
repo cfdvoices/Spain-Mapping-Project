@@ -11,8 +11,50 @@
 
 <body>
 
+  <!-- Onboarding Overlay -->
+  <div id="onboardingOverlay">
+    <div class="onboarding-container">
+      <div class="onboarding-header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Spain" class="flag-icon-large">
+        <h1>¡Bienvenido! Welcome to Spain!</h1>
+        <p class="subtitle">Find your perfect Spanish destination</p>
+      </div>
+      
+      <div class="onboarding-content">
+        <div class="instruction-card">
+          <div class="instruction-number">1</div>
+          <div class="instruction-text">
+            <h3>Choose Your Criteria</h3>
+            <p>Select the factors that matter most to you - from cost of living to climate, safety to culture.</p>
+          </div>
+        </div>
+        
+        <div class="instruction-card">
+          <div class="instruction-number">2</div>
+          <div class="instruction-text">
+            <h3>Rank by Importance</h3>
+            <p>Drag and drop your selected criteria to prioritize what's most important for your decision.</p>
+          </div>
+        </div>
+        
+        <div class="instruction-card">
+          <div class="instruction-number">3</div>
+          <div class="instruction-text">
+            <h3>Explore the Map</h3>
+            <p>Discover regions and cities across Spain tailored to your unique preferences and priorities.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="onboarding-footer">
+        <p class="footer-note">✈️ Whether you're planning a trip or considering a move, we'll help you find your Spain!</p>
+        <button class="action-button onboarding-button" id="startButton">Let's Get Started! 🇪🇸</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Criteria Selection Overlay -->
-  <div id="criteriaOverlay">
+  <div id="criteriaOverlay" style="display: none;">
     <div class="criteria-container">
       <div class="criteria-header">
         <h1><img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Spain"
@@ -27,11 +69,27 @@
         <button class="action-button" id="continueToRanking" disabled>Continue to Ranking →</button>
       </div>
 
-      <!-- Step 2: Ranking -->
+      <!-- Step 2: Pairwise Comparison -->
       <div id="rankingStep" class="ranking-section">
-        <div class="step-indicator">Step 2: Rank by importance</div>
-        <div id="rankingList"></div>
-        <button class="action-button" id="exploreMap">Explore Spain! &#x1F1EA;&#x1F1F8;</button>
+        <div class="step-indicator">Step 2: Compare criteria pairs</div>
+        <div class="comparison-progress">
+          <div class="progress-text">Comparison <span id="currentComparison">1</span> of <span id="totalComparisons">0</span></div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBarFill"></div>
+          </div>
+        </div>
+        
+        <div id="pairwiseComparison" class="pairwise-container">
+          <!-- Pairwise comparison will be inserted here -->
+        </div>
+        
+        <div id="comparisonResults" class="results-section" style="display: none;">
+          <h3>Your Criteria Weights</h3>
+          <div id="weightsList"></div>
+          <button class="action-button" id="exploreMap">Explore Spain! &#x1F1EA;&#x1F1F8;</button>
+        </div>
+        
+        <button class="action-button secondary-button" id="backToSelection" style="margin-top: 20px;">← Back to Selection</button>
       </div>
     </div>
   </div>

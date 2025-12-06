@@ -4,6 +4,21 @@ var width = 450;
 var height = 250;
 var svg, g_map, g_autonomas, g_prov, g_labels, g_cities, s, projection, path, zoom;
 
+// Onboarding functionality
+document.getElementById('startButton').addEventListener('click', () => {
+  const onboardingOverlay = document.getElementById('onboardingOverlay');
+  const criteriaOverlay = document.getElementById('criteriaOverlay');
+  
+  // Fade out onboarding
+  onboardingOverlay.classList.add('hidden');
+  
+  // Show criteria selector after animation
+  setTimeout(() => {
+    onboardingOverlay.style.display = 'none';
+    criteriaOverlay.style.display = 'flex';
+  }, 500);
+});
+
 var div = d3.select("body")
     .append("div")
     .attr("id", "tooltip")

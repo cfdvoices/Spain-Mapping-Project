@@ -1,3 +1,18 @@
+// Onboarding functionality
+document.getElementById('startButton').addEventListener('click', () => {
+  const onboardingOverlay = document.getElementById('onboardingOverlay');
+  const criteriaOverlay = document.getElementById('criteriaOverlay');
+  
+  // Fade out onboarding
+  onboardingOverlay.classList.add('hidden');
+  
+  // Show criteria selector after animation
+  setTimeout(() => {
+    onboardingOverlay.style.display = 'none';
+    criteriaOverlay.style.display = 'flex';
+  }, 500);
+});
+
 // Criteria data with icons
 const criteria = [
   { id: 'gdp', name: 'GDP per Capita', icon: '💰' },
@@ -18,7 +33,9 @@ const criteria = [
 ];
 
 let selectedCriteria = [];
-let draggedItem = null;
+let comparisonMatrix = {};
+let currentComparisonIndex = 0;
+let comparisonPairs = [];
 
 // Initialize criteria grid
 const criteriaGrid = document.getElementById('criteriaGrid');
@@ -94,15 +111,11 @@ function updateSelectionCounter() {
   }
 }
 
-// Continue to ranking
+// Continue to pairwise comparison
 document.getElementById('continueToRanking').addEventListener('click', () => {
   document.getElementById('selectionStep').style.display = 'none';
   document.getElementById('rankingStep').classList.add('active');
-  displayRankingStepAndSetup();
-  
-  // Update the step indicator to show drag instruction
-  document.querySelector('#rankingStep .step-indicator').textContent = 
-    `Step 2: Drag to reorder by importance (${selectedCriteria.length} ${selectedCriteria.length === 1 ? 'criterion' : 'criteria'} selected)`;
+  initializePairwiseComparison();
 });
 
 // Back button functionality
@@ -113,6 +126,11 @@ document.getElementById('backToSelection').addEventListener('click', () => {
 function goBackToSelection() {
   document.getElementById('rankingStep').classList.remove('active');
   document.getElementById('selectionStep').style.display = 'block';
+  
+  // Reset comparison data
+  comparisonMatrix = {};
+  currentComparisonIndex = 0;
+  comparisonPairs = [];
   
   // Update the visual state of selected cards
   const allCards = Array.from(document.querySelectorAll('.criterion-card'));
@@ -146,157 +164,237 @@ function goBackToSelection() {
   document.getElementById('continueToRanking').disabled = selectedCriteria.length === 0;
 }
 
-// Calculate weights using exponential decay that works for any number of criteria
-function calculateWeights() {
-  const n = selectedCriteria.length;
-  if (n === 0) return [];
-  
-  const weights = [];
-  let totalWeight = 0;
-  
-  // Calculate exponential weights: first gets 2^(n-1), second gets 2^(n-2), etc.
-  // This creates a decay pattern where earlier ranks are significantly more important
-  for (let i = 0; i < n; i++) {
-    const weight = Math.pow(2, n - 1 - i);
-    totalWeight += weight;
+// Initialize pairwise comparison process
+function initializePairwiseComparison() {
+  // If only one criterion, skip comparison
+  if (selectedCriteria.length === 1) {
+    const weights = [{
+      ...selectedCriteria[0],
+      weight: 100,
+      rank: 1
+    }];
+    displayResults(weights);
+    return;
   }
   
-  // Normalize to percentages
-  selectedCriteria.forEach((criterion, i) => {
-    const rawWeight = Math.pow(2, n - 1 - i);
-    const normalizedWeight = (rawWeight / totalWeight) * 100;
-    weights.push({
-      ...criterion,
-      rank: i + 1,
-      weight: normalizedWeight.toFixed(2),
-      rawWeight: rawWeight
-    });
-  });
-  
-  return weights;
-}
-
-// Display ranking step with drag-and-drop functionality
-function displayRankingStep() {
-  const rankingList = document.getElementById('rankingList');
-  rankingList.innerHTML = '';
-  
-  const weights = calculateWeights();
-  
-  weights.forEach((item, index) => {
-    const rankingItem = document.createElement('div');
-    rankingItem.className = 'ranking-item';
-    rankingItem.draggable = true;
-    rankingItem.dataset.index = index;
-    rankingItem.dataset.id = item.id;
-    
-    rankingItem.innerHTML = `
-      <div class="drag-handle">⋮⋮</div>
-      <div class="ranking-number">${item.rank}</div>
-      <div class="ranking-icon">${item.icon}</div>
-      <div class="ranking-details">
-        <div class="ranking-name">${item.name}</div>
-        <div class="ranking-weight">Weight: ${item.weight}%</div>
-      </div>
-      <button class="delete-btn" title="Remove criterion">×</button>
-    `;
-    
-    // Add delete button listener
-    const deleteBtn = rankingItem.querySelector('.delete-btn');
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      removeCriterion(item.id);
-    });
-    
-    // Add drag event listeners
-    rankingItem.addEventListener('dragstart', handleDragStart);
-    rankingItem.addEventListener('dragover', handleDragOver);
-    rankingItem.addEventListener('drop', handleDrop);
-    rankingItem.addEventListener('dragend', handleDragEnd);
-    
-    rankingList.appendChild(rankingItem);
-  });
-}
-
-// Remove a criterion from the selection
-function removeCriterion(criterionId) {
-  const index = selectedCriteria.findIndex(c => c.id === criterionId);
-  if (index > -1) {
-    selectedCriteria.splice(index, 1);
-    
-    // If no criteria left, go back to selection step
-    if (selectedCriteria.length === 0) {
-      goBackToSelection();
-    } else {
-      // Refresh the ranking display
-      displayRankingStep();
-      document.querySelector('#rankingStep .step-indicator').textContent = 
-        `Step 2: Drag to reorder by importance (${selectedCriteria.length} ${selectedCriteria.length === 1 ? 'criterion' : 'criteria'} selected)`;
+  // Generate all pairs
+  comparisonPairs = [];
+  for (let i = 0; i < selectedCriteria.length; i++) {
+    for (let j = i + 1; j < selectedCriteria.length; j++) {
+      comparisonPairs.push([selectedCriteria[i], selectedCriteria[j]]);
     }
   }
-}
-
-// Drag and drop handlers
-function handleDragStart(e) {
-  draggedItem = this;
-  this.style.opacity = '0.4';
-  e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragOver(e) {
-  if (e.preventDefault) {
-    e.preventDefault();
-  }
-  e.dataTransfer.dropEffect = 'move';
   
-  const targetItem = e.currentTarget;
-  if (draggedItem !== targetItem) {
-    targetItem.style.borderTop = '3px solid #667eea';
-  }
-  return false;
-}
-
-function handleDrop(e) {
-  if (e.stopPropagation) {
-    e.stopPropagation();
-  }
-  
-  const targetItem = e.currentTarget;
-  targetItem.style.borderTop = '';
-  
-  if (draggedItem !== targetItem) {
-    // Reorder the selectedCriteria array
-    const draggedId = draggedItem.dataset.id;
-    const targetId = targetItem.dataset.id;
-    
-    const draggedIndex = selectedCriteria.findIndex(c => c.id === draggedId);
-    const targetIndex = selectedCriteria.findIndex(c => c.id === targetId);
-    
-    // Remove dragged item and insert at new position
-    const [removed] = selectedCriteria.splice(draggedIndex, 1);
-    selectedCriteria.splice(targetIndex, 0, removed);
-    
-    // Refresh the display
-    displayRankingStep();
-  }
-  
-  return false;
-}
-
-function handleDragEnd(e) {
-  this.style.opacity = '1';
-  
-  // Remove all border highlights
-  document.querySelectorAll('.ranking-item').forEach(item => {
-    item.style.borderTop = '';
+  // Initialize comparison matrix
+  selectedCriteria.forEach(c1 => {
+    comparisonMatrix[c1.id] = {};
+    selectedCriteria.forEach(c2 => {
+      if (c1.id === c2.id) {
+        comparisonMatrix[c1.id][c2.id] = 1;
+      }
+    });
   });
+  
+  currentComparisonIndex = 0;
+  document.getElementById('totalComparisons').textContent = comparisonPairs.length;
+  displayCurrentComparison();
+}
+
+// Display current pairwise comparison
+function displayCurrentComparison() {
+  if (currentComparisonIndex >= comparisonPairs.length) {
+    // All comparisons done, calculate weights
+    const weights = calculateAHPWeights();
+    displayResults(weights);
+    return;
+  }
+  
+  const [criterion1, criterion2] = comparisonPairs[currentComparisonIndex];
+  
+  // Update progress
+  document.getElementById('currentComparison').textContent = currentComparisonIndex + 1;
+  const progress = ((currentComparisonIndex) / comparisonPairs.length) * 100;
+  document.getElementById('progressBarFill').style.width = progress + '%';
+  
+  const container = document.getElementById('pairwiseComparison');
+  container.innerHTML = `
+    <div class="comparison-question">Which criterion is more important to you?</div>
+    
+    <div class="criteria-comparison">
+      <div class="criterion-display" id="criterion1">
+        <div class="criterion-display-icon">${criterion1.icon}</div>
+        <div class="criterion-display-name">${criterion1.name}</div>
+      </div>
+      
+      <div class="vs-divider">VS</div>
+      
+      <div class="criterion-display" id="criterion2">
+        <div class="criterion-display-icon">${criterion2.icon}</div>
+        <div class="criterion-display-name">${criterion2.name}</div>
+      </div>
+    </div>
+    
+    <div class="importance-scale">
+      <div class="importance-label">How much more important? (or equal)</div>
+      <div class="scale-options">
+        <div class="scale-option" data-value="3" data-direction="left">
+          <div class="scale-value">3×</div>
+          <div class="scale-label">Much more</div>
+        </div>
+        <div class="scale-option" data-value="2" data-direction="left">
+          <div class="scale-value">2×</div>
+          <div class="scale-label">More</div>
+        </div>
+        <div class="scale-option" data-value="1" data-direction="equal">
+          <div class="scale-value">=</div>
+          <div class="scale-label">Equal</div>
+        </div>
+        <div class="scale-option" data-value="2" data-direction="right">
+          <div class="scale-value">2×</div>
+          <div class="scale-label">More</div>
+        </div>
+        <div class="scale-option" data-value="3" data-direction="right">
+          <div class="scale-value">3×</div>
+          <div class="scale-label">Much more</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="comparison-buttons">
+      <button class="action-button" id="nextComparison" disabled>Next Comparison →</button>
+    </div>
+  `;
+  
+  // Add click handlers to scale options
+  let selectedValue = null;
+  let selectedDirection = null;
+  
+  document.querySelectorAll('.scale-option').forEach(option => {
+    option.addEventListener('click', () => {
+      // Remove previous selection
+      document.querySelectorAll('.scale-option').forEach(opt => opt.classList.remove('selected'));
+      document.querySelectorAll('.criterion-display').forEach(crit => crit.classList.remove('selected'));
+      
+      // Add new selection
+      option.classList.add('selected');
+      selectedValue = parseFloat(option.dataset.value);
+      selectedDirection = option.dataset.direction;
+      
+      // Highlight selected criterion
+      if (selectedDirection === 'left') {
+        document.getElementById('criterion1').classList.add('selected');
+      } else if (selectedDirection === 'right') {
+        document.getElementById('criterion2').classList.add('selected');
+      }
+      
+      // Enable next button
+      document.getElementById('nextComparison').disabled = false;
+    });
+  });
+  
+  // Next button handler
+  document.getElementById('nextComparison').addEventListener('click', () => {
+    if (selectedValue !== null && selectedDirection !== null) {
+      recordComparison(criterion1, criterion2, selectedValue, selectedDirection);
+      currentComparisonIndex++;
+      displayCurrentComparison();
+    }
+  });
+}
+
+// Record comparison in matrix
+function recordComparison(criterion1, criterion2, value, direction) {
+  if (direction === 'equal') {
+    comparisonMatrix[criterion1.id][criterion2.id] = 1;
+    comparisonMatrix[criterion2.id][criterion1.id] = 1;
+  } else if (direction === 'left') {
+    comparisonMatrix[criterion1.id][criterion2.id] = value;
+    comparisonMatrix[criterion2.id][criterion1.id] = 1 / value;
+  } else if (direction === 'right') {
+    comparisonMatrix[criterion1.id][criterion2.id] = 1 / value;
+    comparisonMatrix[criterion2.id][criterion1.id] = value;
+  }
+}
+
+// Calculate weights using AHP (Analytic Hierarchy Process)
+function calculateAHPWeights() {
+  const n = selectedCriteria.length;
+  const ids = selectedCriteria.map(c => c.id);
+  
+  // Calculate column sums
+  const columnSums = {};
+  ids.forEach(id => {
+    columnSums[id] = 0;
+    ids.forEach(compareId => {
+      columnSums[id] += comparisonMatrix[compareId][id];
+    });
+  });
+  
+  // Normalize matrix and calculate average for each row (criterion weight)
+  const weights = {};
+  ids.forEach(id => {
+    let rowSum = 0;
+    ids.forEach(compareId => {
+      rowSum += comparisonMatrix[id][compareId] / columnSums[compareId];
+    });
+    weights[id] = (rowSum / n) * 100; // Convert to percentage
+  });
+  
+  // Create weighted criteria objects sorted by weight
+  const weightedCriteria = selectedCriteria.map(criterion => ({
+    ...criterion,
+    weight: weights[criterion.id].toFixed(2)
+  })).sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight));
+  
+  // Add ranks
+  weightedCriteria.forEach((criterion, index) => {
+    criterion.rank = index + 1;
+  });
+  
+  return weightedCriteria;
+}
+
+// Display results
+function displayResults(weights) {
+  document.getElementById('pairwiseComparison').style.display = 'none';
+  document.getElementById('comparisonResults').style.display = 'block';
+  
+  // Update progress to 100%
+  document.getElementById('progressBarFill').style.width = '100%';
+  
+  const weightsList = document.getElementById('weightsList');
+  weightsList.innerHTML = '';
+  
+  weights.forEach(item => {
+    const weightItem = document.createElement('div');
+    weightItem.className = 'weight-item';
+    weightItem.innerHTML = `
+      <div class="weight-rank">${item.rank}</div>
+      <div class="weight-icon">${item.icon}</div>
+      <div class="weight-details">
+        <div class="weight-name">${item.name}</div>
+        <div class="weight-bar-container">
+          <div class="weight-bar-fill" style="width: ${item.weight}%"></div>
+        </div>
+      </div>
+      <div class="weight-percentage">${item.weight}%</div>
+    `;
+    weightsList.appendChild(weightItem);
+  });
+  
+  // Setup explore button
+  setupExploreButton(weights);
 }
 
 // Explore map
-function setupExploreButton() {
+function setupExploreButton(weights) {
   const exploreBtn = document.getElementById('exploreMap');
   if (exploreBtn) {
-    exploreBtn.addEventListener('click', () => {
+    // Remove old listeners by cloning
+    const newBtn = exploreBtn.cloneNode(true);
+    exploreBtn.parentNode.replaceChild(newBtn, exploreBtn);
+    
+    newBtn.addEventListener('click', () => {
       const overlay = document.getElementById('criteriaOverlay');
       overlay.classList.add('hidden');
       
@@ -305,7 +403,7 @@ function setupExploreButton() {
         document.getElementById('mapSection').classList.add('active');
         
         // Store selected criteria for later use
-        window.userCriteria = calculateWeights();
+        window.userCriteria = weights;
         console.log('User selected criteria:', window.userCriteria);
         
         // Initialize map (will be called from mapping-script.js)
@@ -315,11 +413,4 @@ function setupExploreButton() {
       }, 500);
     });
   }
-}
-
-// Call setup when ranking step is displayed
-function displayRankingStepAndSetup() {
-  displayRankingStep();
-  // Small delay to ensure button is in DOM
-  setTimeout(setupExploreButton, 0);
 }
