@@ -23,18 +23,47 @@ var div = d3.select("body")
     .append("div")
     .attr("id", "tooltip")
     .attr("class", "tooltip")
-    .style("opacity", 0);
+    .style("opacity", 0)
+    .style("position", "absolute")
+    .style("pointer-events", "none")
+    .style("background", "white")
+    .style("border", "2px solid #333")
+    .style("border-radius", "8px")
+    .style("padding", "10px")
+    .style("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.3)")
+    .style("z-index", "10000");
 
 // Global variable to store user criteria weights
 var userCriteriaWeights = {};
+
+// City data mapping - maps criterion IDs to actual GeoJSON property names
+// Note: Property names have spaces, so we'll use bracket notation to access them
+const cityDataAttributes = {
+  'gdp': 'Test_GDP per capita',
+  'population': 'Test_Population density',
+  'transport': 'Test_Avg distance to bus station',
+  'housing': 'Test_Monthly Cost of Rent',
+  'food': 'Test_Monthly Cost of Food',
+  'services': 'Test_Monthly Cost of services',
+  'climate': 'Test_Temperature',
+  'crime': 'Test_Criminality rate',
+  'water': 'Test_Water quality',
+  'recycling': 'Test_Recycling rates',
+  'greenspace': 'Test_Green Space per Capita',
+  'hazards': 'Test_Natural hazards risk',
+  'education': 'Test_Education years',
+  'jobs': 'Test_Job opportunities',
+  'lifeexpectancy': 'Test_Life expectancy'
+};
 
 function initializeMap() {
     // Get the user criteria from window
     if (window.userCriteria) {
         console.log('User criteria loaded:', window.userCriteria);
         window.userCriteria.forEach(criterion => {
-            userCriteriaWeights[criterion.id] = parseFloat(criterion.weight);
+            userCriteriaWeights[criterion.id] = parseFloat(criterion.weight) / 100; // Normalize to 0-1
         });
+        console.log('User criteria weights:', userCriteriaWeights);
     }
 
     // Create the main SVG container
@@ -87,8 +116,76 @@ function initializeMap() {
             .call(zoom.transform, d3.zoomIdentity);
     }
 
+    // Show controls
+    document.getElementById('controls').style.display = 'block';
+
     // Load ALL data centrally
     loadAllMapData();
+}
+
+// Calculate index of choice for a city based on user criteria
+// Data is already normalized in the GeoJSON (0-100 scale)
+function calculateIndexOfChoice(cityProperties) {
+    let index = 0;
+    let debugInfo = [];
+    
+    // If no criteria selected, return population-based default
+    if (Object.keys(userCriteriaWeights).length === 0) {
+        return cityProperties.population || 100000;
+    }
+    
+    // For each selected criterion, multiply its weight by the city's value
+    Object.keys(userCriteriaWeights).forEach(criterionId => {
+        const weight = userCriteriaWeights[criterionId];
+        const attributeName = cityDataAttributes[criterionId];
+        
+        if (!attributeName) {
+            console.warn(`No attribute mapping found for criterion: ${criterionId}`);
+            return;
+        }
+        
+        // IMPORTANT: Use bracket notation to access properties with spaces
+        let value = cityProperties[attributeName];
+        
+        // Debug: log the first city's values
+        if (debugInfo.length === 0) {
+            debugInfo.push({
+                criterion: criterionId,
+                attributeName: attributeName,
+                weight: weight,
+                value: value,
+                contribution: weight * value
+            });
+        }
+        
+        if (value === undefined || value === null) {
+            console.warn(`Missing value for "${attributeName}" in city ${cityProperties.city}`);
+            return;
+        }
+        
+        // Convert to number if it's a string
+        value = parseFloat(value);
+        
+        if (isNaN(value)) {
+            console.warn(`Invalid number for "${attributeName}" in city ${cityProperties.city}: ${cityProperties[attributeName]}`);
+            return;
+        }
+        
+        // Add weighted contribution to index
+        // Value is already 0-100, weight is 0-1, so result will be 0-100 range
+        const contribution = weight * value;
+        index += contribution;
+    });
+    
+    // Log debug info for first calculation
+    if (debugInfo.length > 0 && !window.debugLogged) {
+        console.log('Sample calculation for city:', cityProperties.city);
+        console.log('Contributions:', debugInfo);
+        console.log('Total index:', index);
+        window.debugLogged = true;
+    }
+    
+    return index;
 }
 
 // --- ADAPTIVE SCALE BAR HELPER ---
@@ -183,93 +280,23 @@ function loadAllMapData() {
             .attr("fill", "#e0e0e0")
             .attr("stroke", "none");
 
-        // 3. Draw the Comunidades Autónomas - Middle Layer with interactivity
+        // 3. Draw the Comunidades Autónomas - Middle Layer (no interactivity)
         g_autonomas.selectAll("path")
             .data(autonomasData.features)
             .enter()
             .append("path")
             .attr("d", path)
-            .attr("fill", function (d) {
-                // You can add color coding based on user criteria here
-                return "#d4d4d4"; // Light gray fill
-            })
+            .attr("fill", "#d4d4d4")
             .attr("stroke", "#555555")
-            .attr("stroke-width", 1.2)
+            .attr("stroke-width", 0.5)
             .attr("class", "autonoma-boundary")
-            .style("cursor", "pointer")
             .style("fill-opacity", 0.3)
-            .on("mouseover", function (event, d) {
-                // Highlight on hover
-                d3.select(this)
-                    .transition()
-                    .duration(200)
-                    .attr("fill", "#a8d5ba")
-                    .style("fill-opacity", 0.6)
-                    .attr("stroke-width", 2);
-
-                // Show tooltip
-                div.transition()
-                    .duration(50)
-                    .style("opacity", 0.9);
-
-                const container = document.getElementById("mapContainer");
-                const box = container.getBoundingClientRect();
-                const x = event.pageX - box.left - window.scrollX;
-                const y = event.pageY - box.top - window.scrollY;
-
-                // Build tooltip content based on available properties
-                let tooltipContent = "<table>";
-
-                // Try to get the name from various possible property names
-                const name = d.properties.name || d.properties.NAME ||
-                    d.properties.comunidad || d.properties.COMUNIDAD ||
-                    d.properties.ccaa || "Comunidad Autónoma";
-
-                tooltipContent += "<tr><th colspan='2' style='background-color: #a8d5ba;'>" + name + "</th></tr>";
-                tooltipContent += "<tr><td colspan='2' style='font-size: 11px; font-style: italic;'>Comunidad Autónoma</td></tr>";
-
-                // Add any other relevant properties
-                if (d.properties.codigo || d.properties.CODIGO) {
-                    tooltipContent += "<tr><td><strong>Código:</strong></td><td>" +
-                        (d.properties.codigo || d.properties.CODIGO) + "</td></tr>";
-                }
-
-                tooltipContent += "</table>";
-
-                div.html(tooltipContent)
-                    .style("left", (x + 20) + "px")
-                    .style("top", (y - 20) + "px")
-                    .style("position", "absolute");
-            })
-            .on("mouseout", function () {
-                // Remove highlight
-                d3.select(this)
-                    .transition()
-                    .duration(300)
-                    .attr("fill", "#d4d4d4")
-                    .style("fill-opacity", 0.3)
-                    .attr("stroke-width", 1.2);
-
-                // Hide tooltip
-                div.transition()
-                    .duration(300)
-                    .style("opacity", 0);
-            })
-            .on("click", function (event, d) {
-                // Handle click events - you can add navigation or details here
-                const name = d.properties.name || d.properties.NAME ||
-                    d.properties.comunidad || d.properties.COMUNIDAD ||
-                    "esta comunidad";
-                console.log("Clicked on Comunidad:", name);
-            });
+            .style("pointer-events", "none"); // Disable autonoma interactivity
 
         // 4. Draw the Provinces - Detail Layer on top
-        // Filter out the exterior polygon that covers everything outside Spain
         const validProvinces = provinceData.features.filter(function (d) {
-            // Filter out features that might be the exterior/inverse polygon
-            // These typically have very large areas or specific properties
             const area = d3.geoArea(d);
-            return area < 1; // Remove extremely large polygons (exterior ring)
+            return area < 1;
         });
 
         g_prov.selectAll("path")
@@ -279,67 +306,16 @@ function loadAllMapData() {
             .attr("d", path)
             .attr("fill", function (d) {
                 let provColor = d3.scaleLinear()
-                    .domain([1, 53]) // Set stops on the scale, e.g., ending years of the century
-                    .range(["cyan", "purple"]) // Set colour values
+                    .domain([1, 53])
+                    .range(["cyan", "purple"])
                 return provColor(d.properties.prov_code)
             })
             .attr("stroke", "#333333")
             .attr("stroke-width", 0.3)
             .attr("class", "province-boundary")
-            .style("cursor", "pointer")
-            .style("pointer-events", "all")
-            .on("mouseover", function (event, d) {
-                // Subtle highlight on hover
-                d3.select(this)
-                    .transition()
-                    .duration(200)
-                    .style("fill-opacity", 0.5)
-                    .attr("stroke-width", 0.8);
+            .style("pointer-events", "none"); // Disable province interactivity
 
-                // Show tooltip
-                div.transition()
-                    .duration(50)
-                    .style("opacity", 0.9);
-
-                const container = document.getElementById("mapContainer");
-                const box = container.getBoundingClientRect();
-                const x = event.pageX - box.left - window.scrollX;
-                const y = event.pageY - box.top - window.scrollY;
-
-                // Build tooltip content
-                let tooltipContent = "<table>";
-
-                const name = d.properties.prov_name
-
-                tooltipContent += "<tr><th colspan='2' style='background-color: #ffd699;'>" + name + "</th></tr>";
-                tooltipContent += "<tr><td colspan='2' style='font-size: 11px; font-style: italic;'>Provincia</td></tr>";
-
-                tooltipContent += "</table>";
-
-                div.html(tooltipContent)
-                    .style("left", (x + 20) + "px")
-                    .style("top", (y - 20) + "px")
-                    .style("position", "absolute");
-            })
-            .on("mouseout", function () {
-                d3.select(this)
-                    .transition()
-                    .duration(300)
-                    .style("fill-opacity", 1)
-                    .attr("stroke-width", 0.3);
-
-                div.transition()
-                    .duration(300)
-                    .style("opacity", 0);
-            })
-            .on("click", function (event, d) {
-                const name = d.properties.provincia || d.properties.PROVINCIA ||
-                    d.properties.name || d.properties.NAME || "provincia";
-                console.log("Clicked on Provincia:", name);
-            });
-
-        // 5. Draw Labels (you can choose whether to label autonomas or provinces)
-        // Labeling Autonomous Communities
+        // 5. Draw Labels
         g_labels.selectAll(".autonoma-label")
             .data(autonomasData.features)
             .enter()
@@ -359,7 +335,7 @@ function loadAllMapData() {
             })
             .attr('font-size', '7px')
             .attr("text-anchor", "middle")
-            .attr("fill", "#2c5f2d")
+            .attr("fill", "#c7e8c7ff")
             .attr("font-weight", "bold")
             .attr("opacity", 0.7)
             .style("pointer-events", "none");
@@ -379,6 +355,36 @@ function loadCities() {
     d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
         .then(function (cities) {
 
+            // Debug: Log first city's properties to see actual column names
+            if (cities.features.length > 0) {
+                console.log('First city properties:', cities.features[0].properties);
+                console.log('Property keys:', Object.keys(cities.features[0].properties));
+            }
+
+            // Calculate index of choice for each city
+            // Data is already normalized in the GeoJSON
+            cities.features.forEach(feature => {
+                feature.properties.indexOfChoice = calculateIndexOfChoice(feature.properties);
+            });
+
+            // Find min and max index values for scaling
+            const indexValues = cities.features.map(d => d.properties.indexOfChoice);
+            const minIndex = d3.min(indexValues);
+            const maxIndex = d3.max(indexValues);
+
+            console.log('Index of Choice range:', minIndex.toFixed(2), 'to', maxIndex.toFixed(2));
+            console.log('All index values:', indexValues.map(v => v.toFixed(2)));
+
+            // Create radius scale based on index of choice
+            const radiusScale = d3.scaleSqrt()
+                .domain([minIndex, maxIndex])
+                .range([2, 10]); // Adjusted range for better visibility
+
+            // Create color scale
+            const colorScale = d3.scaleLinear()
+                .domain([minIndex, (minIndex + maxIndex) / 2, maxIndex])
+                .range(["#ff4444", "#ffaa44", "#44ff44"]); // Red -> Orange -> Green
+
             const cityCircles = g_cities.selectAll("circle")
                 .data(cities.features)
                 .enter()
@@ -393,64 +399,80 @@ function loadCities() {
                     return coords ? coords[1] : 0;
                 })
                 .attr("r", function (d) {
-                    let smallestCity = d3.min(cities.features, function (d) {
-                        return d.properties.population;
-                    })
-                    let biggestCity = d3.max(cities.features, function (d) {
-                        return d.properties.population;
-                    })
-                    let radiusSize = d3.scaleLinear()
-                        .domain([smallestCity, biggestCity])
-                        .range([1, 5])
-                    return radiusSize(d.properties.population)
+                    return radiusScale(d.properties.indexOfChoice);
                 })
-                .attr("fill", "red")
+                .attr("fill", function (d) {
+                    return colorScale(d.properties.indexOfChoice);
+                })
                 .attr("stroke", "white")
                 .attr("stroke-width", 0.5)
-                .style("cursor", "pointer");
+                .style("cursor", "pointer")
+                .style("opacity", 0.8)
+                .style("pointer-events", "all"); // Ensure cities are interactive
 
             // City tooltip (mouseover)
             cityCircles.on("mouseover", function (event, d) {
+                // Instant highlight without transition
                 d3.select(this)
                     .raise()
-                    .transition()
-                    .duration(200)
-                    .attr("stroke", "red")
-                    .attr("fill", "orange");
+                    .attr("stroke", "#FFD700")
+                    .attr("stroke-width", 2.5)
+                    .style("opacity", 1);
 
-                div.transition()
-                    .duration(50)
-                    .style("opacity", 0.9);
+                const x = event.pageX;
+                const y = event.pageY;
 
-                const container = document.getElementById("mapContainer");
-                const box = container.getBoundingClientRect();
-                const x = event.pageX - box.left - window.scrollX;
-                const y = event.pageY - box.top - window.scrollY;
+                // Build detailed tooltip with inline styles
+                let tooltipHTML = '<div style="font-family: Arial, sans-serif;">';
+                tooltipHTML += '<table style="border-collapse: collapse; min-width: 250px; background: white;">';
+                
+                const bgColor = colorScale(d.properties.indexOfChoice);
+                tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: white; padding: 10px; text-align: center; font-size: 16px; font-weight: bold;">' + d.properties.city + '</th></tr>';
+                
+                tooltipHTML += '<tr><td colspan="2" style="font-size: 12px; font-style: italic; padding: 6px; text-align: center; color: #666;">Ciudad</td></tr>';
+                
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold;">Population:</td><td style="padding: 6px; text-align: right;">' + d.properties.population.toLocaleString() + '</td></tr>';
+                
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold;">Index of Choice:</td><td style="padding: 6px; text-align: right; font-weight: bold; color: ' + bgColor + ';">' + d.properties.indexOfChoice.toFixed(2) + '</td></tr>';
+                
+                // Show which criteria contributed
+                if (window.userCriteria && window.userCriteria.length > 0) {
+                    tooltipHTML += '<tr><td colspan="2" style="padding: 8px 6px 6px 6px; font-weight: bold; font-size: 12px; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
+                    
+                    window.userCriteria.slice(0, 3).forEach(criterion => {
+                        const attributeName = cityDataAttributes[criterion.id];
+                        const rawValue = d.properties[attributeName];
+                        const valueDisplay = (rawValue !== undefined && rawValue !== null) ? parseFloat(rawValue).toFixed(1) : 'N/A';
+                        tooltipHTML += '<tr><td style="font-size: 11px; padding: 4px 6px;">' + criterion.icon + ' ' + criterion.name + '</td><td style="font-size: 11px; padding: 4px 6px; text-align: right;">' + criterion.weight + '% <span style="color: #999;">(score: ' + valueDisplay + ')</span></td></tr>';
+                    });
+                    
+                    if (window.userCriteria.length > 3) {
+                        tooltipHTML += '<tr><td colspan="2" style="font-size: 10px; font-style: italic; padding: 4px 6px; color: #999;">... and ' + (window.userCriteria.length - 3) + ' more criteria</td></tr>';
+                    }
+                }
+                
+                tooltipHTML += '</table>';
+                tooltipHTML += '</div>';
 
-                div.html(
-                    "<table>" +
-                    "<tr><th colspan='2' style='background-color: orange;'>" + d.properties.city + "</th></tr>" +
-                    "<tr><td colspan='2' style='font-size: 11px; font-style: italic;'>Ciudad</td></tr>" +
-                    "<tr><td><strong>Population:</strong></td><td>" + d.properties.population.toLocaleString() + "</td></tr>" +
-                    "<tr><td><strong>Latitude:</strong></td><td>" + d.geometry.coordinates[1].toFixed(4) + "</td></tr>" +
-                    "<tr><td><strong>Longitude:</strong></td><td>" + d.geometry.coordinates[0].toFixed(4) + "</td></tr>" +
-                    "</table>"
-                )
-                    .style("left", (x + 20) + "px")
-                    .style("top", (y - 20) + "px")
-                    .style("position", "absolute");
+                // Instant tooltip display
+                div.html(tooltipHTML)
+                    .style("left", (x + 15) + "px")
+                    .style("top", (y - 15) + "px")
+                    .style("opacity", 0.98)
+                    .style("display", "block");
             });
 
             // City tooltip out (mouseout)
             cityCircles.on("mouseout", function () {
+                // Instant hide without transition
                 d3.select(this)
-                    .transition()
-                    .duration(300)
-                    .attr("fill", "red");
+                    .attr("stroke", "white")
+                    .attr("stroke-width", 0.5)
+                    .style("opacity", 0.8);
 
-                div.transition()
-                    .duration(300)
-                    .style("opacity", 0);
+                // Instant hide tooltip
+                div.style("opacity", 0)
+                    .style("display", "none");
             });
 
         })

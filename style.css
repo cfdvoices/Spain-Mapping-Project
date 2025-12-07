@@ -8,6 +8,40 @@ html, body {
 html {
 background: radial-gradient(circle,rgba(39, 55, 84, 1) 0%, rgba(16, 38, 66, 1) 33%, rgba(21, 46, 79, 1) 50%, rgba(12, 47, 54, 1) 100%)}
 
+/* ===== TOOLTIP STYLES ===== */
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: white;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  font-size: 14px;
+}
+
+.tooltip table {
+  border-collapse: collapse;
+  min-width: 200px;
+}
+
+.tooltip th {
+  padding: 8px 12px;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.tooltip td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.tooltip tr:last-child td {
+  border-bottom: none;
+}
+
 /* ===== ONBOARDING STYLES ===== */
 
 #onboardingOverlay {

@@ -32,8 +32,8 @@
         <div class="instruction-card">
           <div class="instruction-number">2</div>
           <div class="instruction-text">
-            <h3>Rank by Importance</h3>
-            <p>Drag and drop your selected criteria to prioritize what's most important for your decision.</p>
+            <h3>Compare Priorities</h3>
+            <p>Compare pairs of criteria to determine what's most important for your decision.</p>
           </div>
         </div>
         
@@ -41,7 +41,7 @@
           <div class="instruction-number">3</div>
           <div class="instruction-text">
             <h3>Explore the Map</h3>
-            <p>Discover regions and cities across Spain tailored to your unique preferences and priorities.</p>
+            <p>Discover cities across Spain tailored to your unique preferences. Larger circles = better match!</p>
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@
 
       <!-- Step 1: Selection -->
       <div id="selectionStep">
-        <div class="step-indicator">Step 1: Select at least 3 criteria</div>
+        <div class="step-indicator">Step 1: Select at least 1 criterion</div>
         <div class="criteria-grid" id="criteriaGrid"></div>
         <button class="action-button" id="continueToRanking" disabled>Continue to Ranking →</button>
       </div>
@@ -86,7 +86,7 @@
         <div id="comparisonResults" class="results-section" style="display: none;">
           <h3>Your Criteria Weights</h3>
           <div id="weightsList"></div>
-          <button class="action-button" id="exploreMap">Explore Spain! &#x1F1EA;&#x1F1F8;</button>
+          <button class="action-button" id="exploreMap">Explore Spain! 🇪🇸</button>
         </div>
         
         <button class="action-button secondary-button" id="backToSelection" style="margin-top: 20px;">← Back to Selection</button>
@@ -100,7 +100,13 @@
       <h2> <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Spain"
           class="flag-icon" alignment="centered"><br><br>Which Spain is calling you?</h2>
       <p>A tool to decide where to travel or where to migrate!✈️</p><br>
-      <p>Using your own preferences and perspectives</p>
+      <p>Cities are sized and colored based on your preferences:</p>
+      <ul style="font-size: 0.9em; line-height: 1.6;">
+        <li><strong>Larger circles</strong> = Better match</li>
+        <li><strong style="color: #44ff44;">Green</strong> = High score</li>
+        <li><strong style="color: #ffaa44;">Orange</strong> = Medium score</li>
+        <li><strong style="color: #ff4444;">Red</strong> = Low score</li>
+      </ul>
     </div>
     <div id="mapContainer"></div>
   </section>
