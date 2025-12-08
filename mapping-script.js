@@ -6,17 +6,17 @@ var svg, g_map, g_autonomas, g_prov, g_labels, g_cities, s, projection, path, zo
 
 // Onboarding functionality
 document.getElementById('startButton').addEventListener('click', () => {
-  const onboardingOverlay = document.getElementById('onboardingOverlay');
-  const criteriaOverlay = document.getElementById('criteriaOverlay');
-  
-  // Fade out onboarding
-  onboardingOverlay.classList.add('hidden');
-  
-  // Show criteria selector after animation
-  setTimeout(() => {
-    onboardingOverlay.style.display = 'none';
-    criteriaOverlay.style.display = 'flex';
-  }, 500);
+    const onboardingOverlay = document.getElementById('onboardingOverlay');
+    const criteriaOverlay = document.getElementById('criteriaOverlay');
+
+    // Fade out onboarding
+    onboardingOverlay.classList.add('hidden');
+
+    // Show criteria selector after animation
+    setTimeout(() => {
+        onboardingOverlay.style.display = 'none';
+        criteriaOverlay.style.display = 'flex';
+    }, 500);
 });
 
 var div = d3.select("body")
@@ -39,21 +39,21 @@ var userCriteriaWeights = {};
 // City data mapping - maps criterion IDs to actual GeoJSON property names
 // Note: Property names have spaces, so we'll use bracket notation to access them
 const cityDataAttributes = {
-  'gdp': 'Test_GDP per capita',
-  'population': 'Test_Population density',
-  'transport': 'Test_Avg distance to bus station',
-  'housing': 'Test_Monthly Cost of Rent',
-  'food': 'Test_Monthly Cost of Food',
-  'services': 'Test_Monthly Cost of services',
-  'climate': 'Test_Temperature',
-  'crime': 'Test_Criminality rate',
-  'water': 'Test_Water quality',
-  'recycling': 'Test_Recycling rates',
-  'greenspace': 'Test_Green Space per Capita',
-  'hazards': 'Test_Natural hazards risk',
-  'education': 'Test_Education years',
-  'jobs': 'Test_Job opportunities',
-  'lifeexpectancy': 'Test_Life expectancy'
+    'gdp': 'Test_GDP per capita',
+    'population': 'Test_Population density',
+    'transport': 'Test_Avg distance to bus station',
+    'housing': 'Test_Monthly Cost of Rent',
+    'food': 'Test_Monthly Cost of Food',
+    'services': 'Test_Monthly Cost of services',
+    'climate': 'Test_Temperature',
+    'crime': 'Test_Criminality rate',
+    'water': 'Test_Water quality',
+    'recycling': 'Test_Recycling rates',
+    'greenspace': 'Test_Green Space per Capita',
+    'hazards': 'Test_Natural hazards risk',
+    'education': 'Test_Education years',
+    'jobs': 'Test_Job opportunities',
+    'lifeexpectancy': 'Test_Life expectancy'
 };
 
 function initializeMap() {
@@ -128,25 +128,25 @@ function initializeMap() {
 function calculateIndexOfChoice(cityProperties) {
     let index = 0;
     let debugInfo = [];
-    
+
     // If no criteria selected, return population-based default
     if (Object.keys(userCriteriaWeights).length === 0) {
         return cityProperties.population || 100000;
     }
-    
+
     // For each selected criterion, multiply its weight by the city's value
     Object.keys(userCriteriaWeights).forEach(criterionId => {
         const weight = userCriteriaWeights[criterionId];
         const attributeName = cityDataAttributes[criterionId];
-        
+
         if (!attributeName) {
             console.warn(`No attribute mapping found for criterion: ${criterionId}`);
             return;
         }
-        
+
         // IMPORTANT: Use bracket notation to access properties with spaces
         let value = cityProperties[attributeName];
-        
+
         // Debug: log the first city's values
         if (debugInfo.length === 0) {
             debugInfo.push({
@@ -157,26 +157,26 @@ function calculateIndexOfChoice(cityProperties) {
                 contribution: weight * value
             });
         }
-        
+
         if (value === undefined || value === null) {
             console.warn(`Missing value for "${attributeName}" in city ${cityProperties.city}`);
             return;
         }
-        
+
         // Convert to number if it's a string
         value = parseFloat(value);
-        
+
         if (isNaN(value)) {
             console.warn(`Invalid number for "${attributeName}" in city ${cityProperties.city}: ${cityProperties[attributeName]}`);
             return;
         }
-        
+
         // Add weighted contribution to index
         // Value is already 0-100, weight is 0-1, so result will be 0-100 range
         const contribution = weight * value;
         index += contribution;
     });
-    
+
     // Log debug info for first calculation
     if (debugInfo.length > 0 && !window.debugLogged) {
         console.log('Sample calculation for city:', cityProperties.city);
@@ -184,7 +184,7 @@ function calculateIndexOfChoice(cityProperties) {
         console.log('Total index:', index);
         window.debugLogged = true;
     }
-    
+
     return index;
 }
 
@@ -287,7 +287,7 @@ function loadAllMapData() {
             .append("path")
             .attr("d", path)
             .attr("fill", "#d4d4d4")
-            .attr("stroke", "#555555")
+            .attr("stroke", "#8c8c8cff")
             .attr("stroke-width", 0.5)
             .attr("class", "autonoma-boundary")
             .style("fill-opacity", 0.3)
@@ -304,14 +304,8 @@ function loadAllMapData() {
             .enter()
             .append("path")
             .attr("d", path)
-            .attr("fill", function (d) {
-                let provColor = d3.scaleLinear()
-                    .domain([1, 53])
-                    .range(["cyan", "purple"])
-                return provColor(d.properties.prov_code)
-            })
-            .attr("stroke", "#333333")
-            .attr("stroke-width", 0.3)
+            .attr("stroke", "#d8d8d8ff")
+            .attr("stroke-width", 0.2)
             .attr("class", "province-boundary")
             .style("pointer-events", "none"); // Disable province interactivity
 
@@ -333,7 +327,7 @@ function loadAllMapData() {
                 return d.properties.code || d.properties.CODE ||
                     d.properties.name || d.properties.NAME || "";
             })
-            .attr('font-size', '7px')
+            .attr('font-size', '6px')
             .attr("text-anchor", "middle")
             .attr("fill", "#c7e8c7ff")
             .attr("font-weight", "bold")
@@ -380,10 +374,10 @@ function loadCities() {
                 .domain([minIndex, maxIndex])
                 .range([2, 10]); // Adjusted range for better visibility
 
-            // Create color scale
+            // Creation of the color scale for the circles representation
             const colorScale = d3.scaleLinear()
                 .domain([minIndex, (minIndex + maxIndex) / 2, maxIndex])
-                .range(["#ff4444", "#ffaa44", "#44ff44"]); // Red -> Orange -> Green
+                .range(['#e5f5f9', '#99d8c9', '#2ca25f']);
 
             const cityCircles = g_cities.selectAll("circle")
                 .data(cities.features)
@@ -416,7 +410,7 @@ function loadCities() {
                 d3.select(this)
                     .raise()
                     .attr("stroke", "#FFD700")
-                    .attr("stroke-width", 2.5)
+                    .attr("stroke-width", 0.5)
                     .style("opacity", 1);
 
                 const x = event.pageX;
@@ -425,32 +419,53 @@ function loadCities() {
                 // Build detailed tooltip with inline styles
                 let tooltipHTML = '<div style="font-family: Arial, sans-serif;">';
                 tooltipHTML += '<table style="border-collapse: collapse; min-width: 250px; background: white;">';
-                
+
                 const bgColor = colorScale(d.properties.indexOfChoice);
                 tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: white; padding: 10px; text-align: center; font-size: 16px; font-weight: bold;">' + d.properties.city + '</th></tr>';
-                
+
                 tooltipHTML += '<tr><td colspan="2" style="font-size: 12px; font-style: italic; padding: 6px; text-align: center; color: #666;">Ciudad</td></tr>';
-                
+
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold;">Population:</td><td style="padding: 6px; text-align: right;">' + d.properties.population.toLocaleString() + '</td></tr>';
-                
+
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold;">Index of Choice:</td><td style="padding: 6px; text-align: right; font-weight: bold; color: ' + bgColor + ';">' + d.properties.indexOfChoice.toFixed(2) + '</td></tr>';
-                
-                // Show which criteria contributed
+
+                // Show which criteria contributed with bar charts
                 if (window.userCriteria && window.userCriteria.length > 0) {
                     tooltipHTML += '<tr><td colspan="2" style="padding: 8px 6px 6px 6px; font-weight: bold; font-size: 12px; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
-                    
-                    window.userCriteria.slice(0, 3).forEach(criterion => {
+
+                    window.userCriteria.forEach(criterion => {
                         const attributeName = cityDataAttributes[criterion.id];
                         const rawValue = d.properties[attributeName];
-                        const valueDisplay = (rawValue !== undefined && rawValue !== null) ? parseFloat(rawValue).toFixed(1) : 'N/A';
-                        tooltipHTML += '<tr><td style="font-size: 11px; padding: 4px 6px;">' + criterion.icon + ' ' + criterion.name + '</td><td style="font-size: 11px; padding: 4px 6px; text-align: right;">' + criterion.weight + '% <span style="color: #999;">(score: ' + valueDisplay + ')</span></td></tr>';
+                        const scoreValue = (rawValue !== undefined && rawValue !== null) ? parseFloat(rawValue) : 0;
+                        // Convert 1-10 scale to percentage (0-100) for bar width
+                        const scorePercent = Math.min(100, Math.max(0, (scoreValue / 10) * 100));
+
+                        // Determine bar color based on score (1-10 scale)
+                        let barColor = '#ff4444'; // Red for low scores
+                        if (scoreValue >= 7) {
+                            barColor = '#2ca25f'; // Green for high scores (7-10)
+                        } else if (scoreValue >= 4) {
+                            barColor = '#99d8c9'; // Teal for medium scores (4-7)
+                        }
+
+                        // Display original raw value without rounding
+                        const displayValue = (rawValue !== undefined && rawValue !== null) ? rawValue : 'N/A';
+
+                        tooltipHTML += '<tr><td colspan="2" style="padding: 6px;">';
+                        tooltipHTML += '<div style="display: flex; align-items: center; gap: 8px;">';
+                        tooltipHTML += '<span style="font-size: 14px;">' + criterion.icon + '</span>';
+                        tooltipHTML += '<div style="flex: 1;">';
+                        tooltipHTML += '<div style="font-size: 10px; font-weight: 600; margin-bottom: 2px;">' + criterion.name + ' <span style="color: #999;">(weight: ' + criterion.weight + '%)</span></div>';
+                        tooltipHTML += '<div style="background: #e9ecef; height: 18px; border-radius: 4px; overflow: hidden; position: relative;">';
+                        tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
+                        tooltipHTML += '<span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">' + displayValue + '</span>';
+                        tooltipHTML += '</div>';
+                        tooltipHTML += '</div>';
+                        tooltipHTML += '</div>';
+                        tooltipHTML += '</td></tr>';
                     });
-                    
-                    if (window.userCriteria.length > 3) {
-                        tooltipHTML += '<tr><td colspan="2" style="font-size: 10px; font-style: italic; padding: 4px 6px; color: #999;">... and ' + (window.userCriteria.length - 3) + ' more criteria</td></tr>';
-                    }
                 }
-                
+
                 tooltipHTML += '</table>';
                 tooltipHTML += '</div>';
 
