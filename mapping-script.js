@@ -304,6 +304,7 @@ function loadAllMapData() {
             .enter()
             .append("path")
             .attr("d", path)
+            .attr("fill", "#ffffffff")
             .attr("stroke", "#d8d8d8ff")
             .attr("stroke-width", 0.2)
             .attr("class", "province-boundary")
