@@ -13,6 +13,9 @@ document.getElementById('startButton').addEventListener('click', () => {
   }, 500);
 });
 
+// Maximum number of criteria that can be selected
+const MAX_CRITERIA = 5;
+
 // Criteria data with icons
 const criteria = [
   { id: 'gdp', name: 'GDP per Capita', icon: '💰' },
@@ -57,7 +60,17 @@ criteria.forEach(criterion => {
       const badge = card.querySelector('.selection-badge');
       if (badge) badge.remove();
     } else {
-      // Select (no limit on number of criteria)
+      // Check if max criteria reached
+      if (selectedCriteria.length >= MAX_CRITERIA) {
+        // Show feedback that limit is reached
+        card.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          card.style.animation = '';
+        }, 500);
+        return;
+      }
+      
+      // Select
       selectedCriteria.push(criterion);
       card.classList.add('selected');
       const badge = document.createElement('div');
@@ -103,11 +116,15 @@ function updateSelectionCounter() {
   }
   
   if (selectedCriteria.length === 0) {
-    counter.textContent = 'Select at least 1 criterion to continue';
+    counter.textContent = `Select 1-${MAX_CRITERIA} criteria to continue`;
   } else if (selectedCriteria.length === 1) {
-    counter.textContent = '1 criterion selected';
+    counter.textContent = `1 criterion selected (max ${MAX_CRITERIA})`;
+  } else if (selectedCriteria.length >= MAX_CRITERIA) {
+    counter.textContent = `${selectedCriteria.length} criteria selected (maximum reached)`;
+    counter.style.color = '#ff4444';
   } else {
-    counter.textContent = `${selectedCriteria.length} criteria selected`;
+    counter.textContent = `${selectedCriteria.length} criteria selected (max ${MAX_CRITERIA})`;
+    counter.style.color = '#667eea';
   }
 }
 
