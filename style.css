@@ -1,12 +1,12 @@
 html, body {
   margin: 0;
   padding: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-family: 'Montserrat', sans-serif;
-  overflow-x: hidden;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
 }
-html {
-background: radial-gradient(circle,rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%);}
 
 /* ===== TOOLTIP STYLES ===== */
 .tooltip {
@@ -782,24 +782,220 @@ background: radial-gradient(circle,rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237,
 
 /* ===== MAP SECTION STYLES ===== */
 
-/* Map Section - hidden initially */
+/* Map Section */
 #mapSection {
-  display: none;
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
-#mapSection.active {
-  display: block;
+#mapContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 320px; /* Leave space for sidebar */
+  bottom: 0;
+  width: calc(100% - 320px);
+  height: 100%;
+  background: radial-gradient(circle,rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%);
+}
+
+#mapContainer svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Criteria Panel Sidebar */
+#criteriaPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.panel-header {
+  margin-bottom: 25px;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 15px;
+}
+
+.panel-header h3 {
+  margin: 0 0 5px 0;
+  color: #667eea;
+  font-size: 1.5em;
+}
+
+.panel-subtitle {
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.panel-section {
+  margin-bottom: 25px;
+}
+
+.panel-section h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+/* Checkbox List */
+#criteriaCheckboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.criterion-checkbox-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.criterion-checkbox-item:hover {
+  background: #e9ecef;
+  transform: translateX(-3px);
+}
+
+.criterion-checkbox-item.selected {
+  background: linear-gradient(135deg, #ff9985 0%, #ffc68c 100%);
+  border-color: #667eea;
+}
+
+.criterion-checkbox-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.criterion-checkbox-item input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.criterion-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
+.criterion-checkbox-icon {
+  font-size: 1.3em;
+}
+
+/* Weight Sliders */
+#criteriaWeightsList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.weight-slider-item {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.weight-slider-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.weight-slider-icon {
+  font-size: 1.2em;
+}
+
+.weight-slider-name {
+  flex: 1;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #333;
+}
+
+.weight-slider-value {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #667eea;
+  min-width: 45px;
+  text-align: right;
+}
+
+.weight-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e9ecef;
+  border-radius: 3px;
+  outline: none;
+}
+
+.weight-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.weight-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  border: none;
 }
 
 /* Legend styling */
 #legend {
   position: absolute;
-  width: 300px;
+  left: 20px;
+  bottom: 20px;
+  width: 280px;
   background: white;
-  padding: 10px;
-  opacity: 0.9;
-  border-width: 2px;
-  border-style: solid;
+  padding: 15px;
+  opacity: 0.95;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+}
+
+#legend h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.2em;
+}
+
+#legend p {
+  margin: 5px 0;
+  font-size: 0.9em;
 }
 
 /* Finding styling */

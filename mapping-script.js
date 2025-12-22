@@ -1,23 +1,7 @@
-// This script will run after the page loads and criteria are selected
-// The map initialization is triggered from criteria-selector.js
+// This script handles the interactive map with dynamic criteria selection
 var width = 450;
 var height = 250;
 var svg, g_map, g_autonomas, g_prov, g_labels, g_cities, s, projection, path, zoom;
-
-// Onboarding functionality
-document.getElementById('startButton').addEventListener('click', () => {
-    const onboardingOverlay = document.getElementById('onboardingOverlay');
-    const criteriaOverlay = document.getElementById('criteriaOverlay');
-
-    // Fade out onboarding
-    onboardingOverlay.classList.add('hidden');
-
-    // Show criteria selector after animation
-    setTimeout(() => {
-        onboardingOverlay.style.display = 'none';
-        criteriaOverlay.style.display = 'flex';
-    }, 500);
-});
 
 var div = d3.select("body")
     .append("div")
@@ -35,37 +19,346 @@ var div = d3.select("body")
 
 // Global variable to store user criteria weights
 var userCriteriaWeights = {};
+var selectedCriteria = [];
+const MAX_CRITERIA = 5;
+
+// Criteria data with icons
+const criteria = [
+  { id: 'gdp', name: 'Income potential', icon: '💰' },
+  { id: 'population', name: 'Population Density', icon: '👥' },
+  { id: 'transport', name: 'Transport Access', icon: '🚇' },
+  { id: 'housing', name: 'Housing Cost', icon: '🏠' },
+  { id: 'food', name: 'Food Cost', icon: '🍽️' },
+  { id: 'services', name: 'Service Cost', icon: '🛍️' },
+  { id: 'climate', name: 'Climate Quality', icon: '☀️' },
+  { id: 'crime', name: 'Safety Level', icon: '🛡️' },
+  { id: 'water', name: 'Water Quality', icon: '💧' },
+  { id: 'recycling', name: 'City Cleanliness', icon: '♻️' },
+  { id: 'greenspace', name: 'Green Space', icon: '🌳' },
+  { id: 'hazards', name: 'Natural Safety', icon: '⛰️' },
+  { id: 'education', name: 'Education Level', icon: '🎓' },
+  { id: 'jobs', name: 'Job Opportunities', icon: '💼' },
+  { id: 'lifeexpectancy', name: 'Life Expectancy', icon: '❤️' }
+];
 
 // City data mapping - maps criterion IDs to actual GeoJSON property names
-// Note: Property names have spaces, so we'll use bracket notation to access them
+// Each criterion has both normalized (for calculations) and real (for display) values
+// inverse: true means higher real values = lower scores (e.g., costs, crime)
 const cityDataAttributes = {
-    'gdp': 'Test_GDP per capita',
-    'population': 'Test_Population density',
-    'transport': 'Test_Avg distance to bus station',
-    'housing': 'Test_Monthly Cost of Rent',
-    'food': 'Test_Monthly Cost of Food',
-    'services': 'Test_Monthly Cost of services',
-    'climate': 'Test_Temperature',
-    'crime': 'Test_Criminality rate',
-    'water': 'Test_Water quality',
-    'recycling': 'Test_Recycling rates',
-    'greenspace': 'Test_Green Space per Capita',
-    'hazards': 'Test_Natural hazards risk',
-    'education': 'Test_Education years',
-    'jobs': 'Test_Job opportunities',
-    'lifeexpectancy': 'Test_Life expectancy'
+    'gdp': {
+        normalized: 'norm_GDP_percapita',
+        real: 'real_GDP_percapita',
+        unit: '€',
+        label: 'GDP per Capita',
+        inverse: false // Higher is better
+    },
+    'population': {
+        normalized: 'norm_Population_density',
+        real: 'real_Population_density',
+        unit: ' people/km²',
+        label: 'Population Density',
+        inverse: false // Context dependent, treating as neutral
+    },
+    'transport': {
+        normalized: 'norm_Avg_Closest_station',
+        real: 'real_Avg_Closest_station',
+        unit: ' km',
+        label: 'Transport Access',
+        inverse: true // Lower distance is better
+    },
+    'housing': {
+        normalized: 'norm_Rent_cost',
+        real: 'real_Rent_cost',
+        unit: '€',
+        label: 'Housing Cost',
+        inverse: true // Lower cost is better
+    },
+    'food': {
+        normalized: 'norm_Food_cost',
+        real: 'real_Food_cost',
+        unit: '€',
+        label: 'Food Cost',
+        inverse: true // Lower cost is better
+    },
+    'services': {
+        normalized: 'norm_Services_cost',
+        real: 'real_Services_cost',
+        unit: '€',
+        label: 'Service Cost',
+        inverse: true // Lower cost is better
+    },
+    'climate': {
+        normalized: 'norm_Weather',
+        real: 'real_Weather',
+        unit: '',
+        label: 'Climate Quality',
+        inverse: false // Higher is better
+    },
+    'crime': {
+        normalized: 'norm_Criminality_rate',
+        real: 'real_Criminality_rate',
+        unit: '',
+        label: 'Safety Level',
+        inverse: true // Lower crime is better
+    },
+    'water': {
+        normalized: 'norm_Water_quality',
+        real: 'real_Water_quality',
+        unit: '',
+        label: 'Water Quality',
+        inverse: false // Higher is better
+    },
+    'recycling': {
+        normalized: 'norm_Recycling_rate',
+        real: 'real_Recycling_rate',
+        unit: '%',
+        label: 'Recycling Rate',
+        inverse: false // Higher is better
+    },
+    'greenspace': {
+        normalized: 'norm_Green_space_per_capita',
+        real: 'real_Green_space_per_capita',
+        unit: ' m²',
+        label: 'Green Space',
+        inverse: false // Higher is better
+    },
+    'hazards': {
+        normalized: 'norm_Natural_risks',
+        real: 'real_Natural_risks',
+        unit: '',
+        label: 'Natural Safety',
+        inverse: true // Lower risk is better
+    },
+    'education': {
+        normalized: 'norm_Education_years',
+        real: 'real_Education_years',
+        unit: ' years',
+        label: 'Education Level',
+        inverse: false // Higher is better
+    },
+    'jobs': {
+        normalized: 'norm_Job_offers',
+        real: 'real_Job_offers',
+        unit: '',
+        label: 'Job Opportunities',
+        inverse: false // Higher is better
+    },
+    'lifeexpectancy': {
+        normalized: 'norm_Life_expectancy',
+        real: 'real_Life_expectancy',
+        unit: ' years',
+        label: 'Life Expectancy',
+        inverse: false // Higher is better
+    }
 };
 
-function initializeMap() {
-    // Get the user criteria from window
-    if (window.userCriteria) {
-        console.log('User criteria loaded:', window.userCriteria);
-        window.userCriteria.forEach(criterion => {
-            userCriteriaWeights[criterion.id] = parseFloat(criterion.weight) / 100; // Normalize to 0-1
-        });
-        console.log('User criteria weights:', userCriteriaWeights);
-    }
+// Initialize the application when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCriteriaPanel();
+    // Initialize the map structure (SVG, base layers) without cities
+    initializeMapStructure();
+});
 
+// Initialize the criteria selection panel
+function initializeCriteriaPanel() {
+    const checkboxList = document.getElementById('criteriaCheckboxList');
+    
+    criteria.forEach(criterion => {
+        const item = document.createElement('div');
+        item.className = 'criterion-checkbox-item';
+        item.dataset.criterionId = criterion.id;
+        
+        item.innerHTML = `
+            <input type="checkbox" id="cb_${criterion.id}" value="${criterion.id}">
+            <label class="criterion-checkbox-label" for="cb_${criterion.id}">
+                <span class="criterion-checkbox-icon">${criterion.icon}</span>
+                <span>${criterion.name}</span>
+            </label>
+        `;
+        
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', function() {
+            handleCriterionSelection(criterion, this.checked);
+        });
+        
+        // Make the whole item clickable
+        item.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                checkbox.click();
+            }
+        });
+        
+        checkboxList.appendChild(item);
+    });
+}
+
+// Handle criterion selection/deselection
+function handleCriterionSelection(criterion, isSelected) {
+    if (isSelected) {
+        // Check if max criteria reached
+        if (selectedCriteria.length >= MAX_CRITERIA) {
+            // Uncheck the checkbox
+            document.getElementById('cb_' + criterion.id).checked = false;
+            alert(`Maximum ${MAX_CRITERIA} criteria allowed. Please deselect one to add another.`);
+            return;
+        }
+        
+        // Add to selected criteria with default equal weight
+        selectedCriteria.push({
+            ...criterion,
+            weight: (100 / (selectedCriteria.length + 1)).toFixed(2)
+        });
+        
+        // Recalculate weights to be equal
+        redistributeWeights();
+        
+        // Update UI
+        document.querySelector(`[data-criterion-id="${criterion.id}"]`).classList.add('selected');
+    } else {
+        // Remove from selected criteria
+        const index = selectedCriteria.findIndex(c => c.id === criterion.id);
+        if (index > -1) {
+            selectedCriteria.splice(index, 1);
+            redistributeWeights();
+        }
+        
+        // Update UI
+        document.querySelector(`[data-criterion-id="${criterion.id}"]`).classList.remove('selected');
+    }
+    
+    // Update the weights section
+    updateWeightsSection();
+    
+    // Enable/disable checkboxes based on max criteria
+    updateCheckboxStates();
+}
+
+// Redistribute weights equally
+function redistributeWeights() {
+    if (selectedCriteria.length === 0) return;
+    
+    const equalWeight = (100 / selectedCriteria.length).toFixed(2);
+    selectedCriteria.forEach(c => {
+        c.weight = equalWeight;
+    });
+}
+
+// Update checkbox states (disable if max reached)
+function updateCheckboxStates() {
+    const allItems = document.querySelectorAll('.criterion-checkbox-item');
+    allItems.forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (!checkbox.checked && selectedCriteria.length >= MAX_CRITERIA) {
+            item.classList.add('disabled');
+            checkbox.disabled = true;
+        } else {
+            item.classList.remove('disabled');
+            checkbox.disabled = false;
+        }
+    });
+}
+
+// Update the weights section
+function updateWeightsSection() {
+    const weightsSection = document.getElementById('weightsSection');
+    const weightsList = document.getElementById('criteriaWeightsList');
+    
+    if (selectedCriteria.length === 0) {
+        weightsSection.style.display = 'none';
+        return;
+    }
+    
+    weightsSection.style.display = 'block';
+    weightsList.innerHTML = '';
+    
+    selectedCriteria.forEach(criterion => {
+        const item = document.createElement('div');
+        item.className = 'weight-slider-item';
+        
+        item.innerHTML = `
+            <div class="weight-slider-header">
+                <span class="weight-slider-icon">${criterion.icon}</span>
+                <span class="weight-slider-name">${criterion.name}</span>
+                <span class="weight-slider-value" id="weight_${criterion.id}">${criterion.weight}%</span>
+            </div>
+            <input type="range" min="1" max="100" value="${criterion.weight}" 
+                   class="weight-slider" id="slider_${criterion.id}">
+        `;
+        
+        const slider = item.querySelector('input[type="range"]');
+        slider.addEventListener('input', function() {
+            handleWeightChange(criterion.id, parseFloat(this.value));
+        });
+        
+        weightsList.appendChild(item);
+    });
+}
+
+// Handle weight slider changes
+function handleWeightChange(criterionId, newWeight) {
+    // Update the specific criterion weight
+    const criterion = selectedCriteria.find(c => c.id === criterionId);
+    if (criterion) {
+        criterion.weight = newWeight.toFixed(2);
+    }
+    
+    // Normalize weights to sum to 100
+    normalizeWeights();
+    
+    // Update all displays
+    selectedCriteria.forEach(c => {
+        const valueDisplay = document.getElementById('weight_' + c.id);
+        const slider = document.getElementById('slider_' + c.id);
+        if (valueDisplay) valueDisplay.textContent = c.weight + '%';
+        if (slider) slider.value = c.weight;
+    });
+}
+
+// Normalize weights to sum to 100%
+function normalizeWeights() {
+    const total = selectedCriteria.reduce((sum, c) => sum + parseFloat(c.weight), 0);
+    if (total > 0) {
+        selectedCriteria.forEach(c => {
+            c.weight = ((parseFloat(c.weight) / total) * 100).toFixed(2);
+        });
+    }
+}
+
+// Update map button handler
+document.getElementById('updateMapBtn').addEventListener('click', function() {
+    if (selectedCriteria.length === 0) {
+        alert('Please select at least one criterion');
+        return;
+    }
+    
+    // Normalize weights one final time
+    normalizeWeights();
+    
+    // Convert to user criteria format expected by map
+    window.userCriteria = selectedCriteria.map((c, index) => ({
+        ...c,
+        rank: index + 1
+    }));
+    
+    // Update user criteria weights for calculation
+    userCriteriaWeights = {};
+    window.userCriteria.forEach(criterion => {
+        userCriteriaWeights[criterion.id] = parseFloat(criterion.weight) / 100;
+    });
+    
+    console.log('Updating map with criteria:', window.userCriteria);
+    
+    // If map already exists, update it; otherwise initialize
+    if (window.mapInitialized) {
+        updateMap();
+    } else {
+        initializeMap();
+        window.mapInitialized = true;
+    }
+});
+
+// Initialize map structure (SVG and base layers) without cities
+function initializeMapStructure() {
     // Create the main SVG container
     svg = d3.select("#mapContainer")
         .append("svg")
@@ -82,16 +375,20 @@ function initializeMap() {
     s = svg.append("g").attr("class", "scale-bar");
 
     // Define Projection and Path Generator
-    projection = d3.geoEquirectangular()
+    projection = d3.geoConicEqualArea()
         .scale(1)
         .translate([0, 0]);
 
     path = d3.geoPath().projection(projection);
 
     /* D3 ZOOM CONTROL */
-    // Define the zoom behavior
+    // Define the zoom behavior with tighter limits
     zoom = d3.zoom()
-        .scaleExtent([0.5, 9]) // Set the zoom limits
+        .scaleExtent([0.85, 4]) // Restricted zoom: slightly out to moderately in
+        .translateExtent([
+            [-width * 0.2, -height * 0.2],  // Top-left limit (20% beyond)
+            [width * 1.2, height * 1.2]      // Bottom-right limit (20% beyond)
+        ])
         .on("zoom", zoomed); // Specify the function to call on zoom events
 
     // Apply the zoom behavior to the SVG element
@@ -116,11 +413,159 @@ function initializeMap() {
             .call(zoom.transform, d3.zoomIdentity);
     }
 
-    // Show controls
-    document.getElementById('controls').style.display = 'block';
+    // Load base map layers (without cities)
+    loadBaseMapLayers();
+}
 
-    // Load ALL data centrally
-    loadAllMapData();
+function initializeMap() {
+    console.log('Initializing map with criteria:', window.userCriteria);
+
+    // If structure not yet created, create it
+    if (!svg) {
+        initializeMapStructure();
+    }
+
+    // Load cities with current criteria
+    loadCities();
+    
+    // Create pie chart
+    if (window.userCriteria && window.userCriteria.length > 0) {
+        createCriteriaPieChart();
+    }
+}
+
+// Function to update map with new criteria
+function updateMap() {
+    console.log('Updating map with new criteria:', window.userCriteria);
+    
+    // Remove existing pie chart if it exists
+    d3.select("#pieChartContainer").remove();
+    
+    // Recreate pie chart with new criteria
+    createCriteriaPieChart();
+    
+    // Reload cities with new calculations
+    loadCities();
+}
+
+// Function to create a pie chart showing criteria weights
+function createCriteriaPieChart() {
+    if (!window.userCriteria || window.userCriteria.length === 0) {
+        return;
+    }
+
+    // Create container for pie chart in top-left
+    const pieContainer = d3.select("#mapContainer")
+        .append("div")
+        .attr("id", "pieChartContainer")
+        .style("position", "absolute")
+        .style("top", "10px")
+        .style("left", "10px")
+        .style("background", "white")
+        .style("border-radius", "12px")
+        .style("padding", "15px")
+        .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
+        .style("z-index", "1000")
+        .style("pointer-events", "all");
+
+    // Add title
+    pieContainer.append("div")
+        .style("font-size", "14px")
+        .style("font-weight", "bold")
+        .style("margin-bottom", "10px")
+        .style("text-align", "center")
+        .style("color", "#333")
+        .text("Your Priorities");
+
+    // Create SVG for pie chart
+    const pieWidth = 180;
+    const pieHeight = 180;
+    const radius = Math.min(pieWidth, pieHeight) / 2 - 10;
+
+    const pieSvg = pieContainer.append("svg")
+        .attr("width", pieWidth)
+        .attr("height", pieHeight)
+        .append("g")
+        .attr("transform", `translate(${pieWidth / 2}, ${pieHeight / 2})`);
+
+    // Create color scale
+    const colorScale = d3.scaleOrdinal()
+        .domain(window.userCriteria.map(c => c.id))
+        .range(['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0']);
+
+    // Create pie layout
+    const pie = d3.pie()
+        .value(d => parseFloat(d.weight))
+        .sort(null);
+
+    // Create arc generator
+    const arc = d3.arc()
+        .innerRadius(0)
+        .outerRadius(radius);
+
+    // Create arcs
+    const arcs = pieSvg.selectAll("arc")
+        .data(pie(window.userCriteria))
+        .enter()
+        .append("g")
+        .attr("class", "arc");
+
+    // Draw pie slices
+    arcs.append("path")
+        .attr("d", arc)
+        .attr("fill", d => colorScale(d.data.id))
+        .attr("stroke", "white")
+        .attr("stroke-width", 2)
+        .style("opacity", 0.85)
+        .on("mouseover", function(event, d) {
+            d3.select(this)
+                .style("opacity", 1)
+                .style("cursor", "pointer");
+            
+            // Show tooltip
+            div.html(`
+                <div style="font-family: Arial, sans-serif; padding: 5px;">
+                    <div style="font-size: 16px; margin-bottom: 5px;">${d.data.icon} ${d.data.name}</div>
+                    <div style="font-size: 14px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
+                </div>
+            `)
+            .style("left", (event.pageX + 15) + "px")
+            .style("top", (event.pageY - 15) + "px")
+            .style("opacity", 0.98)
+            .style("display", "block");
+        })
+        .on("mouseout", function() {
+            d3.select(this)
+                .style("opacity", 0.85);
+            div.style("opacity", 0).style("display", "none");
+        });
+
+    // Add legend below pie chart
+    const legend = pieContainer.append("div")
+        .style("margin-top", "10px")
+        .style("max-height", "120px")
+        .style("overflow-y", "auto");
+
+    window.userCriteria.forEach((criterion, i) => {
+        const legendItem = legend.append("div")
+            .style("display", "flex")
+            .style("align-items", "center")
+            .style("margin-bottom", "5px")
+            .style("font-size", "11px");
+
+        legendItem.append("div")
+            .style("width", "12px")
+            .style("height", "12px")
+            .style("background", colorScale(criterion.id))
+            .style("border-radius", "2px")
+            .style("margin-right", "6px")
+            .style("flex-shrink", "0");
+
+        legendItem.append("div")
+            .style("flex", "1")
+            .style("color", "#333")
+            .html(`${criterion.icon} ${criterion.name}: <strong>${criterion.weight}%</strong>`);
+    });
 }
 
 // Calculate index of choice for a city based on user criteria
@@ -134,24 +579,25 @@ function calculateIndexOfChoice(cityProperties) {
         return cityProperties.population || 100000;
     }
 
-    // For each selected criterion, multiply its weight by the city's value
+    // For each selected criterion, multiply its weight by the city's NORMALIZED value
     Object.keys(userCriteriaWeights).forEach(criterionId => {
         const weight = userCriteriaWeights[criterionId];
-        const attributeName = cityDataAttributes[criterionId];
+        const attributeInfo = cityDataAttributes[criterionId];
 
-        if (!attributeName) {
+        if (!attributeInfo) {
             console.warn(`No attribute mapping found for criterion: ${criterionId}`);
             return;
         }
 
-        // IMPORTANT: Use bracket notation to access properties with spaces
-        let value = cityProperties[attributeName];
+        // Use NORMALIZED value for calculation
+        const normalizedAttrName = attributeInfo.normalized;
+        let value = cityProperties[normalizedAttrName];
 
         // Debug: log the first city's values
         if (debugInfo.length === 0) {
             debugInfo.push({
                 criterion: criterionId,
-                attributeName: attributeName,
+                normalizedAttribute: normalizedAttrName,
                 weight: weight,
                 value: value,
                 contribution: weight * value
@@ -159,7 +605,7 @@ function calculateIndexOfChoice(cityProperties) {
         }
 
         if (value === undefined || value === null) {
-            console.warn(`Missing value for "${attributeName}" in city ${cityProperties.city}`);
+            console.warn(`Missing normalized value for "${normalizedAttrName}" in city ${cityProperties.city}`);
             return;
         }
 
@@ -167,12 +613,12 @@ function calculateIndexOfChoice(cityProperties) {
         value = parseFloat(value);
 
         if (isNaN(value)) {
-            console.warn(`Invalid number for "${attributeName}" in city ${cityProperties.city}: ${cityProperties[attributeName]}`);
+            console.warn(`Invalid number for "${normalizedAttrName}" in city ${cityProperties.city}: ${cityProperties[normalizedAttrName]}`);
             return;
         }
 
         // Add weighted contribution to index
-        // Value is already 0-100, weight is 0-1, so result will be 0-100 range
+        // Normalized value should be 0-10 or 0-1, weight is 0-1
         const contribution = weight * value;
         index += contribution;
     });
@@ -220,6 +666,140 @@ function zoomed(event) {
     g_labels.attr("transform", event.transform);
     g_cities.attr("transform", event.transform);
     updateScaleBar(event.transform);
+    updateProportionalLegend(event.transform.k);
+}
+
+// --- PROPORTIONAL SYMBOL LEGEND ---
+let proportionalLegendGroup = null;
+
+function initializeProportionalLegend() {
+    if (!svg) return;
+    
+    // Add legend group to SVG (fixed position, doesn't move with zoom)
+    proportionalLegendGroup = svg.append("g")
+        .attr("class", "proportional-legend");
+    
+    // Add semi-transparent background (will be sized dynamically)
+    proportionalLegendGroup.append("rect")
+        .attr("class", "legend-background")
+        .attr("fill", "rgba(255, 255, 255, 0.9)")
+        .attr("rx", 6)
+        .attr("ry", 6)
+        .attr("stroke", "#ccc")
+        .attr("stroke-width", 0.5);
+    
+    // Add title
+    proportionalLegendGroup.append("text")
+        .attr("class", "legend-title")
+        .attr("font-size", "7px")
+        .attr("font-weight", "600")
+        .attr("fill", "#333")
+        .text("Match Score");
+}
+
+function updateProportionalLegend(zoomLevel) {
+    if (!proportionalLegendGroup || !window.currentRadiusScale) return;
+    
+    // Sample values for legend (low, medium, high)
+    const legendValues = [
+        { label: "High", value: 0.8 },
+        { label: "Medium", value: 0.5 },
+        { label: "Low", value: 0.2 }
+    ];
+    
+    // Get current min/max from the radius scale domain
+    const domain = window.currentRadiusScale.domain();
+    const minIndex = domain[0];
+    const maxIndex = domain[1];
+    
+    // Calculate actual index values for legend
+    const legendIndices = legendValues.map(v => 
+        minIndex + (maxIndex - minIndex) * v.value
+    );
+    
+    // Get actual radii as they appear on the map (scaled by zoom)
+    const legendRadii = legendIndices.map(idx => 
+        window.currentRadiusScale(idx) * zoomLevel
+    );
+    
+    // Calculate layout dimensions
+    const maxRadius = Math.max(...legendRadii);
+    const padding = 8;
+    const titleHeight = 15;
+    const startY = titleHeight + padding;
+    const labelOffset = 35;
+    
+    // Calculate total height needed
+    let totalHeight = startY + padding;
+    legendRadii.forEach(r => {
+        totalHeight += r * 2 + 8; // Add space for each circle plus gap
+    });
+    
+    // Calculate background dimensions
+    const bgWidth = labelOffset + 40;
+    const bgHeight = totalHeight;
+    const legendX = width - bgWidth - 15;
+    const legendY = height - bgHeight - 120; // Adjusted to be closer to scale bar (was -140)
+    
+    // Update background position and size
+    proportionalLegendGroup.select(".legend-background")
+        .attr("x", legendX)
+        .attr("y", legendY)
+        .attr("width", bgWidth)
+        .attr("height", bgHeight);
+    
+    // Update title position
+    proportionalLegendGroup.select(".legend-title")
+        .attr("x", legendX + bgWidth / 2)
+        .attr("y", legendY + 10)
+        .attr("text-anchor", "middle");
+    
+    // Remove old circles, labels, and lines
+    proportionalLegendGroup.selectAll(".legend-circle").remove();
+    proportionalLegendGroup.selectAll(".legend-label").remove();
+    proportionalLegendGroup.selectAll(".legend-line").remove();
+    
+    // Draw circles from largest to smallest (top to bottom)
+    let currentY = legendY + startY;
+    
+    legendValues.forEach((item, i) => {
+        const radius = legendRadii[i];
+        const circleY = currentY + radius;
+        const circleX = legendX + padding + maxRadius;
+        
+        // Draw circle
+        proportionalLegendGroup.append("circle")
+            .attr("class", "legend-circle")
+            .attr("cx", circleX)
+            .attr("cy", circleY)
+            .attr("r", radius)
+            .attr("fill", "rgba(102, 126, 234, 0.25)")
+            .attr("stroke", "#667eea")
+            .attr("stroke-width", 0.8);
+        
+        // Draw line from circle edge to label
+        proportionalLegendGroup.append("line")
+            .attr("class", "legend-line")
+            .attr("x1", circleX + radius)
+            .attr("y1", circleY)
+            .attr("x2", legendX + labelOffset - 2)
+            .attr("y2", circleY)
+            .attr("stroke", "#999")
+            .attr("stroke-width", 0.3)
+            .attr("stroke-dasharray", "1,1");
+        
+        // Add label
+        proportionalLegendGroup.append("text")
+            .attr("class", "legend-label")
+            .attr("x", legendX + labelOffset)
+            .attr("y", circleY + 2.5)
+            .attr("font-size", "7px")
+            .attr("fill", "#333")
+            .text(item.label);
+        
+        // Move down for next circle
+        currentY += radius * 2 + 8;
+    });
 }
 
 // --- SCALE BAR FUNCTION ---
@@ -241,27 +821,62 @@ function updateScaleBar(transform) {
     const adaptive = getAdaptiveScaleDistance(currentPixelLengthPerMeter);
     const dynamicScaleLength = adaptive.distance * currentPixelLengthPerMeter;
 
-    const xPos = 20;
-    const yPos = height - 20;
+    // Position in bottom-right corner at the very bottom
+    const xPos = width - dynamicScaleLength - 20;
+    const yPos = height + 15; // Moved to very bottom (was -20)
 
     s.html("");
+    
+    // Add background rectangle for better visibility
+    s.append("rect")
+        .attr("x", xPos - 6)
+        .attr("y", yPos - 14)
+        .attr("width", dynamicScaleLength + 12)
+        .attr("height", 20)
+        .attr("fill", "rgba(255, 255, 255, 0.85)")
+        .attr("rx", 4)
+        .attr("ry", 4);
+    
+    // Main scale line
     s.append("line")
-        .attr("x1", xPos).attr("y1", yPos)
-        .attr("x2", xPos + dynamicScaleLength).attr("y2", yPos)
-        .attr("stroke", "white").attr("stroke-width", 1);
+        .attr("x1", xPos)
+        .attr("y1", yPos)
+        .attr("x2", xPos + dynamicScaleLength)
+        .attr("y2", yPos)
+        .attr("stroke", "#333")
+        .attr("stroke-width", 1.2);
 
+    // Scale text
     s.append("text")
-        .attr("x", xPos + dynamicScaleLength / 2).attr("y", yPos - 6)
-        .attr("text-anchor", "middle").attr("font-size", "7px")
-        .attr("fill", "white")
+        .attr("x", xPos + dynamicScaleLength / 2)
+        .attr("y", yPos - 5)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "8px")
+        .attr("font-weight", "500")
+        .attr("fill", "#333")
         .text(adaptive.label);
 
-    s.append("line").attr("x1", xPos).attr("y1", yPos - 5).attr("x2", xPos).attr("y2", yPos + 5).attr("stroke", "white");
-    s.append("line").attr("x1", xPos + dynamicScaleLength).attr("y1", yPos - 5).attr("x2", xPos + dynamicScaleLength).attr("y2", yPos + 5).attr("stroke", "white");
+    // Left end tick
+    s.append("line")
+        .attr("x1", xPos)
+        .attr("y1", yPos - 3)
+        .attr("x2", xPos)
+        .attr("y2", yPos + 3)
+        .attr("stroke", "#333")
+        .attr("stroke-width", 1.2);
+    
+    // Right end tick
+    s.append("line")
+        .attr("x1", xPos + dynamicScaleLength)
+        .attr("y1", yPos - 3)
+        .attr("x2", xPos + dynamicScaleLength)
+        .attr("y2", yPos + 3)
+        .attr("stroke", "#333")
+        .attr("stroke-width", 1.2);
 }
 
-// --- CENTRALIZED DATA LOADING ---
-function loadAllMapData() {
+// --- CENTRALIZED BASE MAP LOADING (without cities) ---
+function loadBaseMapLayers() {
     Promise.all([
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/Spain.geojson"),
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/ID_autonomous_communities_all.geojson"),
@@ -338,8 +953,7 @@ function loadAllMapData() {
         // 6. Initialize Scale Bar
         updateScaleBar(d3.zoomIdentity);
 
-        // 7. Load cities
-        loadCities();
+        console.log('Base map layers loaded successfully');
 
     }).catch(function (error) {
         console.error("Error loading map data:", error);
@@ -347,6 +961,9 @@ function loadAllMapData() {
 }
 
 function loadCities() {
+    // Clear existing cities
+    g_cities.selectAll("*").remove();
+    
     d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
         .then(function (cities) {
 
@@ -370,10 +987,13 @@ function loadCities() {
             console.log('Index of Choice range:', minIndex.toFixed(2), 'to', maxIndex.toFixed(2));
             console.log('All index values:', indexValues.map(v => v.toFixed(2)));
 
-            // Create radius scale based on index of choice
+            // Create radius scale based on index of choice (reduced max size)
             const radiusScale = d3.scaleSqrt()
                 .domain([minIndex, maxIndex])
-                .range([2, 10]); // Adjusted range for better visibility
+                .range([1, 5]); // Reduced from [2, 10] to [1, 5]
+            
+            // Store globally for legend
+            window.currentRadiusScale = radiusScale;
 
             // Creation of the color scale for the circles representation
             const colorScale = d3.scaleLinear()
@@ -424,24 +1044,32 @@ function loadCities() {
                 const bgColor = colorScale(d.properties.indexOfChoice);
                 tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: white; padding: 10px; text-align: center; font-size: 16px; font-weight: bold;">' + d.properties.city + '</th></tr>';
 
-                tooltipHTML += '<tr><td colspan="2" style="font-size: 12px; font-style: italic; padding: 6px; text-align: center; color: #666;">Ciudad</td></tr>';
+                tooltipHTML += '<tr><td colspan="2" style="font-size: 16px; font-style: italic; padding: 6px; text-align: center; color: #666;">Ciudad</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold;">Population:</td><td style="padding: 6px; text-align: right;">' + d.properties.population.toLocaleString() + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold; font-size: 16px;">Population:</td><td style="padding: 6px; text-align: right; font-size: 16px;">' + d.properties.population.toLocaleString() + '</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold;">Index of Choice:</td><td style="padding: 6px; text-align: right; font-weight: bold; color: ' + bgColor + ';">' + d.properties.indexOfChoice.toFixed(2) + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold; font-size: 16px;">Index of Choice:</td><td style="padding: 6px; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: 16px;">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
                 // Show which criteria contributed with bar charts
                 if (window.userCriteria && window.userCriteria.length > 0) {
-                    tooltipHTML += '<tr><td colspan="2" style="padding: 8px 6px 6px 6px; font-weight: bold; font-size: 12px; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
+                    tooltipHTML += '<tr><td colspan="2" style="padding: 8px 6px 6px 6px; font-weight: bold; font-size: 16px; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
 
                     window.userCriteria.forEach(criterion => {
-                        const attributeName = cityDataAttributes[criterion.id];
-                        const rawValue = d.properties[attributeName];
-                        const scoreValue = (rawValue !== undefined && rawValue !== null) ? parseFloat(rawValue) : 0;
-                        // Convert 1-10 scale to percentage (0-100) for bar width
+                        const attributeInfo = cityDataAttributes[criterion.id];
+                        
+                        // Get NORMALIZED value for bar chart (0-10 scale typically)
+                        const normalizedValue = d.properties[attributeInfo.normalized];
+                        const scoreValue = (normalizedValue !== undefined && normalizedValue !== null) ? parseFloat(normalizedValue) : 0;
+                        // Convert to percentage (0-100) for bar width, assuming 0-10 scale
                         const scorePercent = Math.min(100, Math.max(0, (scoreValue / 10) * 100));
 
-                        // Determine bar color based on score (1-10 scale)
+                        // Get REAL value for display
+                        const realValue = d.properties[attributeInfo.real];
+                        const displayValue = (realValue !== undefined && realValue !== null) ? 
+                            parseFloat(realValue).toLocaleString(undefined, {maximumFractionDigits: 2}) + attributeInfo.unit : 
+                            'N/A';
+
+                        // Determine bar color based on normalized score (0-10 scale)
                         let barColor = '#ff4444'; // Red for low scores
                         if (scoreValue >= 7) {
                             barColor = '#2ca25f'; // Green for high scores (7-10)
@@ -449,18 +1077,21 @@ function loadCities() {
                             barColor = '#99d8c9'; // Teal for medium scores (4-7)
                         }
 
-                        // Display original raw value without rounding
-                        const displayValue = (rawValue !== undefined && rawValue !== null) ? rawValue : 'N/A';
+                        // Add inverse indicator
+                        const inverseIndicator = attributeInfo.inverse ? 
+                            ' <span style="color: #ff6b6b; font-size: 14px;">⚠ lower is better</span>' : '';
 
                         tooltipHTML += '<tr><td colspan="2" style="padding: 6px;">';
                         tooltipHTML += '<div style="display: flex; align-items: center; gap: 8px;">';
-                        tooltipHTML += '<span style="font-size: 14px;">' + criterion.icon + '</span>';
+                        tooltipHTML += '<span style="font-size: 20px;">' + criterion.icon + '</span>';
                         tooltipHTML += '<div style="flex: 1;">';
-                        tooltipHTML += '<div style="font-size: 10px; font-weight: 600; margin-bottom: 2px;">' + criterion.name + ' <span style="color: #999;">(weight: ' + criterion.weight + '%)</span></div>';
+                        tooltipHTML += '<div style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">' + criterion.name + ' <span style="color: #999;">(weight: ' + criterion.weight + '%)</span></div>';
                         tooltipHTML += '<div style="background: #e9ecef; height: 18px; border-radius: 4px; overflow: hidden; position: relative;">';
                         tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
-                        tooltipHTML += '<span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">' + displayValue + '</span>';
+                        // Display normalized score inside the bar
+                        tooltipHTML += '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: bold; color: #333;">' + scoreValue.toFixed(1) + '/10</span>';
                         tooltipHTML += '</div>';
+                        tooltipHTML += '<div style="font-size: 16px; color: #666; margin-top: 2px;">Value: ' + displayValue + inverseIndicator + '</div>';
                         tooltipHTML += '</div>';
                         tooltipHTML += '</div>';
                         tooltipHTML += '</td></tr>';
@@ -490,6 +1121,13 @@ function loadCities() {
                 div.style("opacity", 0)
                     .style("display", "none");
             });
+            
+            // Initialize proportional symbol legend
+            if (!proportionalLegendGroup) {
+                initializeProportionalLegend();
+            }
+            // Update legend with current zoom level
+            updateProportionalLegend(1); // Start at zoom level 1
 
         })
         .catch(function (error) {
