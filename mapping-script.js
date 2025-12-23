@@ -26,7 +26,7 @@ const MAX_CRITERIA = 5;
 const criteria = [
   { id: 'gdp', name: 'Income potential', icon: '💰' },
   { id: 'population', name: 'Population Density', icon: '👥' },
-  { id: 'transport', name: 'Transport Access', icon: '🚇' },
+  { id: 'transport', name: 'Stop Remoteness', icon: '🚇' },
   { id: 'housing', name: 'Housing Cost', icon: '🏠' },
   { id: 'food', name: 'Food Cost', icon: '🍽️' },
   { id: 'services', name: 'Service Cost', icon: '🛍️' },
@@ -384,7 +384,7 @@ function initializeMapStructure() {
     /* D3 ZOOM CONTROL */
     // Define the zoom behavior with tighter limits
     zoom = d3.zoom()
-        .scaleExtent([0.85, 4]) // Restricted zoom: slightly out to moderately in
+        .scaleExtent([0.85, 3]) // Restricted zoom: slightly out to moderately in
         .translateExtent([
             [-width * 0.2, -height * 0.2],  // Top-left limit (20% beyond)
             [width * 1.2, height * 1.2]      // Bottom-right limit (20% beyond)
@@ -691,7 +691,7 @@ function initializeProportionalLegend() {
     // Add title
     proportionalLegendGroup.append("text")
         .attr("class", "legend-title")
-        .attr("font-size", "7px")
+        .attr("font-size", "6px")
         .attr("font-weight", "600")
         .attr("fill", "#333")
         .text("Match Score");
@@ -793,7 +793,7 @@ function updateProportionalLegend(zoomLevel) {
             .attr("class", "legend-label")
             .attr("x", legendX + labelOffset)
             .attr("y", circleY + 2.5)
-            .attr("font-size", "7px")
+            .attr("font-size", "5px")
             .attr("fill", "#333")
             .text(item.label);
         
@@ -844,14 +844,14 @@ function updateScaleBar(transform) {
         .attr("x2", xPos + dynamicScaleLength)
         .attr("y2", yPos)
         .attr("stroke", "#333")
-        .attr("stroke-width", 1.2);
+        .attr("stroke-width", 0.8);
 
     // Scale text
     s.append("text")
         .attr("x", xPos + dynamicScaleLength / 2)
         .attr("y", yPos - 5)
         .attr("text-anchor", "middle")
-        .attr("font-size", "8px")
+        .attr("font-size", "6px")
         .attr("font-weight", "500")
         .attr("fill", "#333")
         .text(adaptive.label);
@@ -863,7 +863,7 @@ function updateScaleBar(transform) {
         .attr("x2", xPos)
         .attr("y2", yPos + 3)
         .attr("stroke", "#333")
-        .attr("stroke-width", 1.2);
+        .attr("stroke-width", 1);
     
     // Right end tick
     s.append("line")
@@ -872,7 +872,7 @@ function updateScaleBar(transform) {
         .attr("x2", xPos + dynamicScaleLength)
         .attr("y2", yPos + 3)
         .attr("stroke", "#333")
-        .attr("stroke-width", 1.2);
+        .attr("stroke-width", 1);
 }
 
 // --- CENTRALIZED BASE MAP LOADING (without cities) ---
