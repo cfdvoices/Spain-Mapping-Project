@@ -22,6 +22,18 @@ var userCriteriaWeights = {};
 var selectedCriteria = [];
 const MAX_CRITERIA = 5;
 
+// Global variable for user type (tourist or migrant)
+var userType = 'migrant'; // Default
+
+// Helper function to parse European-formatted numbers (comma as decimal separator)
+function parseEuropeanFloat(value) {
+    if (value === undefined || value === null) return 0;
+    // Convert to string and replace comma with dot
+    const stringValue = String(value).replace(',', '.');
+    const parsed = parseFloat(stringValue);
+    return isNaN(parsed) ? 0 : parsed;
+}
+
 // Criteria data with icons
 const criteria = [
   { id: 'gdp', name: 'Income potential', icon: '💰' },
@@ -31,7 +43,7 @@ const criteria = [
   { id: 'food', name: 'Food Cost', icon: '🍽️' },
   { id: 'services', name: 'Service Cost', icon: '🛍️' },
   { id: 'climate', name: 'Climate Quality', icon: '☀️' },
-  { id: 'crime', name: 'Safety Level', icon: '🛡️' },
+  { id: 'crime', name: 'Criminality Rate', icon: '🛡️' },
   { id: 'water', name: 'Water Quality', icon: '💧' },
   { id: 'recycling', name: 'City Cleanliness', icon: '♻️' },
   { id: 'greenspace', name: 'Green Space', icon: '🌳' },
@@ -63,7 +75,7 @@ const cityDataAttributes = {
         normalized: 'norm_Avg_Closest_station',
         real: 'real_Avg_Closest_station',
         unit: ' km',
-        label: 'Transport Access',
+        label: 'Stop Remoteness',
         inverse: true // Lower distance is better
     },
     'housing': {
@@ -98,7 +110,7 @@ const cityDataAttributes = {
         normalized: 'norm_Criminality_rate',
         real: 'real_Criminality_rate',
         unit: '',
-        label: 'Safety Level',
+        label: 'Criminality Rate',
         inverse: true // Lower crime is better
     },
     'water': {
@@ -157,7 +169,64 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCriteriaPanel();
     // Initialize the map structure (SVG, base layers) without cities
     initializeMapStructure();
+    
+    // Setup panel toggle button
+    const toggleBtn = document.getElementById('togglePanelBtn');
+    const panel = document.getElementById('criteriaPanel');
+    
+    if (toggleBtn && panel) {
+        toggleBtn.addEventListener('click', function() {
+            panel.classList.toggle('minimized');
+            
+            // Wait for CSS transition to complete, then update positions
+            setTimeout(function() {
+                updateMapElementPositions();
+            }, 300);
+        });
+    }
+    
+    // Setup user type filter (tourist/migrant)
+    const userTypeRadios = document.querySelectorAll('input[name="userType"]');
+    userTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            userType = this.value;
+            console.log('User type changed to:', userType);
+            // Update cursor style for all city markers
+            updateCityCursorStyle();
+        });
+    });
 });
+
+// Function to update cursor style based on user type
+function updateCityCursorStyle() {
+    const cursorStyle = userType === 'tourist' ? 'pointer' : 'default';
+    // Update initial city markers
+    g_cities.selectAll(".initial-city-marker").style("cursor", cursorStyle);
+    // Update city points (after criteria selection)
+    g_cities.selectAll(".city-point").style("cursor", cursorStyle);
+}
+
+// Function to update positions of map elements based on panel state
+function updateMapElementPositions() {
+    const panel = document.getElementById('criteriaPanel');
+    const isPanelMinimized = panel && panel.classList.contains('minimized');
+    
+    // Don't change width - keep it at 450 so elements stay within viewBox
+    // The CSS handles expanding the container, but viewBox stays the same
+    // This keeps all elements visible and at the same positions
+    
+    // Update proportional legend position (uses width value which stays at 450)
+    if (proportionalLegendGroup && window.currentRadiusScale) {
+        const currentTransform = d3.zoomTransform(svg.node());
+        updateProportionalLegend(currentTransform.k);
+    }
+    
+    // Update scale bar position (uses width value which stays at 450)
+    if (svg) {
+        const currentTransform = d3.zoomTransform(svg.node());
+        updateScaleBar(currentTransform);
+    }
+}
 
 // Initialize the criteria selection panel
 function initializeCriteriaPanel() {
@@ -393,6 +462,9 @@ function initializeMapStructure() {
 
     // Apply the zoom behavior to the SVG element
     svg.call(zoom);
+    
+    // Disable double-click zoom (we use double-click for city selection in tourist mode)
+    svg.on("dblclick.zoom", null);
 
     // Export zoom controls to the window scope so buttons can access them
     window.zoomIn = function () {
@@ -412,6 +484,15 @@ function initializeMapStructure() {
             .duration(750)
             .call(zoom.transform, d3.zoomIdentity);
     }
+    
+    // Setup zoom control button event listeners
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    
+    if (zoomInBtn) zoomInBtn.addEventListener('click', window.zoomIn);
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', window.zoomOut);
+    if (zoomResetBtn) zoomResetBtn.addEventListener('click', window.zoomReset);
 
     // Load base map layers (without cities)
     loadBaseMapLayers();
@@ -600,7 +681,7 @@ function calculateIndexOfChoice(cityProperties) {
                 normalizedAttribute: normalizedAttrName,
                 weight: weight,
                 value: value,
-                contribution: weight * value
+                contribution: weight * parseEuropeanFloat(value)
             });
         }
 
@@ -609,8 +690,8 @@ function calculateIndexOfChoice(cityProperties) {
             return;
         }
 
-        // Convert to number if it's a string
-        value = parseFloat(value);
+        // Parse European-formatted number (comma as decimal separator)
+        value = parseEuropeanFloat(value);
 
         if (isNaN(value)) {
             console.warn(`Invalid number for "${normalizedAttrName}" in city ${cityProperties.city}: ${cityProperties[normalizedAttrName]}`);
@@ -649,13 +730,15 @@ function getAdaptiveScaleDistance(pixelLengthPerMeter) {
         }
     }
 
-    let label;
+    let label, unit;
     if (bestDistance >= 1000) {
         label = (bestDistance / 1000) + ' km';
+        unit = 'km';
     } else {
         label = bestDistance + ' m';
+        unit = 'm';
     }
-    return { distance: bestDistance, label: label };
+    return { distance: bestDistance, label: label, unit: unit };
 }
 
 // --- ZOOM FUNCTION ---
@@ -691,7 +774,7 @@ function initializeProportionalLegend() {
     // Add title
     proportionalLegendGroup.append("text")
         .attr("class", "legend-title")
-        .attr("font-size", "6px")
+        .attr("font-size", "5px")
         .attr("font-weight", "600")
         .attr("fill", "#333")
         .text("Match Score");
@@ -700,7 +783,7 @@ function initializeProportionalLegend() {
 function updateProportionalLegend(zoomLevel) {
     if (!proportionalLegendGroup || !window.currentRadiusScale) return;
     
-    // Sample values for legend (low, medium, high)
+    // Sample values for legend (high to low, top to bottom)
     const legendValues = [
         { label: "High", value: 0.8 },
         { label: "Medium", value: 0.5 },
@@ -722,24 +805,24 @@ function updateProportionalLegend(zoomLevel) {
         window.currentRadiusScale(idx) * zoomLevel
     );
     
-    // Calculate layout dimensions
+    // Calculate layout dimensions - now expanding downwards
     const maxRadius = Math.max(...legendRadii);
     const padding = 8;
-    const titleHeight = 15;
+    const titleHeight = 8;
     const startY = titleHeight + padding;
     const labelOffset = 35;
     
-    // Calculate total height needed
+    // Calculate total height needed (expands down as circles grow)
     let totalHeight = startY + padding;
     legendRadii.forEach(r => {
-        totalHeight += r * 2 + 8; // Add space for each circle plus gap
+        totalHeight += r * 1.8 + 6; // Add space for each circle plus gap
     });
     
-    // Calculate background dimensions
-    const bgWidth = labelOffset + 40;
+    // Position at top of map, expanding downwards
+    const bgWidth = labelOffset + 20;
     const bgHeight = totalHeight;
-    const legendX = width - bgWidth - 15;
-    const legendY = height - bgHeight - 120; // Adjusted to be closer to scale bar (was -140)
+    const legendX = width - bgWidth - 20;
+    const legendY = 10; // Fixed near top, expands downwards (changed from -23 to 10)
     
     // Update background position and size
     proportionalLegendGroup.select(".legend-background")
@@ -793,7 +876,7 @@ function updateProportionalLegend(zoomLevel) {
             .attr("class", "legend-label")
             .attr("x", legendX + labelOffset)
             .attr("y", circleY + 2.5)
-            .attr("font-size", "5px")
+            .attr("font-size", "4px")
             .attr("fill", "#333")
             .text(item.label);
         
@@ -821,58 +904,74 @@ function updateScaleBar(transform) {
     const adaptive = getAdaptiveScaleDistance(currentPixelLengthPerMeter);
     const dynamicScaleLength = adaptive.distance * currentPixelLengthPerMeter;
 
-    // Position in bottom-right corner at the very bottom
+    // Position in bottom-right corner, above zoom buttons (moved up by 80px)
     const xPos = width - dynamicScaleLength - 20;
-    const yPos = height + 15; // Moved to very bottom (was -20)
+    const yPos = height - 20; // Moved up to avoid zoom buttons
+    
+    // Calculate segment widths for 3 divisions (0, 1/3, 2/3, 1)
+    const segment = dynamicScaleLength / 3;
 
     s.html("");
     
     // Add background rectangle for better visibility
     s.append("rect")
-        .attr("x", xPos - 6)
-        .attr("y", yPos - 14)
-        .attr("width", dynamicScaleLength + 12)
-        .attr("height", 20)
-        .attr("fill", "rgba(255, 255, 255, 0.85)")
-        .attr("rx", 4)
-        .attr("ry", 4);
+        .attr("x", xPos - 8)
+        .attr("y", yPos - 12)
+        .attr("width", dynamicScaleLength + 16)
+        .attr("height", 25)
+        .attr("fill", "rgba(255, 255, 255, 0.9)")
+        .attr("rx", 6)
+        .attr("ry", 6)
+        .attr("stroke", "#ccc")
+        .attr("stroke-width", 0.5);
     
     // Main scale line
     s.append("line")
         .attr("x1", xPos)
-        .attr("y1", yPos)
+        .attr("y1", yPos+2)
         .attr("x2", xPos + dynamicScaleLength)
-        .attr("y2", yPos)
+        .attr("y2", yPos+2)
         .attr("stroke", "#333")
-        .attr("stroke-width", 0.8);
+        .attr("stroke-width", 1);
 
-    // Scale text
+    // Add intermediate tick marks and labels
+    const divisions = [0, 1/3, 2/3, 1];
+    const distanceValues = divisions.map(d => (adaptive.distance * d).toFixed(adaptive.distance >= 1000 ? 0 : 1));
+    
+    divisions.forEach((division, index) => {
+        const x = xPos + (dynamicScaleLength * division);
+        
+        // Tick mark
+        s.append("line")
+            .attr("x1", x)
+            .attr("y1", yPos - 2)
+            .attr("x2", x)
+            .attr("y2", yPos + 6)
+            .attr("stroke", "#333")
+            .attr("stroke-width", index === 0 || index === divisions.length - 1 ? 1 : 1);
+        
+        // Label below tick
+        if (index < divisions.length) {
+            s.append("text")
+                .attr("x", x)
+                .attr("y", yPos + 12)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "5px")
+                .attr("font-weight", "500")
+                .attr("fill", "#333")
+                .text(distanceValues[index]);
+        }
+    });
+    
+    // Unit label at the top center
     s.append("text")
         .attr("x", xPos + dynamicScaleLength / 2)
-        .attr("y", yPos - 5)
+        .attr("y", yPos - 6)
         .attr("text-anchor", "middle")
-        .attr("font-size", "6px")
-        .attr("font-weight", "500")
-        .attr("fill", "#333")
-        .text(adaptive.label);
-
-    // Left end tick
-    s.append("line")
-        .attr("x1", xPos)
-        .attr("y1", yPos - 3)
-        .attr("x2", xPos)
-        .attr("y2", yPos + 3)
-        .attr("stroke", "#333")
-        .attr("stroke-width", 1);
-    
-    // Right end tick
-    s.append("line")
-        .attr("x1", xPos + dynamicScaleLength)
-        .attr("y1", yPos - 3)
-        .attr("x2", xPos + dynamicScaleLength)
-        .attr("y2", yPos + 3)
-        .attr("stroke", "#333")
-        .attr("stroke-width", 1);
+        .attr("font-size", "5px")
+        .attr("font-weight", "600")
+        .attr("fill", "#667eea")
+        .text(adaptive.unit || 'km');
 }
 
 // --- CENTRALIZED BASE MAP LOADING (without cities) ---
@@ -943,7 +1042,7 @@ function loadBaseMapLayers() {
                 return d.properties.code || d.properties.CODE ||
                     d.properties.name || d.properties.NAME || "";
             })
-            .attr('font-size', '6px')
+            .attr('font-size', '4px')
             .attr("text-anchor", "middle")
             .attr("fill", "#c7e8c7ff")
             .attr("font-weight", "bold")
@@ -953,6 +1052,9 @@ function loadBaseMapLayers() {
         // 6. Initialize Scale Bar
         updateScaleBar(d3.zoomIdentity);
 
+        // 7. Load initial city markers and labels (before criteria selection)
+        loadInitialCityMarkers();
+
         console.log('Base map layers loaded successfully');
 
     }).catch(function (error) {
@@ -960,7 +1062,62 @@ function loadBaseMapLayers() {
     });
 }
 
-function loadCities() {
+// Load initial city markers and labels (shown before user selects criteria)
+function loadInitialCityMarkers() {
+    d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
+        .then(function (cities) {
+            // Draw simple dots for cities
+            const initialMarkers = g_cities.selectAll(".initial-city-marker")
+                .data(cities.features)
+                .enter()
+                .append("circle")
+                .attr("class", "initial-city-marker")
+                .attr("cx", d => projection(d.geometry.coordinates)[0])
+                .attr("cy", d => projection(d.geometry.coordinates)[1])
+                .attr("r", 1.5)
+                .attr("fill", "#667eea")
+                .attr("stroke", "white")
+                .attr("stroke-width", 0.3)
+                .attr("opacity", 0.8)
+                .style("cursor", userType === 'tourist' ? 'pointer' : 'default')
+                .on("dblclick", function(event, d) {
+                    if (userType === 'tourist') {
+                        const cityName = d.properties.city || "";
+                        if (cityName) {
+                            const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(cityName + ", Spain")}`;
+                            window.open(googleMapsUrl, '_blank');
+                        }
+                    }
+                });
+            
+            // Draw labels for cities
+            const initialLabels = g_labels.selectAll(".initial-city-label")
+                .data(cities.features)
+                .enter()
+                .append("text")
+                .attr("class", "initial-city-label")
+                .attr("x", d => projection(d.geometry.coordinates)[0])
+                .attr("y", d => projection(d.geometry.coordinates)[1] - 3)
+                .text(d => d.properties.city || "")
+                .attr("font-size", "3px")
+                .attr("text-anchor", "middle")
+                .attr("fill", "#333")
+                .attr("font-weight", "800")
+                .attr("opacity", 0.9)
+                .style("pointer-events", "none");
+            
+            console.log('Initial city markers loaded');
+        })
+        .catch(function (error) {
+            console.error("Error loading initial city markers:", error);
+        });
+}
+
+function loadCities(currentTransform = null) {
+    // Remove initial city markers and labels when loading actual cities
+    g_cities.selectAll(".initial-city-marker").remove();
+    g_labels.selectAll(".initial-city-label").remove();
+    
     // Clear existing cities
     g_cities.selectAll("*").remove();
     
@@ -998,7 +1155,7 @@ function loadCities() {
             // Creation of the color scale for the circles representation
             const colorScale = d3.scaleLinear()
                 .domain([minIndex, (minIndex + maxIndex) / 2, maxIndex])
-                .range(['#e5f5f9', '#99d8c9', '#2ca25f']);
+                .range(['#044613ff', '#2e8d57ff', '#3dde83ff']);
 
             const cityCircles = g_cities.selectAll("circle")
                 .data(cities.features)
@@ -1021,7 +1178,7 @@ function loadCities() {
                 })
                 .attr("stroke", "white")
                 .attr("stroke-width", 0.5)
-                .style("cursor", "pointer")
+                .style("cursor", userType === 'tourist' ? 'pointer' : 'default')
                 .style("opacity", 0.8)
                 .style("pointer-events", "all"); // Ensure cities are interactive
 
@@ -1059,14 +1216,18 @@ function loadCities() {
                         
                         // Get NORMALIZED value for bar chart (0-10 scale typically)
                         const normalizedValue = d.properties[attributeInfo.normalized];
-                        const scoreValue = (normalizedValue !== undefined && normalizedValue !== null) ? parseFloat(normalizedValue) : 0;
+                        const scoreValue = parseEuropeanFloat(normalizedValue);
                         // Convert to percentage (0-100) for bar width, assuming 0-10 scale
                         const scorePercent = Math.min(100, Math.max(0, (scoreValue / 10) * 100));
 
                         // Get REAL value for display
                         const realValue = d.properties[attributeInfo.real];
+                        const realValueParsed = parseEuropeanFloat(realValue);
                         const displayValue = (realValue !== undefined && realValue !== null) ? 
-                            parseFloat(realValue).toLocaleString(undefined, {maximumFractionDigits: 2}) + attributeInfo.unit : 
+                            realValueParsed.toLocaleString(undefined, {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2
+                            }) + attributeInfo.unit : 
                             'N/A';
 
                         // Determine bar color based on normalized score (0-10 scale)
@@ -1077,21 +1238,30 @@ function loadCities() {
                             barColor = '#99d8c9'; // Teal for medium scores (4-7)
                         }
 
-                        // Add inverse indicator
-                        const inverseIndicator = attributeInfo.inverse ? 
-                            ' <span style="color: #ff6b6b; font-size: 14px;">⚠ lower is better</span>' : '';
+                        // Prepare bar content - show inverse warning or score
+                        let barContent = '';
+                        if (attributeInfo.inverse) {
+                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">⚠ lower is better</span>';
+                        } else {
+                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: bold; color: #333;">' + scoreValue.toFixed(1) + '/10</span>';
+                        }
+                        
+                        // Always show normalized score on the right side
+                        const normalizedScoreText = scoreValue.toFixed(1) + '/10';
 
                         tooltipHTML += '<tr><td colspan="2" style="padding: 6px;">';
                         tooltipHTML += '<div style="display: flex; align-items: center; gap: 8px;">';
                         tooltipHTML += '<span style="font-size: 20px;">' + criterion.icon + '</span>';
                         tooltipHTML += '<div style="flex: 1;">';
-                        tooltipHTML += '<div style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">' + criterion.name + ' <span style="color: #999;">(weight: ' + criterion.weight + '%)</span></div>';
+                        tooltipHTML += '<div style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">' + criterion.name + '</div>';
                         tooltipHTML += '<div style="background: #e9ecef; height: 18px; border-radius: 4px; overflow: hidden; position: relative;">';
                         tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
-                        // Display normalized score inside the bar
-                        tooltipHTML += '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: bold; color: #333;">' + scoreValue.toFixed(1) + '/10</span>';
+                        tooltipHTML += barContent;
                         tooltipHTML += '</div>';
-                        tooltipHTML += '<div style="font-size: 16px; color: #666; margin-top: 2px;">Value: ' + displayValue + inverseIndicator + '</div>';
+                        tooltipHTML += '<div style="font-size: 16px; color: #666; margin-top: 2px; display: flex; justify-content: space-between;">';
+                        tooltipHTML += '<span>Value: ' + displayValue + '</span>';
+                        tooltipHTML += '<span style="color: #667eea; font-weight: 600;">' + normalizedScoreText + '</span>';
+                        tooltipHTML += '</div>';
                         tooltipHTML += '</div>';
                         tooltipHTML += '</div>';
                         tooltipHTML += '</td></tr>';
@@ -1120,6 +1290,17 @@ function loadCities() {
                 // Instant hide tooltip
                 div.style("opacity", 0)
                     .style("display", "none");
+            });
+            
+            // Double-click handler for tourist mode (opens Google Maps)
+            cityCircles.on("dblclick", function(event, d) {
+                if (userType === 'tourist') {
+                    const cityName = d.properties.city || "";
+                    if (cityName) {
+                        const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(cityName + ", Spain")}`;
+                        window.open(googleMapsUrl, '_blank');
+                    }
+                }
             });
             
             // Initialize proportional symbol legend
