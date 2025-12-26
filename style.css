@@ -1084,6 +1084,67 @@ html, body {
   z-index: 100;
 }
 
+/* City Search Box */
+#citySearchContainer {
+  margin-bottom: 15px;
+  position: relative;
+}
+
+#citySearchInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  font-size: 0.9em;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+#citySearchInput:focus {
+  border-color: #764ba2;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#citySearchInput::placeholder {
+  color: #999;
+}
+
+#citySearchResults {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #667eea;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#citySearchResults.active {
+  display: block;
+}
+
+.search-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 0.9em;
+}
+
+.search-result-item:hover {
+  background: #f0f0ff;
+}
+
+.search-result-item:last-child {
+  border-radius: 0 0 6px 6px;
+}
+
 #legend h2 {
   margin: 0 0 10px 0;
   font-size: 1.2em;
@@ -1145,4 +1206,109 @@ html, body {
 .finding-2 {
   box-shadow: 0 -7px teal inset;
   -webkit-box-shadow: 0 -7px 0 teal inset;
+}
+
+/* City Detail View */
+#cityDetailView {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  z-index: 2000;
+}
+
+#cityDetailHeader {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 2001;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#cityDetailTitle {
+  margin: 0 0 10px 0;
+  color: #667eea;
+  font-size: 1.5em;
+}
+
+.back-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #764ba2;
+  transform: translateX(-3px);
+}
+
+#cityDetailMapContainer {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%);
+}
+
+#cityDetailMapContainer svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* City Zoom Controls */
+#cityZoomControls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2001;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px;
+  border-radius: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Tourism Legend */
+.tourism-legend {
+  position: absolute;
+  top: 120px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  z-index: 2001;
+}
+
+.tourism-legend h3 {
+  margin: 0 0 10px 0;
+  color: #667eea;
+  font-size: 1.1em;
+}
+
+.tourism-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 0.85em;
+}
+
+.tourism-emoji {
+  font-size: 1.2em;
+  min-width: 25px;
+  text-align: center;
 }

@@ -25,6 +25,48 @@ const MAX_CRITERIA = 5;
 // Global variable for user type (tourist or migrant)
 var userType = 'migrant'; // Default
 
+// Criteria allowed for tourists (subset of all criteria)
+// Using actual criterion IDs from the criteria array
+const TOURIST_ALLOWED_CRITERIA = [
+    'transport',     // Stop Remoteness
+    'housing',       // Housing Cost
+    'food',          // Food Cost
+    'climate',       // Climate Quality
+    'crime',         // Criminality Rate
+    'water',         // Water Quality
+    'greenspace'     // Green Space
+];
+
+// Global variable to store all cities for search
+var allCitiesData = null;
+
+// Tourism type to emoji mapping
+const tourismEmojis = {
+    'apartment': '🏢',
+    'aquarium': '🐠',
+    'artwork': '🎨',
+    'attraction': '⭐',
+    'camp_site': '⛺',
+    'caravan_site': '🚐',
+    'chalet': '🏔️',
+    'gallery': '🖼️',
+    'guest_house': '🏠',
+    'hostel': '🛏️',
+    'hotel': '🏨',
+    'hunting_lodge': '🦌',
+    'information': 'ℹ️',
+    'memorial': '🗿',
+    'motel': '🛣️',
+    'museum': '🏛️',
+    'picnic_site': '🧺',
+    'picnic_table': '🪑',
+    'podiatrist': '👣',
+    'spa_resort': '💆',
+    'tours': '🚌',
+    'viewpoint': '👁️',
+    'zoo': '🦁'
+};
+
 // Helper function to parse European-formatted numbers (comma as decimal separator)
 function parseEuropeanFloat(value) {
     if (value === undefined || value === null) return 0;
@@ -189,13 +231,220 @@ document.addEventListener('DOMContentLoaded', function() {
     const userTypeRadios = document.querySelectorAll('input[name="userType"]');
     userTypeRadios.forEach(radio => {
         radio.addEventListener('change', function() {
+            const previousUserType = userType;
             userType = this.value;
-            console.log('User type changed to:', userType);
+            console.log('User type changed from', previousUserType, 'to:', userType);
+            
+            // Reset map and criteria if there was a previous selection
+            if (selectedCriteria.length > 0) {
+                resetMapAndCriteria();
+            } else {
+                // Just refresh criteria panel to show appropriate criteria
+                initializeCriteriaPanel();
+            }
+            
             // Update cursor style for all city markers
             updateCityCursorStyle();
         });
     });
+    
+    // Setup city search functionality
+    initializeCitySearch();
 });
+
+// Function to reset map and criteria when user type changes
+function resetMapAndCriteria() {
+    console.log('Resetting map and criteria...');
+    
+    // Clear selected criteria
+    selectedCriteria = [];
+    userCriteriaWeights = {};
+    
+    // Hide weights section
+    const weightsSection = document.getElementById('weightsSection');
+    if (weightsSection) {
+        weightsSection.style.display = 'none';
+    }
+    
+    // Clear weights list
+    const weightsList = document.getElementById('criteriaWeightsList');
+    if (weightsList) {
+        weightsList.innerHTML = '';
+    }
+    
+    // Remove pie chart if it exists
+    const pieChartContainer = document.getElementById('criteriaWeightsList');
+    if (pieChartContainer) {
+        const pieChartSvg = pieChartContainer.querySelector('svg');
+        if (pieChartSvg) {
+            pieChartSvg.remove();
+        }
+    }
+    
+    // Also remove any standalone pie chart SVG
+    if (typeof d3 !== 'undefined') {
+        d3.select('#criteriaWeightsList').selectAll('svg').remove();
+    }
+    
+    // Reinitialize criteria panel with new criteria filter
+    initializeCriteriaPanel();
+    
+    // Clear city circles (results)
+    if (typeof g_cities !== 'undefined') {
+        g_cities.selectAll(".city-point").remove();
+    }
+    
+    // Clear city labels
+    if (typeof g_labels !== 'undefined') {
+        g_labels.selectAll("text").remove();
+    }
+    
+    // Remove proportional legend completely and reset the variable
+    if (typeof proportionalLegendGroup !== 'undefined' && proportionalLegendGroup) {
+        proportionalLegendGroup.remove(); // Remove the entire group
+        proportionalLegendGroup = null; // Reset to null so it can be recreated
+    }
+    
+    // Reset currentRadiusScale
+    if (typeof window !== 'undefined') {
+        window.currentRadiusScale = null;
+    }
+    
+    // Reload initial city markers
+    if (typeof loadInitialCityMarkers === 'function') {
+        loadInitialCityMarkers();
+    }
+    
+    console.log('Map and criteria reset complete');
+}
+
+// ===== CITY SEARCH FUNCTIONALITY =====
+
+function initializeCitySearch() {
+    const searchInput = document.getElementById('citySearchInput');
+    const searchResults = document.getElementById('citySearchResults');
+    
+    if (!searchInput || !searchResults) return;
+    
+    // Load cities data for search
+    d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
+        .then(function(data) {
+            allCitiesData = data.features;
+            console.log('Cities data loaded for search:', allCitiesData.length);
+        });
+    
+    // Search input event
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        
+        if (query.length < 2) {
+            searchResults.classList.remove('active');
+            return;
+        }
+        
+        if (!allCitiesData) {
+            searchResults.innerHTML = '<div class="search-result-item">Loading cities...</div>';
+            searchResults.classList.add('active');
+            return;
+        }
+        
+        // Filter cities
+        const matches = allCitiesData.filter(d => {
+            const cityName = (d.properties.city || "").toLowerCase();
+            return cityName.includes(query);
+        }).slice(0, 10); // Limit to 10 results
+        
+        if (matches.length === 0) {
+            searchResults.innerHTML = '<div class="search-result-item">No cities found</div>';
+            searchResults.classList.add('active');
+            return;
+        }
+        
+        // Display results
+        searchResults.innerHTML = matches.map(d => 
+            `<div class="search-result-item" data-city="${d.properties.city}">${d.properties.city}</div>`
+        ).join('');
+        
+        searchResults.classList.add('active');
+        
+        // Add click handlers to results
+        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const cityName = this.getAttribute('data-city');
+                if (cityName) {
+                    highlightCity(cityName);
+                    searchInput.value = cityName;
+                    searchResults.classList.remove('active');
+                }
+            });
+        });
+    });
+    
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.remove('active');
+        }
+    });
+}
+
+function highlightCity(cityName) {
+    console.log('Highlighting city:', cityName);
+    
+    // Find the city in the data
+    const cityFeature = allCitiesData.find(d => d.properties.city === cityName);
+    if (!cityFeature) {
+        console.error('City not found:', cityName);
+        return;
+    }
+    
+    // Get city coordinates
+    const coords = projection(cityFeature.geometry.coordinates);
+    if (!coords) return;
+    
+    // Highlight the city marker temporarily
+    const marker = g_cities.selectAll('.city-point, .initial-city-marker')
+        .filter(d => d.properties.city === cityName);
+    
+    if (marker.empty()) {
+        console.log('City marker not found on map');
+        return;
+    }
+    
+    // Pulse animation
+    marker.each(function() {
+        const originalStroke = d3.select(this).attr('stroke');
+        const originalStrokeWidth = d3.select(this).attr('stroke-width');
+        
+        d3.select(this)
+            .attr('stroke', '#FFD700')
+            .attr('stroke-width', 3)
+            .transition()
+            .duration(500)
+            .attr('stroke-width', 5)
+            .transition()
+            .duration(500)
+            .attr('stroke-width', 3)
+            .transition()
+            .duration(500)
+            .attr('stroke-width', 5)
+            .transition()
+            .duration(500)
+            .attr('stroke', originalStroke)
+            .attr('stroke-width', originalStrokeWidth);
+    });
+    
+    // Show tooltip if criteria have been selected
+    if (selectedCriteria.length > 0) {
+        // Trigger tooltip display
+        marker.dispatch('mouseover');
+        
+        // Keep tooltip visible for 5 seconds
+        setTimeout(() => {
+            marker.dispatch('mouseout');
+        }, 5000);
+    }
+}
 
 // Function to update cursor style based on user type
 function updateCityCursorStyle() {
@@ -231,8 +480,14 @@ function updateMapElementPositions() {
 // Initialize the criteria selection panel
 function initializeCriteriaPanel() {
     const checkboxList = document.getElementById('criteriaCheckboxList');
+    checkboxList.innerHTML = ''; // Clear existing items
     
-    criteria.forEach(criterion => {
+    // Filter criteria based on user type
+    const availableCriteria = userType === 'tourist' 
+        ? criteria.filter(c => TOURIST_ALLOWED_CRITERIA.includes(c.id))
+        : criteria;
+    
+    availableCriteria.forEach(criterion => {
         const item = document.createElement('div');
         item.className = 'criterion-checkbox-item';
         item.dataset.criterionId = criterion.id;
@@ -541,7 +796,7 @@ function createCriteriaPieChart() {
         .attr("id", "pieChartContainer")
         .style("position", "absolute")
         .style("top", "10px")
-        .style("left", "10px")
+        .style("left", "20px")
         .style("background", "white")
         .style("border-radius", "12px")
         .style("padding", "15px")
@@ -775,9 +1030,9 @@ function initializeProportionalLegend() {
     proportionalLegendGroup.append("text")
         .attr("class", "legend-title")
         .attr("font-size", "5px")
-        .attr("font-weight", "600")
-        .attr("fill", "#333")
-        .text("Match Score");
+        .attr("font-weight", "800")
+        .attr("fill", "#00a04bff")
+        .text("Index of Choice");
 }
 
 function updateProportionalLegend(zoomLevel) {
@@ -785,9 +1040,9 @@ function updateProportionalLegend(zoomLevel) {
     
     // Sample values for legend (high to low, top to bottom)
     const legendValues = [
-        { label: "High", value: 0.8 },
-        { label: "Medium", value: 0.5 },
-        { label: "Low", value: 0.2 }
+        { label: "High", value: 0.9 },
+        { label: "Mid", value: 0.5 },
+        { label: "Low", value: 0.1 }
     ];
     
     // Get current min/max from the radius scale domain
@@ -827,14 +1082,14 @@ function updateProportionalLegend(zoomLevel) {
     // Update background position and size
     proportionalLegendGroup.select(".legend-background")
         .attr("x", legendX)
-        .attr("y", legendY)
+        .attr("y", legendY-8)
         .attr("width", bgWidth)
         .attr("height", bgHeight);
     
     // Update title position
     proportionalLegendGroup.select(".legend-title")
         .attr("x", legendX + bgWidth / 2)
-        .attr("y", legendY + 10)
+        .attr("y", legendY+2)
         .attr("text-anchor", "middle");
     
     // Remove old circles, labels, and lines
@@ -850,33 +1105,34 @@ function updateProportionalLegend(zoomLevel) {
         const circleY = currentY + radius;
         const circleX = legendX + padding + maxRadius;
         
-        // Draw circle
+        // Draw circles
         proportionalLegendGroup.append("circle")
             .attr("class", "legend-circle")
-            .attr("cx", circleX)
-            .attr("cy", circleY)
+            .attr("cx", circleX-4)
+            .attr("cy", circleY-8)
             .attr("r", radius)
-            .attr("fill", "rgba(102, 126, 234, 0.25)")
-            .attr("stroke", "#667eea")
-            .attr("stroke-width", 0.8);
+            .attr("fill", "rgba(219, 255, 209, 1)")
+            .attr("stroke", "#000000ff")
+            .attr("stroke-width", 0.4);
         
-        // Draw line from circle edge to label
+        // Draw lines from circle edge to label
         proportionalLegendGroup.append("line")
             .attr("class", "legend-line")
-            .attr("x1", circleX + radius)
-            .attr("y1", circleY)
-            .attr("x2", legendX + labelOffset - 2)
-            .attr("y2", circleY)
-            .attr("stroke", "#999")
+            .attr("x1", circleX + radius-2)
+            .attr("y1", circleY-8)
+            .attr("x2", legendX + labelOffset+2)
+            .attr("y2", circleY-8)
+            .attr("stroke", "#818181ff")
             .attr("stroke-width", 0.3)
             .attr("stroke-dasharray", "1,1");
         
         // Add label
         proportionalLegendGroup.append("text")
             .attr("class", "legend-label")
-            .attr("x", legendX + labelOffset)
-            .attr("y", circleY + 2.5)
+            .attr("x", legendX + labelOffset+5)
+            .attr("y", circleY - 6.2)
             .attr("font-size", "4px")
+            .attr("font-weight", "600")
             .attr("fill", "#333")
             .text(item.label);
         
@@ -908,17 +1164,17 @@ function updateScaleBar(transform) {
     const xPos = width - dynamicScaleLength - 20;
     const yPos = height - 20; // Moved up to avoid zoom buttons
     
-    // Calculate segment widths for 3 divisions (0, 1/3, 2/3, 1)
-    const segment = dynamicScaleLength / 3;
+    // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
+    const segment = dynamicScaleLength / 4;
 
     s.html("");
     
     // Add background rectangle for better visibility
     s.append("rect")
         .attr("x", xPos - 8)
-        .attr("y", yPos - 12)
+        .attr("y", yPos - 7)
         .attr("width", dynamicScaleLength + 16)
-        .attr("height", 25)
+        .attr("height", 20)
         .attr("fill", "rgba(255, 255, 255, 0.9)")
         .attr("rx", 6)
         .attr("ry", 6)
@@ -932,11 +1188,23 @@ function updateScaleBar(transform) {
         .attr("x2", xPos + dynamicScaleLength)
         .attr("y2", yPos+2)
         .attr("stroke", "#333")
-        .attr("stroke-width", 1);
+        .attr("stroke-width", 0.5);
 
     // Add intermediate tick marks and labels
-    const divisions = [0, 1/3, 2/3, 1];
-    const distanceValues = divisions.map(d => (adaptive.distance * d).toFixed(adaptive.distance >= 1000 ? 0 : 1));
+    const divisions = [0, 1/4, 2/4, 3/4, 1];
+    
+    // Calculate distance values and convert to appropriate units
+    const distanceValues = divisions.map(d => {
+        const distanceInMeters = adaptive.distance * d;
+        if (adaptive.unit === 'km') {
+            // Convert to kilometers
+            const distanceInKm = distanceInMeters / 1000;
+            return distanceInKm.toFixed(distanceInKm >= 10 ? 0 : 1);
+        } else {
+            // Keep as meters
+            return distanceInMeters.toFixed(distanceInMeters >= 100 ? 0 : 1);
+        }
+    });
     
     divisions.forEach((division, index) => {
         const x = xPos + (dynamicScaleLength * division);
@@ -944,19 +1212,19 @@ function updateScaleBar(transform) {
         // Tick mark
         s.append("line")
             .attr("x1", x)
-            .attr("y1", yPos - 2)
+            .attr("y1", yPos+2)
             .attr("x2", x)
             .attr("y2", yPos + 6)
             .attr("stroke", "#333")
-            .attr("stroke-width", index === 0 || index === divisions.length - 1 ? 1 : 1);
+            .attr("stroke-width", index === 0 || index === divisions.length - 1 ? 0.5 : 0.5);
         
         // Label below tick
         if (index < divisions.length) {
             s.append("text")
                 .attr("x", x)
-                .attr("y", yPos + 12)
+                .attr("y", yPos + 10)
                 .attr("text-anchor", "middle")
-                .attr("font-size", "5px")
+                .attr("font-size", "4.5px")
                 .attr("font-weight", "500")
                 .attr("fill", "#333")
                 .text(distanceValues[index]);
@@ -966,12 +1234,12 @@ function updateScaleBar(transform) {
     // Unit label at the top center
     s.append("text")
         .attr("x", xPos + dynamicScaleLength / 2)
-        .attr("y", yPos - 6)
+        .attr("y", yPos)
         .attr("text-anchor", "middle")
         .attr("font-size", "5px")
         .attr("font-weight", "600")
         .attr("fill", "#667eea")
-        .text(adaptive.unit || 'km');
+        .text('Scale Bar '+ '('+adaptive.unit+')' || 'km');
 }
 
 // --- CENTRALIZED BASE MAP LOADING (without cities) ---
@@ -1084,8 +1352,7 @@ function loadInitialCityMarkers() {
                     if (userType === 'tourist') {
                         const cityName = d.properties.city || "";
                         if (cityName) {
-                            const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(cityName + ", Spain")}`;
-                            window.open(googleMapsUrl, '_blank');
+                            showCityDetailView(cityName);
                         }
                     }
                 });
@@ -1099,7 +1366,7 @@ function loadInitialCityMarkers() {
                 .attr("x", d => projection(d.geometry.coordinates)[0])
                 .attr("y", d => projection(d.geometry.coordinates)[1] - 3)
                 .text(d => d.properties.city || "")
-                .attr("font-size", "3px")
+                .attr("font-size", "2px")
                 .attr("text-anchor", "middle")
                 .attr("fill", "#333")
                 .attr("font-weight", "800")
@@ -1176,8 +1443,8 @@ function loadCities(currentTransform = null) {
                 .attr("fill", function (d) {
                     return colorScale(d.properties.indexOfChoice);
                 })
-                .attr("stroke", "white")
-                .attr("stroke-width", 0.5)
+                .attr("stroke", "black")
+                .attr("stroke-width", 0.2)
                 .style("cursor", userType === 'tourist' ? 'pointer' : 'default')
                 .style("opacity", 0.8)
                 .style("pointer-events", "all"); // Ensure cities are interactive
@@ -1272,19 +1539,57 @@ function loadCities(currentTransform = null) {
                 tooltipHTML += '</div>';
 
                 // Instant tooltip display
+                // Smart tooltip positioning - keep it always visible on screen
                 div.html(tooltipHTML)
-                    .style("left", (x + 15) + "px")
-                    .style("top", (y - 15) + "px")
-                    .style("opacity", 0.98)
-                    .style("display", "block");
+                    .style("display", "block")
+                    .style("opacity", 0); // Make invisible first to measure size
+                
+                // Get tooltip dimensions
+                const tooltipNode = div.node();
+                const tooltipRect = tooltipNode.getBoundingClientRect();
+                const tooltipWidth = tooltipRect.width;
+                const tooltipHeight = tooltipRect.height;
+                
+                // Get viewport dimensions
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // Calculate initial position (offset from cursor)
+                let left = x + 15;
+                let top = y - 15;
+                
+                // Adjust horizontal position if tooltip goes off right edge
+                if (left + tooltipWidth > viewportWidth) {
+                    left = x - tooltipWidth - 15; // Show on left side of cursor
+                }
+                
+                // Adjust horizontal position if tooltip goes off left edge
+                if (left < 0) {
+                    left = 10; // Pin to left edge with padding
+                }
+                
+                // Adjust vertical position if tooltip goes off bottom edge
+                if (top + tooltipHeight > viewportHeight) {
+                    top = viewportHeight - tooltipHeight - 10; // Pin above bottom
+                }
+                
+                // Adjust vertical position if tooltip goes off top edge
+                if (top < 0) {
+                    top = 10; // Pin below top with padding
+                }
+                
+                // Apply final position and make visible
+                div.style("left", left + "px")
+                    .style("top", top + "px")
+                    .style("opacity", 0.98);
             });
 
             // City tooltip out (mouseout)
             cityCircles.on("mouseout", function () {
                 // Instant hide without transition
                 d3.select(this)
-                    .attr("stroke", "white")
-                    .attr("stroke-width", 0.5)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 0.2)
                     .style("opacity", 0.8);
 
                 // Instant hide tooltip
@@ -1292,13 +1597,12 @@ function loadCities(currentTransform = null) {
                     .style("display", "none");
             });
             
-            // Double-click handler for tourist mode (opens Google Maps)
+            // Double-click handler for tourist mode (opens city detail view)
             cityCircles.on("dblclick", function(event, d) {
                 if (userType === 'tourist') {
                     const cityName = d.properties.city || "";
                     if (cityName) {
-                        const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(cityName + ", Spain")}`;
-                        window.open(googleMapsUrl, '_blank');
+                        showCityDetailView(cityName);
                     }
                 }
             });
@@ -1315,3 +1619,398 @@ function loadCities(currentTransform = null) {
             console.error("Error loading cities:", error);
         });
 }
+// ===== CITY DETAIL VIEW FUNCTIONS =====
+
+function showCityDetailView(cityName) {
+    console.log('Opening city detail view for:', cityName);
+    
+    // Hide main map and UI elements
+    document.getElementById('mapContainer').style.display = 'none';
+    document.getElementById('legend').style.display = 'none';
+    document.getElementById('zoomControls').style.display = 'none';
+    
+    // Hide criteria panel
+    const criteriaPanel = document.getElementById('criteriaPanel');
+    if (criteriaPanel) {
+        criteriaPanel.style.display = 'none';
+    }
+    
+    // Show city detail view
+    const cityDetailView = document.getElementById('cityDetailView');
+    cityDetailView.style.display = 'block';
+    
+    // Set city title
+    document.getElementById('cityDetailTitle').textContent = cityName;
+    
+    // Load city detail map
+    loadCityDetailMap(cityName);
+}
+
+function hideCityDetailView() {
+    console.log('Returning to Spain map');
+    
+    // Show main map and UI elements
+    document.getElementById('mapContainer').style.display = 'block';
+    document.getElementById('legend').style.display = 'block';
+    document.getElementById('zoomControls').style.display = 'flex';
+    
+    // Show criteria panel
+    const criteriaPanel = document.getElementById('criteriaPanel');
+    if (criteriaPanel) {
+        criteriaPanel.style.display = 'block';
+    }
+    
+    // Hide city detail view
+    document.getElementById('cityDetailView').style.display = 'none';
+    
+    // Clear city detail map
+    const container = document.getElementById('cityDetailMapContainer');
+    container.innerHTML = '';
+    
+    // Remove tourism legend if exists
+    const existingLegend = document.querySelector('.tourism-legend');
+    if (existingLegend) {
+        existingLegend.remove();
+    }
+}
+
+function loadCityDetailMap(cityName) {
+    const container = document.getElementById('cityDetailMapContainer');
+    container.innerHTML = ''; // Clear previous content
+    
+    console.log('Loading city detail map for:', cityName);
+    console.log('Container dimensions:', container.clientWidth, 'x', container.clientHeight);
+    
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 600;
+    
+    // Create SVG for city detail map (completely independent from main map)
+    const citySvg = d3.select("#cityDetailMapContainer")
+        .append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", [0, 0, width, height])
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("background", "radial-gradient(circle, rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%)");
+    
+    // Create groups for layers (only border and tourism)
+    const g_border = citySvg.append("g").attr("class", "city-border-layer");
+    const g_tourism = citySvg.append("g").attr("class", "city-tourism-layer");
+    
+    // Create projection (independent from main map)
+    const cityProjection = d3.geoMercator();
+    const cityPath = d3.geoPath().projection(cityProjection);
+    
+    console.log('Loading city data from GitHub...');
+    
+    // Load city borders and tourism data
+    Promise.all([
+        d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities_borders.geojson"),
+        d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities_tourism.geojson")
+    ]).then(function([bordersData, tourismData]) {
+        
+        console.log('Data loaded successfully');
+        console.log('Total borders:', bordersData.features.length);
+        console.log('Total tourism points:', tourismData.features.length);
+        
+        // Log first border properties to see structure
+        if (bordersData.features.length > 0) {
+            console.log('First border properties:', Object.keys(bordersData.features[0].properties));
+            console.log('First border sample:', bordersData.features[0].properties);
+        }
+        
+        // Filter for the specific city - try ALL property values
+        const cityBorder = bordersData.features.filter(d => {
+            // Get ALL property values and check if any matches the city name
+            const props = d.properties;
+            for (let key in props) {
+                const value = String(props[key] || "");
+                if (value.toLowerCase() === cityName.toLowerCase()) {
+                    console.log(`Match found! Property "${key}" = "${value}"`);
+                    return true;
+                }
+            }
+            return false;
+        });
+        
+        console.log('Matching city borders found:', cityBorder.length);
+        
+        if (cityBorder.length === 0) {
+            console.error(`No border found for city: ${cityName}`);
+            
+            // Log all unique city-like property values
+            const allCityValues = new Set();
+            bordersData.features.forEach(d => {
+                Object.values(d.properties).forEach(val => {
+                    if (val && typeof val === 'string') {
+                        allCityValues.add(val);
+                    }
+                });
+            });
+            console.log('All unique values in borders (first 20):', Array.from(allCityValues).slice(0, 20));
+            
+            // Show error message with better info
+            citySvg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height / 2 - 20)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#667eea")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .text(`City border not found: ${cityName}`);
+            
+            citySvg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height / 2 + 10)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#666")
+                .attr("font-size", "14px")
+                .text('Check console for available cities');
+            
+            return;
+        }
+        
+        // Log first tourism point properties to see structure
+        if (tourismData.features.length > 0) {
+            console.log('First tourism point properties:', Object.keys(tourismData.features[0].properties));
+            console.log('First tourism point sample:', tourismData.features[0].properties);
+        }
+        
+        // Filter tourism points for THIS CITY ONLY using the "layer" attribute
+        const cityTourism = tourismData.features.filter(d => {
+            const props = d.properties;
+            
+            // PRIMARY STRATEGY: Check the "layer" attribute
+            // It has format "Tourism_CityName", so we strip "Tourism_" prefix
+            if (props.layer) {
+                const layerValue = String(props.layer);
+                // Remove "Tourism_" prefix (case-insensitive)
+                const layerCity = layerValue.replace(/^Tourism_/i, '');
+                
+                if (layerCity.toLowerCase() === cityName.toLowerCase()) {
+                    return true;
+                }
+            }
+            
+            // FALLBACK STRATEGY: Check all other properties for city name match
+            for (let key in props) {
+                if (key === 'layer') continue; // Already checked above
+                
+                const value = String(props[key] || "");
+                if (value.toLowerCase() === cityName.toLowerCase()) {
+                    return true;
+                }
+            }
+            
+            return false; // Don't include points that don't match this city
+        });
+        
+        console.log('Tourism points found for city:', cityTourism.length);
+        console.log('Sample tourism types:', cityTourism.slice(0, 5).map(d => 
+            d.properties.tourism_ty || d.properties.tourism_type || d.properties.type
+        ));
+        
+        // Fit projection to TOURISM POINTS extent instead of city border
+        if (cityTourism.length > 0) {
+            // Create a FeatureCollection from tourism points for fitting
+            const tourismCollection = {
+                type: "FeatureCollection",
+                features: cityTourism
+            };
+            cityProjection.fitSize([width, height], tourismCollection);
+            console.log('Projection fitted to tourism points extent');
+        } else {
+            // Fallback: fit to city border if no tourism points
+            cityProjection.fitSize([width, height], cityBorder[0]);
+            console.log('Projection fitted to city border (no tourism points found)');
+        }
+        
+        // Draw city border (will be shown in background)
+        g_border.selectAll("path")
+            .data(cityBorder)
+            .enter()
+            .append("path")
+            .attr("d", cityPath)
+            .attr("fill", "rgba(200, 200, 200, 0.3)")
+            .attr("stroke", "#667eea")
+            .attr("stroke-width", 2)
+            .attr("stroke-dasharray", "5,5");
+        
+        console.log('City border drawn');
+        
+        // Store current zoom level for symbol scaling
+        let currentCityZoom = 1;
+        
+        // Function to calculate symbol size based on zoom (10x smaller than before)
+        function getSymbolSize(zoomLevel) {
+            // Base size 1.6px at zoom 1, scales up to 3.2px at zoom 8
+            // This makes symbols about 10 times smaller
+            return Math.max(1.6, Math.min(3.2, 1.6 * Math.sqrt(zoomLevel)));
+        }
+        
+        // Draw tourism points with dynamic sizing
+        const tourismPoints = g_tourism.selectAll("text")
+            .data(cityTourism)
+            .enter()
+            .append("text")
+            .attr("class", "tourism-point")
+            .attr("x", d => {
+                const coords = cityProjection(d.geometry.coordinates);
+                return coords ? coords[0] : 0;
+            })
+            .attr("y", d => {
+                const coords = cityProjection(d.geometry.coordinates);
+                return coords ? coords[1] : 0;
+            })
+            .text(d => {
+                const type = d.properties.tourism_ty || d.properties.tourism_type || 
+                            d.properties.type || d.properties.tourism || '';
+                const emoji = tourismEmojis[type] || tourismEmojis[type.toLowerCase()] || '📍';
+                return emoji;
+            })
+            .attr("font-size", getSymbolSize(1) + "px")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .attr("cursor", "pointer")
+            .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.4))")
+            .style("pointer-events", "all")
+            .on("mouseover", function(event, d) {
+                const type = d.properties.tourism_ty || d.properties.tourism_type || 
+                            d.properties.type || d.properties.tourism || 'Unknown';
+                const name = d.properties.name || d.properties.NAME || d.properties.Name || 'Unnamed';
+                
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("font-size", (getSymbolSize(currentCityZoom) * 2.5) + "px");
+                
+                // Show simple tooltip
+                const tooltip = d3.select("body").append("div")
+                    .attr("class", "city-tourism-tooltip")
+                    .style("position", "absolute")
+                    .style("background", "white")
+                    .style("padding", "10px 14px")
+                    .style("border", "2px solid #667eea")
+                    .style("border-radius", "8px")
+                    .style("pointer-events", "none")
+                    .style("z-index", "10000")
+                    .style("font-size", "14px")
+                    .style("box-shadow", "0 4px 12px rgba(0,0,0,0.2)")
+                    .html(`<strong>${name}</strong><br><em>${type}</em>`)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 10) + "px")
+                    .style("opacity", 0);
+                
+                tooltip.transition().duration(200).style("opacity", 1);
+            })
+            .on("mouseout", function() {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("font-size", getSymbolSize(currentCityZoom) + "px");
+                
+                d3.selectAll(".city-tourism-tooltip").remove();
+            });
+        
+        console.log('Tourism points drawn:', tourismPoints.size());
+        
+        // Create tourism legend
+        createTourismLegend(cityTourism);
+        
+        // Setup zoom for city detail map with dynamic symbol scaling
+        const cityZoom = d3.zoom()
+            .scaleExtent([1, 8])
+            .on("zoom", function(event) {
+                g_border.attr("transform", event.transform);
+                g_tourism.attr("transform", event.transform);
+                
+                // Update current zoom level and symbol sizes
+                currentCityZoom = event.transform.k;
+                const newSize = getSymbolSize(currentCityZoom);
+                
+                g_tourism.selectAll(".tourism-point")
+                    .attr("font-size", newSize + "px");
+            });
+        
+        citySvg.call(cityZoom);
+        citySvg.on("dblclick.zoom", null); // Disable double-click zoom
+        
+        // Setup city zoom button controls
+        const cityZoomInBtn = document.getElementById('cityZoomInBtn');
+        const cityZoomOutBtn = document.getElementById('cityZoomOutBtn');
+        const cityZoomResetBtn = document.getElementById('cityZoomResetBtn');
+        
+        if (cityZoomInBtn) {
+            cityZoomInBtn.onclick = function() {
+                citySvg.transition().duration(750).call(cityZoom.scaleBy, 1.5);
+            };
+        }
+        if (cityZoomOutBtn) {
+            cityZoomOutBtn.onclick = function() {
+                citySvg.transition().duration(750).call(cityZoom.scaleBy, 0.67);
+            };
+        }
+        if (cityZoomResetBtn) {
+            cityZoomResetBtn.onclick = function() {
+                citySvg.transition().duration(750).call(cityZoom.transform, d3.zoomIdentity);
+            };
+        }
+        
+        console.log('City detail map fully loaded');
+        
+    }).catch(function(error) {
+        console.error("Error loading city detail data:", error);
+        
+        // Show error message on map
+        citySvg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height / 2)
+            .attr("text-anchor", "middle")
+            .attr("fill", "red")
+            .attr("font-size", "16px")
+            .text(`Error loading city data: ${error.message}`);
+    });
+}
+
+function createTourismLegend(tourismData) {
+    // Get unique tourism types
+    const types = new Set();
+    tourismData.forEach(d => {
+        const type = d.properties.tourism_ty || d.properties.tourism_type || 
+                    d.properties.type || '';
+        if (type) types.add(type);
+    });
+    
+    // Create legend HTML
+    let legendHTML = '<div class="tourism-legend"><h3>Tourism Sites</h3>';
+    
+    const sortedTypes = Array.from(types).sort();
+    sortedTypes.forEach(type => {
+        const emoji = tourismEmojis[type] || '📍';
+        const label = type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        legendHTML += `
+            <div class="tourism-legend-item">
+                <span class="tourism-emoji">${emoji}</span>
+                <span>${label}</span>
+            </div>
+        `;
+    });
+    
+    legendHTML += '</div>';
+    
+    // Add legend to city detail view
+    const cityDetailView = document.getElementById('cityDetailView');
+    const existingLegend = cityDetailView.querySelector('.tourism-legend');
+    if (existingLegend) {
+        existingLegend.remove();
+    }
+    cityDetailView.insertAdjacentHTML('beforeend', legendHTML);
+}
+
+// Setup back button
+document.addEventListener('DOMContentLoaded', function() {
+    const backBtn = document.getElementById('backToMapBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', hideCityDetailView);
+    }
+});

@@ -14,6 +14,12 @@
   <!-- Map Section -->
   <section id="mapSection" class="active">
     <div id="legend">
+      <!-- City Search Box -->
+      <div id="citySearchContainer">
+        <input type="text" id="citySearchInput" placeholder="🔍 Search for a city..." autocomplete="off">
+        <div id="citySearchResults"></div>
+      </div>
+      
       <h2> <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Spain"
           class="flag-icon" alignment="centered"><br><br>Which Spain is calling you?</h2>
       <p>A tool to decide where to travel or where to migrate!✈️</p><br>
@@ -50,7 +56,7 @@
     <!-- Right Sidebar for Criteria Selection -->
     <div id="criteriaPanel">
       <button id="togglePanelBtn" class="toggle-panel-btn" title="Minimize/Maximize Panel">
-        <span id="toggleIcon">◀</span>
+        <span id="toggleIcon">▶</span>
       </button>
       
       <div id="panelContent">
@@ -85,6 +91,23 @@
     </div>
     
     <div id="mapContainer"></div>
+    
+    <!-- City Detail View (hidden by default) -->
+    <div id="cityDetailView" style="display: none;">
+      <div id="cityDetailHeader">
+        <h2 id="cityDetailTitle"></h2>
+        <button id="backToMapBtn" class="back-btn">← Back to Spain Map</button>
+      </div>
+      
+      <!-- City Zoom Controls -->
+      <div id="cityZoomControls">
+        <button id="cityZoomInBtn" class="zoom-btn" title="Zoom In">+</button>
+        <button id="cityZoomResetBtn" class="zoom-btn" title="Reset Zoom">⊙</button>
+        <button id="cityZoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
+      </div>
+      
+      <div id="cityDetailMapContainer"></div>
+    </div>
   </section>
 
   <!-- Load map script -->
