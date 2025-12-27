@@ -250,6 +250,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup city search functionality
     initializeCitySearch();
+    
+    // Setup methodology modal
+    setupMethodologyModal();
 });
 
 // Function to reset map and criteria when user type changes
@@ -806,12 +809,12 @@ function createCriteriaPieChart() {
 
     // Add title
     pieContainer.append("div")
-        .style("font-size", "14px")
+        .style("font-size", "16px")
         .style("font-weight", "bold")
-        .style("margin-bottom", "10px")
+        .style("margin-bottom", "8px")
         .style("text-align", "center")
         .style("color", "#333")
-        .text("Your Priorities");
+        .text("Selected Priorities");
 
     // Create SVG for pie chart
     const pieWidth = 180;
@@ -865,8 +868,8 @@ function createCriteriaPieChart() {
                     <div style="font-size: 14px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
             `)
-            .style("left", (event.pageX + 15) + "px")
-            .style("top", (event.pageY - 15) + "px")
+            .style("left", (event.pageX + 5) + "px")
+            .style("top", (event.pageY - 5) + "px")
             .style("opacity", 0.98)
             .style("display", "block");
         })
@@ -878,7 +881,7 @@ function createCriteriaPieChart() {
 
     // Add legend below pie chart
     const legend = pieContainer.append("div")
-        .style("margin-top", "10px")
+        .style("margin-top", "0px")
         .style("max-height", "120px")
         .style("overflow-y", "auto");
 
@@ -887,7 +890,7 @@ function createCriteriaPieChart() {
             .style("display", "flex")
             .style("align-items", "center")
             .style("margin-bottom", "5px")
-            .style("font-size", "11px");
+            .style("font-size", "13px");
 
         legendItem.append("div")
             .style("width", "12px")
@@ -1525,7 +1528,7 @@ function loadCities(currentTransform = null) {
                         tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
                         tooltipHTML += barContent;
                         tooltipHTML += '</div>';
-                        tooltipHTML += '<div style="font-size: 16px; color: #666; margin-top: 2px; display: flex; justify-content: space-between;">';
+                        tooltipHTML += '<div style="font-size: 12px; color: #666; margin-top: 2px; display: flex; justify-content: space-between;">';
                         tooltipHTML += '<span>Value: ' + displayValue + '</span>';
                         tooltipHTML += '<span style="color: #667eea; font-weight: 600;">' + normalizedScoreText + '</span>';
                         tooltipHTML += '</div>';
@@ -2014,3 +2017,167 @@ document.addEventListener('DOMContentLoaded', function() {
         backBtn.addEventListener('click', hideCityDetailView);
     }
 });
+
+// ===== METHODOLOGY MODAL FUNCTIONALITY =====
+
+const methodologyData = [
+    {
+        link: "https://es.wikipedia.org/wiki/Anexo:Provincias_de_Espa%C3%B1a_por_PIB",
+        code: "real_GDP_percapita",
+        name: "GDP per capita",
+        source: "Wikipedia",
+        methodology: "1) Acess the Province level data for all the selected provinces from our cities.\n2) Collect the data in a table"
+    },
+    {
+        link: "https://www.ine.es/jaxiT3/Tabla.htm?t=30687&L=0",
+        code: "real_Life_expectancy",
+        name: "Life expectancy",
+        source: "National Institute of Statistics Spain",
+        methodology: "1) Compile all the data of each city's newborns life expectancies from the original source (no adjustments required)"
+    },
+    {
+        link: "https://www.elconfidencial.com/espana/2023-03-26/el-mapa-de-la-educacion-en-espana-descubre-el-nivel-de-estudios-de-tus-vecinos-calle-a-calle_3598890/",
+        code: "real_Education_years",
+        name: "Education years",
+        source: "El Confidencial",
+        methodology: "1) Compile all the data of average education years from the original source (no adjustments required)"
+    },
+    {
+        link: "https://atlasau.mitma.gob.es/#bbox=-847794,5370217,1810191,995874&c=indicator&i=pobevo.densidad&s=2022&view=map4",
+        code: "real_Population_density",
+        name: "Population density",
+        source: "Ministry of Housing and Urban Agenda Spain",
+        methodology: "1) Acess the Digital Atlas of Urban Areas of Spain\n2) Collect population density values for the corresponding Municipalities / Cities during 2022"
+    },
+    {
+        link: "https://centrodedescargas.cnig.es/CentroDescargas/redes-transporte",
+        code: "real_Avg_Closest_station",
+        name: "Station Remoteness",
+        source: "Open Street Maps and Public Opendatasoft Data",
+        methodology: "1) Download OSM data for each city, as well as the train/tram stops (using the OSM Downloader extension within QGIS)\n2) Download the administrative borders of all Municipalities within Spain\n3) Filter and export relevant features from the OSM main layer (general points and polygons layer) using QGIS and export them in geographic coordinates WGS 84\n4) Create a new model within Model Builder from ArcGIS\n5) Preprocess all features: Reproject all of them to ETRS 1989 LAEA (European Standard, equal area projection). Repair geometry for all polygon feeatures. Filter out the specific points features from OSM contained within the municipality polygon\n3) Filter \"stop_position\" within the \"other tags\" attribute for the points features, to extract only public transport stops. Repeat to filter out only buildings from the polygons layer\n4) Create random points inside each Municipality according to their area and a density of 0,0001 points per square meter. Calculate the distance to the closest neighbour inside the bus stops layer, for each feature\n5) Calculate aggregate statistics in order to get the average distance to get to the closest stop."
+    },
+    {
+        link: "https://console.apify.com/actors/REcGj6dyoIJ9Z7aE6/input",
+        code: "real_Rent_cost",
+        name: "Cost of housing",
+        source: "Idealista Scraper (Apify) and Inside Airbnb Data",
+        methodology: "1) Scrape housing rent prices for one bedroom on each city inside Idealista, one of the largest Proptechs in Spain, (at least 300 places per city)\n2) Calculate the average price per city - specify that it corresponds to only one single bedroom per city\n3) Repeat the same process but instead of using Airbnb or Booking.com, data which will be used solely for touristic purposes."
+    },
+    {
+        link: "https://www.ine.es/jaxiT3/Tabla.htm?t=76092",
+        code: "real_Food_cost",
+        name: "Cost of food",
+        source: "National Institute of Statistics Spain / Numbeo",
+        methodology: "1) Access each city cost of food in numbeo and calculate a average for every city.\n2) Compile the data for each city in a separate table."
+    },
+    {
+        link: "https://www.numbeo.com/cost-of-living/",
+        code: "real_Services_cost",
+        name: "Cost of basic services (utilities)",
+        source: "Numbeo",
+        methodology: "1) Access the average of utilities under \"Utilities (Monthly)\" for each city\n2) Collect all of the data for each city"
+    },
+    {
+        link: "https://www.kaggle.com/datasets/alexgczs/monthly-temperature-in-spain-1996-2023",
+        code: "real_Weather",
+        name: "Climate (T/H/P)",
+        source: "Kaggle",
+        methodology: "1) Collect the values of all main variables for all"
+    },
+    {
+        link: "https://apify.com/bebity/linkedin-jobs-scraper",
+        code: "real_Job_offers",
+        name: "Job opportunities",
+        source: "LinkedIn Jobs Scraper (Apify)",
+        methodology: "1) Scrape the max possible number of LinkedIn job offers using Apify free credits for each city\n2) Divide the amount of job offers for each city by the population of each city."
+    },
+    {
+        link: "https://estadisticasdecriminalidad.ses.mir.es/publico/portalestadistico/datos.html?type=jaxi&title=Hechos%20conocidos&path=/Datos1/",
+        code: "real_Criminality_rate",
+        name: "Criminality rates",
+        source: "Ministry of Interior Spain",
+        methodology: "1) Download the official data of census population from the National Institute From Statistics\n2) Compile the crimes count of 2022, from the Ministry of the Interior, only considering the categories against people, sexual liberty and \n3) Dissagregate crimes data per Municipality using the Urban Scale Law proportionally to the Population inside each City for each Province. The power used is the 1.15, according to bibliography and the thesis that most populated areas attarct the most criminal activities"
+    },
+    {
+        link: "https://sinac.sanidad.gob.es/CiudadanoWeb/ciudadano/informacionAbastecimientoActionEntrada.do",
+        code: "real_Water_quality",
+        name: "Water quality",
+        source: "Ministry of Health Spain",
+        methodology: "1) Access the Ministry of Health portal to get each city data for the specified criteria (fecal coliforms, conductivity, pH, turbidity and chlorine)\n2) Copy the data into the proper format\n3) Calculate the indexes using the permitted values and the"
+    },
+    {
+        link: "https://www.miteco.gob.es/content/dam/miteco/es/calidad-y-evaluacion-ambiental/sgecocir/residuos-municipales/Memoria%20anual%20de%20generaci%C3%B3n%20y%20gesti%C3%B3n%20de%20residuos%202022.pdf",
+        code: "real_Recycling_rate",
+        name: "Recycling rates",
+        source: "Ministry For Ecological Transition And The Demographic Challenge",
+        methodology: "1) Collect the recycling rate, measured as the quantity of waste separated at source before collection, divided by the overall solid waste collected, per autonomous community\n2) Apply the same rate that exist on a broader Autonomous Community level to the Municipality"
+    },
+    {
+        link: "https://atlasau.mitma.gob.es/#bbox=-661621,5096106,559723,401808&c=indicator&i=sueocup.ocupa024&s=2016&view=map5",
+        code: "real_Green_space_per_capita",
+        name: "Green Space per Capita",
+        source: "Ministry of Housing and Urban Agenda Spain",
+        methodology: "1) We uploaded your custom administrative boundaries (municipalities) to Google Earth Engine Assets as a Shapefile, after cleaning the geometry and attributes (specifically creating the Official_4 column for city names) to avoid upload errors.\n2) Instead of raw satellite imagery, we loaded the Dynamic World V1 dataset for the year 2022, which provides high-resolution (10m) land cover probabilities derived from Sentinel-2 data.\n3) We created a \"Mode Composite\" to determine the most frequent land cover class for each pixel in 2022 and defined a \"Green Mask\" by isolating pixels classified as Trees (Class 1) or Grass (Class 2).\n4) We applied a spatial reducer (reduceRegions) to sum the area of the masked green pixels within each city boundary, using the EPSG:3035 (European Equal Area) projection and a high tileScale to ensure accuracy and prevent processing timeouts.\n5) Finally, we formatted the output to include only the relevant city names and calculated green areas (in square meters) and exported the results as a clean CSV file to Google Drive for further analysis.\n6) We finalized the analysis checking if the results made sense, by dividing the overall green cover by the total area of each municipality, and then after checking that all values made sense, the green area in square metes was divided by the overall population of each area from 2022."
+    },
+    {
+        link: "https://www.ign.es/web/resources/sismologia/www/dir_images_terremotos/mapas_sismicidad/peligrosidadaceleracion.jpg",
+        code: "real_Natural_risks",
+        name: "Natural hazard risks",
+        source: "Geographic Institute Spain",
+        methodology: "1) Open the latest sismic and flooding risks maps provided by the official Spanish institutions (updated to 2015)\n2) Use the available data and points in order to get the latest information about the sismic and flooding risk for each city."
+    }
+];
+
+function setupMethodologyModal() {
+    const methodologyBtn = document.getElementById('methodologyBtn');
+    const modal = document.getElementById('methodologyModal');
+    const closeBtn = document.getElementById('closeMethodologyBtn');
+    
+    if (!methodologyBtn || !modal || !closeBtn) return;
+    
+    // Open modal
+    methodologyBtn.addEventListener('click', function() {
+        modal.style.display = 'flex';
+        loadMethodologyContent();
+    });
+    
+    // Close modal
+    closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+    
+    // Close on outside click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Close on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        }
+    });
+}
+
+function loadMethodologyContent() {
+    const container = document.getElementById('methodologyContent');
+    if (!container) return;
+    
+    container.innerHTML = methodologyData.map(item => `
+        <div class="methodology-card">
+            <div class="methodology-card-header">
+                <div class="methodology-card-title">
+                    <h3>${item.name}</h3>
+                    <span class="criteria-code">${item.code}</span>
+                </div>
+            </div>
+            <div class="source-name">📚 ${item.source}</div>
+            <div class="methodology-text">${item.methodology}</div>
+            <a href="${item.link}" target="_blank" class="source-link">
+                🔗 View Source
+            </a>
+        </div>
+    `).join('');
+}

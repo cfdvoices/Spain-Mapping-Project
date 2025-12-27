@@ -19,51 +19,61 @@
         <input type="text" id="citySearchInput" placeholder="🔍 Search for a city..." autocomplete="off">
         <div id="citySearchResults"></div>
       </div>
-      
-      <h2> <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Spain"
-          class="flag-icon" alignment="centered"><br><br>Which Spain is calling you?</h2>
-      <p>A tool to decide where to travel or where to migrate!✈️</p><br>
+
+      <h2>
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEguNKXZxOtkRuwNziT13vSJ6GHJ9RCnf0tsHxwYUQ1ejz8a-lhk64Mxdp37YZv4AI1D-4agnAWwda4h6c-SjjjON9trtkbUE7sYMELWC-1ajm-Uc0uSOyYeInugn0dETZPUsogaklni-D8/s0/Flag_of_Spain.gif" alt="Spain" class="flag-icon"
+          alignment="centered"><br>
+        <br>Which Spain is calling you?
+      </h2>
+      <p>A tool to decide where to travel or where to migrate!✈️</p>
+      <p class="credits">By: <strong>Igor Dolgov</strong> and <strong>Ricardo Ontaneda</strong><br>EMJM Cartography MSc.
+      </p>
+      <br>
+      <button id="methodologyBtn" class="methodology-btn" title="View Methodology & Sources">
+        <span class="methodology-icon">📊</span>
+        <span class="methodology-label">Methodology & Sources</span>
+      </button>
       <p>Cities are sized and colored based on your preferences:</p>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <svg width="20" height="20">
-            <circle cx="10" cy="10" r="8" fill="#3dde83" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="10" cy="10" r="8" fill="#3dde83" stroke="#fff" stroke-width="1.5" />
           </svg>
           <span style="font-size: 0.9em;">High score</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
           <svg width="20" height="20">
-            <circle cx="10" cy="10" r="8" fill="#2e8d57" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="10" cy="10" r="8" fill="#2e8d57" stroke="#fff" stroke-width="1.5" />
           </svg>
           <span style="font-size: 0.9em;">Medium score</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
           <svg width="20" height="20">
-            <circle cx="10" cy="10" r="8" fill="#044613" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="10" cy="10" r="8" fill="#044613" stroke="#fff" stroke-width="1.5" />
           </svg>
           <span style="font-size: 0.9em;">Low score</span>
         </div>
       </div>
     </div>
-    
+
     <!-- Zoom Controls -->
     <div id="zoomControls">
       <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
       <button id="zoomResetBtn" class="zoom-btn" title="Reset Zoom">⊙</button>
       <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
     </div>
-    
+
     <!-- Right Sidebar for Criteria Selection -->
     <div id="criteriaPanel">
       <button id="togglePanelBtn" class="toggle-panel-btn" title="Minimize/Maximize Panel">
         <span id="toggleIcon">▶</span>
       </button>
-      
+
       <div id="panelContent">
         <div class="panel-header">
-          <h3>🎯 Your Priorities</h3>
+          <h3>🎯 Define Your Priorities</h3>
           <p class="panel-subtitle">Select criteria and adjust weights</p>
-          
+
           <!-- Tourist / Migrant Filter Toggle -->
           <div class="filter-toggle">
             <label class="filter-option">
@@ -76,12 +86,12 @@
             </label>
           </div>
         </div>
-        
+
         <div class="panel-section">
           <h4>Select Criteria (max 5)</h4>
           <div id="criteriaCheckboxList"></div>
         </div>
-        
+
         <div class="panel-section" id="weightsSection" style="display: none;">
           <h4>Adjust Weights</h4>
           <div id="criteriaWeightsList"></div>
@@ -89,24 +99,37 @@
         </div>
       </div>
     </div>
-    
+
     <div id="mapContainer"></div>
-    
+
     <!-- City Detail View (hidden by default) -->
     <div id="cityDetailView" style="display: none;">
       <div id="cityDetailHeader">
         <h2 id="cityDetailTitle"></h2>
         <button id="backToMapBtn" class="back-btn">← Back to Spain Map</button>
       </div>
-      
+
       <!-- City Zoom Controls -->
       <div id="cityZoomControls">
         <button id="cityZoomInBtn" class="zoom-btn" title="Zoom In">+</button>
         <button id="cityZoomResetBtn" class="zoom-btn" title="Reset Zoom">⊙</button>
         <button id="cityZoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
       </div>
-      
+
       <div id="cityDetailMapContainer"></div>
+    </div>
+
+    <!-- Methodology Modal -->
+    <div id="methodologyModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <button id="closeMethodologyBtn" class="modal-close">✕</button>
+        <h1 class="modal-title">📊 Methodology & Data Sources</h1>
+        <p class="modal-subtitle">Learn how we process and analyze data for each criterion</p>
+
+        <div id="methodologyContent" class="methodology-grid">
+          <!-- Content will be dynamically loaded -->
+        </div>
+      </div>
     </div>
   </section>
 
