@@ -1535,3 +1535,499 @@ html, body {
 .modal-content::-webkit-scrollbar-thumb:hover {
   background: #764ba2;
 }
+
+/* ===== MOBILE RESPONSIVENESS ===== */
+/* Only applies to devices with screen width <= 768px (smartphones and small tablets) */
+
+@media screen and (max-width: 768px) {
+  /* Body and base elements */
+  html, body {
+    font-size: 14px;
+  }
+
+  /* ===== ONBOARDING MOBILE ===== */
+  .onboarding-container {
+    padding: 30px 20px;
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .flag-icon-large {
+    width: 80px;
+  }
+
+  .onboarding-header h1 {
+    font-size: 1.8em;
+  }
+
+  .onboarding-header .subtitle {
+    font-size: 1em;
+  }
+
+  .instruction-card {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px 15px;
+    margin-bottom: 20px;
+  }
+
+  .instruction-number {
+    width: 50px;
+    height: 50px;
+    font-size: 1.6em;
+  }
+
+  .instruction-text h3 {
+    font-size: 1.2em;
+  }
+
+  .instruction-text p {
+    font-size: 0.95em;
+  }
+
+  .onboarding-button {
+    padding: 14px 35px;
+    font-size: 1em;
+    width: 100%;
+  }
+
+  /* ===== CRITERIA SELECTOR MOBILE ===== */
+  .criteria-container {
+    padding: 25px 15px;
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .criteria-header h1 {
+    font-size: 1.6em;
+  }
+
+  .criteria-header p {
+    font-size: 0.9em;
+  }
+
+  .criteria-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .criterion-card {
+    padding: 15px 10px;
+  }
+
+  .criterion-icon {
+    font-size: 1.8em;
+  }
+
+  .criterion-name {
+    font-size: 0.8em;
+  }
+
+  .pairwise-container {
+    padding: 20px 15px;
+  }
+
+  .criteria-comparison {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .vs-divider {
+    writing-mode: horizontal-tb;
+    padding: 10px 0;
+  }
+
+  .criterion-display {
+    padding: 20px 15px;
+  }
+
+  .intensity-slider {
+    width: 100%;
+  }
+
+  /* ===== LEGEND MOBILE ===== */
+  #legend {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 40vh;
+    padding: 15px;
+    border-radius: 0 0 15px 15px;
+    overflow-y: auto;
+    z-index: 900;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  #legend h2 {
+    font-size: 1em;
+    margin: 0 0 8px 0;
+    text-align: center;
+  }
+
+  #legend p {
+    font-size: 0.8em;
+    margin: 3px 0;
+    text-align: center;
+  }
+
+  .flag-icon {
+    width: 50px;
+  }
+
+  .credits {
+    font-size: 0.65em;
+  }
+
+  /* City Search Box Mobile */
+  #citySearchContainer {
+    margin-bottom: 10px;
+  }
+
+  #citySearchInput {
+    font-size: 0.85em;
+    padding: 8px 10px;
+  }
+
+  #citySearchResults {
+    max-height: 150px;
+  }
+
+  /* Methodology Button Mobile */
+  .methodology-btn {
+    margin-left: 0;
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .methodology-icon {
+    font-size: 14px;
+  }
+
+  .methodology-label {
+    font-size: 11px;
+  }
+
+  /* ===== ZOOM CONTROLS MOBILE ===== */
+  #zoomControls {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .zoom-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+
+  /* ===== CRITERIA PANEL MOBILE ===== */
+  #criteriaPanel {
+    position: fixed;
+    right: 0;
+    top: auto;
+    bottom: 60px;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 50vh;
+    border-radius: 15px 15px 0 0;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+  }
+
+  #criteriaPanel.minimized {
+    height: 50px;
+    max-height: 50px;
+    overflow: hidden;
+  }
+
+  .toggle-panel-btn {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 50px;
+    border-radius: 15px 15px 0 0;
+    transform: none;
+  }
+
+  #criteriaPanel.minimized .toggle-panel-btn {
+    border-radius: 15px 15px 0 0;
+  }
+
+  #toggleIcon {
+    transform: rotate(90deg);
+  }
+
+  #criteriaPanel.minimized #toggleIcon {
+    transform: rotate(-90deg);
+  }
+
+  #panelContent {
+    padding: 15px;
+  }
+
+  .panel-header h3 {
+    font-size: 1.1em;
+  }
+
+  .panel-subtitle {
+    font-size: 0.8em;
+  }
+
+  .filter-toggle {
+    flex-direction: row;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .filter-option {
+    padding: 8px 15px;
+    font-size: 0.85em;
+  }
+
+  .panel-section h4 {
+    font-size: 1em;
+  }
+
+  .criteria-checkbox-item {
+    padding: 10px;
+    font-size: 0.85em;
+  }
+
+  .criterion-weight-item {
+    padding: 10px;
+  }
+
+  .criterion-label {
+    font-size: 0.85em;
+  }
+
+  .weight-input {
+    width: 50px;
+    padding: 4px 6px;
+    font-size: 0.85em;
+  }
+
+  .action-button {
+    padding: 10px 20px;
+    font-size: 0.9em;
+    width: 100%;
+  }
+
+  /* ===== MAP CONTAINER MOBILE ===== */
+  #mapContainer {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+  }
+
+  #mapContainer svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Pie Chart Container Mobile */
+  #pieChartContainer {
+    top: 5px !important;
+    left: 5px !important;
+    padding: 10px !important;
+    max-width: 160px;
+  }
+
+  #pieChartContainer div {
+    font-size: 13px !important;
+  }
+
+  #pieChartContainer svg {
+    width: 140px !important;
+    height: 140px !important;
+  }
+
+  /* ===== TOOLTIP MOBILE ===== */
+  .tooltip {
+    font-size: 12px;
+    padding: 8px;
+    max-width: 90vw;
+  }
+
+  .tooltip table {
+    min-width: 180px;
+  }
+
+  .tooltip th {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .tooltip td {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+
+  /* ===== CITY DETAIL VIEW MOBILE ===== */
+  #cityDetailHeader {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    padding: 12px 15px;
+    max-width: calc(100% - 20px);
+  }
+
+  #cityDetailTitle {
+    font-size: 1.2em;
+    margin: 0 0 8px 0;
+  }
+
+  .back-btn {
+    padding: 8px 15px;
+    font-size: 0.85em;
+    width: 100%;
+  }
+
+  #cityZoomControls {
+    bottom: 10px;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  /* Tourism Legend Mobile */
+  .tourism-legend {
+    top: auto;
+    bottom: 70px;
+    left: 10px;
+    right: 10px;
+    max-width: calc(100% - 20px);
+    max-height: 30vh;
+    padding: 12px;
+  }
+
+  .tourism-legend h3 {
+    font-size: 1em;
+  }
+
+  .tourism-legend-item {
+    font-size: 0.75em;
+    margin: 4px 0;
+  }
+
+  .tourism-emoji {
+    font-size: 1em;
+    min-width: 20px;
+  }
+
+  /* ===== METHODOLOGY MODAL MOBILE ===== */
+  .modal {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
+  .modal-content {
+    padding: 25px 15px;
+    max-height: 95vh;
+    margin-top: 10px;
+  }
+
+  .modal-close {
+    top: 10px;
+    right: 10px;
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+
+  .modal-title {
+    font-size: 1.4em;
+    padding-right: 45px;
+  }
+
+  .modal-subtitle {
+    font-size: 0.95em;
+  }
+
+  .methodology-card {
+    padding: 15px;
+  }
+
+  .methodology-card h3 {
+    font-size: 1.1em;
+  }
+
+  .methodology-card .criteria-code {
+    font-size: 0.7em;
+    padding: 2px 8px;
+  }
+
+  .methodology-card .source-name {
+    font-size: 0.85em;
+  }
+
+  .methodology-card .methodology-text {
+    font-size: 0.85em;
+    padding: 12px;
+  }
+
+  .methodology-card .source-link {
+    font-size: 0.8em;
+    padding: 6px 12px;
+  }
+
+  /* ===== ADJUSTMENTS FOR VERY SMALL SCREENS ===== */
+  @media screen and (max-width: 400px) {
+    html, body {
+      font-size: 13px;
+    }
+
+    #legend {
+      padding: 10px;
+    }
+
+    .criteria-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .zoom-btn {
+      width: 30px;
+      height: 30px;
+      font-size: 16px;
+    }
+
+    #pieChartContainer {
+      max-width: 130px;
+    }
+
+    #pieChartContainer svg {
+      width: 110px !important;
+      height: 110px !important;
+    }
+  }
+
+  /* ===== LANDSCAPE ORIENTATION ADJUSTMENTS ===== */
+  @media screen and (max-width: 768px) and (orientation: landscape) {
+    #legend {
+      max-height: 35vh;
+      font-size: 0.9em;
+    }
+
+    #criteriaPanel {
+      max-height: 45vh;
+    }
+
+    .tourism-legend {
+      max-height: 40vh;
+    }
+
+    .modal-content {
+      max-height: 90vh;
+    }
+  }
+}

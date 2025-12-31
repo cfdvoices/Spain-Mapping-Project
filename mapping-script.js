@@ -1508,12 +1508,12 @@ function loadCities(currentTransform = null) {
                             barColor = '#99d8c9'; // Teal for medium scores (4-7)
                         }
 
-                        // Prepare bar content - show inverse warning or score
+                        // Prepare bar content - show relationship indicator
                         let barContent = '';
                         if (attributeInfo.inverse) {
-                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">⚠ lower is better</span>';
+                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">⚠ lower real values are better</span>';
                         } else {
-                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: bold; color: #333;">' + scoreValue.toFixed(1) + '/10</span>';
+                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">✓ higher real values are     better</span>';
                         }
                         
                         // Always show normalized score on the right side
