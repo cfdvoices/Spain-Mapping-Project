@@ -1163,9 +1163,16 @@ function updateScaleBar(transform) {
     const adaptive = getAdaptiveScaleDistance(currentPixelLengthPerMeter);
     const dynamicScaleLength = adaptive.distance * currentPixelLengthPerMeter;
 
-    // Position in bottom-right corner, above zoom buttons (moved up by 80px)
-    const xPos = width - dynamicScaleLength - 20;
-    const yPos = height - 20; // Moved up to avoid zoom buttons
+    // Check if mobile device
+    const isMobile = window.innerWidth <= 768;
+    
+    // Position adjustments for mobile
+    const xPos = isMobile ? 
+        (width - dynamicScaleLength) / 2 : // Center on mobile
+        (width - dynamicScaleLength - 20); // Right side on desktop
+    const yPos = isMobile ? 
+        (height - 95) : // Higher position on mobile (above zoom controls)
+        (height - 20); // Bottom on desktop
     
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
     const segment = dynamicScaleLength / 4;
@@ -1173,25 +1180,28 @@ function updateScaleBar(transform) {
     s.html("");
     
     // Add background rectangle for better visibility
+    const bgPadding = isMobile ? 10 : 8;
+    const bgHeight = isMobile ? 25 : 20;
     s.append("rect")
-        .attr("x", xPos - 8)
-        .attr("y", yPos - 7)
-        .attr("width", dynamicScaleLength + 16)
-        .attr("height", 20)
-        .attr("fill", "rgba(255, 255, 255, 0.9)")
-        .attr("rx", 6)
-        .attr("ry", 6)
-        .attr("stroke", "#ccc")
-        .attr("stroke-width", 0.5);
+        .attr("x", xPos - bgPadding)
+        .attr("y", yPos - (isMobile ? 9 : 7))
+        .attr("width", dynamicScaleLength + (bgPadding * 2))
+        .attr("height", bgHeight)
+        .attr("fill", "rgba(255, 255, 255, 0.95)")
+        .attr("rx", isMobile ? 8 : 6)
+        .attr("ry", isMobile ? 8 : 6)
+        .attr("stroke", "#999")
+        .attr("stroke-width", isMobile ? 1 : 0.5);
     
     // Main scale line
+    const lineWeight = isMobile ? 1.5 : 0.5;
     s.append("line")
         .attr("x1", xPos)
         .attr("y1", yPos+2)
         .attr("x2", xPos + dynamicScaleLength)
         .attr("y2", yPos+2)
         .attr("stroke", "#333")
-        .attr("stroke-width", 0.5);
+        .attr("stroke-width", lineWeight);
 
     // Add intermediate tick marks and labels
     const divisions = [0, 1/4, 2/4, 3/4, 1];
@@ -1213,34 +1223,40 @@ function updateScaleBar(transform) {
         const x = xPos + (dynamicScaleLength * division);
         
         // Tick mark
+        const tickHeight = isMobile ? 8 : 6;
+        const tickWeight = isMobile ? 1.5 : 0.5;
         s.append("line")
             .attr("x1", x)
             .attr("y1", yPos+2)
             .attr("x2", x)
-            .attr("y2", yPos + 6)
+            .attr("y2", yPos + tickHeight)
             .attr("stroke", "#333")
-            .attr("stroke-width", index === 0 || index === divisions.length - 1 ? 0.5 : 0.5);
+            .attr("stroke-width", index === 0 || index === divisions.length - 1 ? tickWeight : tickWeight);
         
         // Label below tick
         if (index < divisions.length) {
+            const fontSize = isMobile ? "9px" : "4.5px";
+            const labelYOffset = isMobile ? 13 : 10;
             s.append("text")
                 .attr("x", x)
-                .attr("y", yPos + 10)
+                .attr("y", yPos + labelYOffset)
                 .attr("text-anchor", "middle")
-                .attr("font-size", "4.5px")
-                .attr("font-weight", "500")
+                .attr("font-size", fontSize)
+                .attr("font-weight", "600")
                 .attr("fill", "#333")
                 .text(distanceValues[index]);
         }
     });
     
     // Unit label at the top center
+    const titleFontSize = isMobile ? "10px" : "5px";
+    const titleYOffset = isMobile ? -1 : 0;
     s.append("text")
         .attr("x", xPos + dynamicScaleLength / 2)
-        .attr("y", yPos)
+        .attr("y", yPos + titleYOffset)
         .attr("text-anchor", "middle")
-        .attr("font-size", "5px")
-        .attr("font-weight", "600")
+        .attr("font-size", titleFontSize)
+        .attr("font-weight", "700")
         .attr("fill", "#667eea")
         .text('Scale Bar '+ '('+adaptive.unit+')' || 'km');
 }
