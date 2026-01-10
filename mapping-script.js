@@ -1166,12 +1166,12 @@ function updateScaleBar(transform) {
     // Check if mobile device
     const isMobile = window.innerWidth <= 768;
     
-    // Position adjustments for mobile
+    // Position adjustments for mobile - scale bar now more prominent
     const xPos = isMobile ? 
         (width - dynamicScaleLength) / 2 : // Center on mobile
         (width - dynamicScaleLength - 20); // Right side on desktop
     const yPos = isMobile ? 
-        (height - 95) : // Higher position on mobile (above zoom controls)
+        (height - 115) : // Higher position on mobile (well above zoom controls)
         (height - 20); // Bottom on desktop
     
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
@@ -1180,21 +1180,21 @@ function updateScaleBar(transform) {
     s.html("");
     
     // Add background rectangle for better visibility
-    const bgPadding = isMobile ? 10 : 8;
-    const bgHeight = isMobile ? 25 : 20;
+    const bgPadding = isMobile ? 12 : 8;
+    const bgHeight = isMobile ? 30 : 20;
     s.append("rect")
         .attr("x", xPos - bgPadding)
-        .attr("y", yPos - (isMobile ? 9 : 7))
+        .attr("y", yPos - (isMobile ? 10 : 7))
         .attr("width", dynamicScaleLength + (bgPadding * 2))
         .attr("height", bgHeight)
-        .attr("fill", "rgba(255, 255, 255, 0.95)")
-        .attr("rx", isMobile ? 8 : 6)
-        .attr("ry", isMobile ? 8 : 6)
-        .attr("stroke", "#999")
-        .attr("stroke-width", isMobile ? 1 : 0.5);
+        .attr("fill", "rgba(255, 255, 255, 0.98)")
+        .attr("rx", isMobile ? 10 : 6)
+        .attr("ry", isMobile ? 10 : 6)
+        .attr("stroke", "#667eea")
+        .attr("stroke-width", isMobile ? 2 : 0.5);
     
     // Main scale line
-    const lineWeight = isMobile ? 1.5 : 0.5;
+    const lineWeight = isMobile ? 2 : 0.5;
     s.append("line")
         .attr("x1", xPos)
         .attr("y1", yPos+2)
@@ -1223,8 +1223,8 @@ function updateScaleBar(transform) {
         const x = xPos + (dynamicScaleLength * division);
         
         // Tick mark
-        const tickHeight = isMobile ? 8 : 6;
-        const tickWeight = isMobile ? 1.5 : 0.5;
+        const tickHeight = isMobile ? 10 : 6;
+        const tickWeight = isMobile ? 2 : 0.5;
         s.append("line")
             .attr("x1", x)
             .attr("y1", yPos+2)
@@ -1235,28 +1235,28 @@ function updateScaleBar(transform) {
         
         // Label below tick
         if (index < divisions.length) {
-            const fontSize = isMobile ? "9px" : "4.5px";
-            const labelYOffset = isMobile ? 13 : 10;
+            const fontSize = isMobile ? "11px" : "4.5px";
+            const labelYOffset = isMobile ? 15 : 10;
             s.append("text")
                 .attr("x", x)
                 .attr("y", yPos + labelYOffset)
                 .attr("text-anchor", "middle")
                 .attr("font-size", fontSize)
-                .attr("font-weight", "600")
-                .attr("fill", "#333")
+                .attr("font-weight", "700")
+                .attr("fill", "#222")
                 .text(distanceValues[index]);
         }
     });
     
     // Unit label at the top center
-    const titleFontSize = isMobile ? "10px" : "5px";
-    const titleYOffset = isMobile ? -1 : 0;
+    const titleFontSize = isMobile ? "11px" : "5px";
+    const titleYOffset = isMobile ? -2 : 0;
     s.append("text")
         .attr("x", xPos + dynamicScaleLength / 2)
         .attr("y", yPos + titleYOffset)
         .attr("text-anchor", "middle")
         .attr("font-size", titleFontSize)
-        .attr("font-weight", "700")
+        .attr("font-weight", "800")
         .attr("fill", "#667eea")
         .text('Scale Bar '+ '('+adaptive.unit+')' || 'km');
 }
