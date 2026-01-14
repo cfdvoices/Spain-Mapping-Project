@@ -1039,7 +1039,7 @@ function calculateIndexOfChoice(cityProperties) {
 
 // --- ADAPTIVE SCALE BAR HELPER ---
 function getAdaptiveScaleDistance(pixelLengthPerMeter) {
-    const targetPixelLength = 120;
+    const targetPixelLength = 70;
     let idealDistanceMeters = targetPixelLength / pixelLengthPerMeter;
     let powerOfTen = Math.pow(10, Math.floor(Math.log10(idealDistanceMeters)));
     let roundFactors = [1, 2, 5];
@@ -1112,13 +1112,13 @@ function updateScaleBar(transform) {
     // Check if mobile device
     const isMobile = window.innerWidth <= 768;
 
-    // Position adjustments for mobile - scale bar now more prominent
+    // UPDATED POSITION: Lower bottom, shifted 70px to the right to avoid legend
     const xPos = isMobile ?
         (width - dynamicScaleLength) / 2 : // Center on mobile
-        (width - dynamicScaleLength - 20); // Right side on desktop
+        120; // Left side on desktop, 70px more to the right (20 + 70 = 90)
     const yPos = isMobile ?
-        (height - 115) : // Higher position on mobile (well above zoom controls)
-        (height - 20); // Bottom on desktop
+        (height - 35) : // Higher position on mobile (well above zoom controls)
+        (height + 8); // Desktop: lower bottom, just above zoom controls
 
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
     const segment = dynamicScaleLength / 4;
@@ -1127,7 +1127,7 @@ function updateScaleBar(transform) {
 
     // Add background rectangle for better visibility
     const bgPadding = isMobile ? 12 : 8;
-    const bgHeight = isMobile ? 30 : 20;
+    const bgHeight = isMobile ? 30 : 18;
     s.append("rect")
         .attr("x", xPos - bgPadding)
         .attr("y", yPos - (isMobile ? 10 : 7))
@@ -1136,8 +1136,7 @@ function updateScaleBar(transform) {
         .attr("fill", "rgba(255, 255, 255, 0.98)")
         .attr("rx", isMobile ? 10 : 6)
         .attr("ry", isMobile ? 10 : 6)
-        .attr("stroke", "#667eea")
-        .attr("stroke-width", isMobile ? 2 : 0.5);
+        .attr("opacity",0.7)
 
     // Main scale line
     const lineWeight = isMobile ? 2 : 0.5;
@@ -1169,7 +1168,7 @@ function updateScaleBar(transform) {
         const x = xPos + (dynamicScaleLength * division);
 
         // Tick mark
-        const tickHeight = isMobile ? 10 : 6;
+        const tickHeight = isMobile ? 9 : 5;
         const tickWeight = isMobile ? 2 : 0.5;
         s.append("line")
             .attr("x1", x)
@@ -1182,7 +1181,7 @@ function updateScaleBar(transform) {
         // Label below tick
         if (index < divisions.length) {
             const fontSize = isMobile ? "11px" : "4.5px";
-            const labelYOffset = isMobile ? 15 : 10;
+            const labelYOffset = isMobile ? 14 : 9;
             s.append("text")
                 .attr("x", x)
                 .attr("y", yPos + labelYOffset)
@@ -1195,16 +1194,16 @@ function updateScaleBar(transform) {
     });
 
     // Unit label at the top center
-    const titleFontSize = isMobile ? "11px" : "5px";
+    const titleFontSize = isMobile ? "9px" : "5px";
     const titleYOffset = isMobile ? -2 : 0;
     s.append("text")
         .attr("x", xPos + dynamicScaleLength / 2)
         .attr("y", yPos + titleYOffset)
         .attr("text-anchor", "middle")
         .attr("font-size", titleFontSize)
-        .attr("font-weight", "800")
-        .attr("fill", "#667eea")
-        .text('Scale Bar ' + '(' + adaptive.unit + ')' || 'km');
+        .attr("font-weight", "700")
+        .attr("fill", "#000000")
+        .text(adaptive.unit || 'km');
 }
 
 // --- CENTRALIZED BASE MAP LOADING (without cities) ---
@@ -1233,11 +1232,11 @@ function loadBaseMapLayers() {
             .enter()
             .append("path")
             .attr("d", path)
-            .attr("fill", "#d4d4d476")
-            .attr("stroke", "#8c8c8cff")
-            .attr("stroke-width", 0.5)
+            .attr("fill", "#4d4d4d76")
+            .attr("stroke", "rgb(230, 230, 230)")
+            .attr("stroke-width", 0.2)
             .attr("class", "autonoma-boundary")
-            .style("fill-opacity", 0.9)
+            .style("fill-opacity", 1)
             .style("pointer-events", "none"); // Disable autonoma interactivity
 
         // 4. Draw the Provinces - Detail Layer on top
@@ -1256,31 +1255,6 @@ function loadBaseMapLayers() {
             .attr("stroke-width", 0.2)
             .attr("class", "province-boundary")
             .style("pointer-events", "none"); // Disable province interactivity
-
-        // 5. Draw Labels
-        g_labels.selectAll(".autonoma-label")
-            .data(autonomasData.features)
-            .enter()
-            .append("text")
-            .attr("class", "autonoma-label")
-            .attr('x', function (d) {
-                const centroid = d3.geoCentroid(d);
-                return projection(centroid)[0];
-            })
-            .attr('y', function (d) {
-                const centroid = d3.geoCentroid(d);
-                return projection(centroid)[1];
-            })
-            .text(function (d) {
-                return d.properties.code || d.properties.CODE ||
-                    d.properties.name || d.properties.NAME || "";
-            })
-            .attr('font-size', '4px')
-            .attr("text-anchor", "middle")
-            .attr("fill", "#c7e8c7ff")
-            .attr("font-weight", "bold")
-            .attr("opacity", 0.7)
-            .style("pointer-events", "none");
 
         // 6. Initialize Scale Bar
         updateScaleBar(d3.zoomIdentity);
