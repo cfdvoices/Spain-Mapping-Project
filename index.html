@@ -10,9 +10,79 @@
 </head>
 
 <body>
+  <!-- Start Experience Button Overlay - Appears first -->
+  <div id="startExperienceOverlay" class="start-experience-overlay">
+    <div class="start-experience-container">
+      <img
+        src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEguNKXZxOtkRuwNziT13vSJ6GHJ9RCnf0tsHxwYUQ1ejz8a-lhk64Mxdp37YZv4AI1D-4agnAWwda4h6c-SjjjON9trtkbUE7sYMELWC-1ajm-Uc0uSOyYeInugn0dETZPUsogaklni-D8/s0/Flag_of_Spain.gif"
+        alt="Spain Flag" class="start-flag">
+      <h1 class="start-title">Which Spain is calling you?</h1>
+      <p class="start-subtitle">An interactive map to discover your perfect Spanish city</p>
+      <button id="startExperienceBtn" class="start-experience-btn">
+        🎵 Start Experience
+      </button>
+      <p class="start-note">Click to enable audio and begin</p>
+    </div>
+  </div>
 
   <!-- Map Section -->
-  <section id="mapSection" class="active">
+  <section id="mapSection">
+    <!-- Incoming Call Overlay - Now inside map section -->
+    <div id="callOverlay" class="call-overlay-popup">
+      <div class="call-phone">
+        <button id="closeCallOverlay" class="close-popup-btn" title="Close">✕</button>
+        <p class="incoming">📞 Incoming call…</p>
+        <h2>Spain</h2>
+        <p class="subtitle">Which Spain is calling you?</p>
+
+        <div class="call-actions">
+          <button id="declineCall" class="call-btn decline">✖</button>
+          <button id="answerCall" class="call-btn answer">📞</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intro Explanation Modal - Now inside map section -->
+    <div id="introModal" class="intro-modal-popup">
+      <div class="intro-content">
+        <button id="closeIntro" class="modal-close">✕</button>
+        <h2>👋 Hola, this is Spain calling</h2>
+
+        <p>
+          This map helps you compare Spanish cities using a single composite index,
+          built from multiple social, economic and environmental indicators.
+        </p>
+
+        <h3>📊 How the index works</h3>
+        <p>
+          All variables were <strong>normalised</strong> to a common scale, allowing
+          very different indicators to be compared and combined fairly.
+        </p>
+
+        <ul>
+          <li>
+            <strong>Directly proportional variables</strong><br>
+            Higher values = better score
+            <em>(e.g. income potential, accessibility, services)</em>
+          </li>
+          <li>
+            <strong>Inversely proportional variables</strong><br>
+            Higher values = worse score
+            <em>(e.g. crime rate, pollution, cost burdens)</em>
+          </li>
+        </ul>
+
+        <p>
+          After normalisation, your selected criteria are weighted and combined into
+          a single index that determines each city's size and colour on the map.
+        </p>
+
+        <p class="closing">
+          In short: you choose what matters — Spain does the maths.
+        </p>
+      </div>
+    </div>
+
     <div id="legend">
       <!-- City Search Box -->
       <div id="citySearchContainer">
@@ -21,8 +91,9 @@
       </div>
 
       <h2>
-        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEguNKXZxOtkRuwNziT13vSJ6GHJ9RCnf0tsHxwYUQ1ejz8a-lhk64Mxdp37YZv4AI1D-4agnAWwda4h6c-SjjjON9trtkbUE7sYMELWC-1ajm-Uc0uSOyYeInugn0dETZPUsogaklni-D8/s0/Flag_of_Spain.gif" alt="Spain" class="flag-icon"
-          alignment="centered"><br>
+        <img
+          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEguNKXZxOtkRuwNziT13vSJ6GHJ9RCnf0tsHxwYUQ1ejz8a-lhk64Mxdp37YZv4AI1D-4agnAWwda4h6c-SjjjON9trtkbUE7sYMELWC-1ajm-Uc0uSOyYeInugn0dETZPUsogaklni-D8/s0/Flag_of_Spain.gif"
+          alt="Spain" class="flag-icon" alignment="centered"><br>
         <br>Which Spain is calling you?
       </h2>
       <p>A tool to decide where to travel or where to migrate!✈️</p>
@@ -57,7 +128,7 @@
     </div>
 
     <!-- Zoom Controls -->
-    <div id="zoomControls">
+    <div id="zoomControls" class="map-hidden">
       <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
       <button id="zoomResetBtn" class="zoom-btn" title="Reset Zoom">⊙</button>
       <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>

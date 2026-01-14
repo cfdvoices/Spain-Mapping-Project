@@ -78,21 +78,21 @@ function parseEuropeanFloat(value) {
 
 // Criteria data with icons
 const criteria = [
-  { id: 'gdp', name: 'Income potential', icon: '💰' },
-  { id: 'population', name: 'Population Density', icon: '👥' },
-  { id: 'transport', name: 'Stop Remoteness', icon: '🚇' },
-  { id: 'housing', name: 'Housing Cost', icon: '🏠' },
-  { id: 'food', name: 'Food Cost', icon: '🍽️' },
-  { id: 'services', name: 'Service Cost', icon: '🛍️' },
-  { id: 'climate', name: 'Climate Quality', icon: '☀️' },
-  { id: 'crime', name: 'Criminality Rate', icon: '🛡️' },
-  { id: 'water', name: 'Water Quality', icon: '💧' },
-  { id: 'recycling', name: 'City Cleanliness', icon: '♻️' },
-  { id: 'greenspace', name: 'Green Space', icon: '🌳' },
-  { id: 'hazards', name: 'Natural Safety', icon: '⛰️' },
-  { id: 'education', name: 'Education Level', icon: '🎓' },
-  { id: 'jobs', name: 'Job Opportunities', icon: '💼' },
-  { id: 'lifeexpectancy', name: 'Life Expectancy', icon: '❤️' }
+    { id: 'gdp', name: 'Income potential', icon: '💰' },
+    { id: 'population', name: 'Population Density', icon: '👥' },
+    { id: 'transport', name: 'Stop Remoteness', icon: '🚇' },
+    { id: 'housing', name: 'Housing Cost', icon: '🏠' },
+    { id: 'food', name: 'Food Cost', icon: '🍽️' },
+    { id: 'services', name: 'Service Cost', icon: '🛍️' },
+    { id: 'climate', name: 'Climate Quality', icon: '☀️' },
+    { id: 'crime', name: 'Criminality Rate', icon: '🛡️' },
+    { id: 'water', name: 'Water Quality', icon: '💧' },
+    { id: 'recycling', name: 'City Cleanliness', icon: '♻️' },
+    { id: 'greenspace', name: 'Green Space', icon: '🌳' },
+    { id: 'hazards', name: 'Natural Safety', icon: '⛰️' },
+    { id: 'education', name: 'Education Level', icon: '🎓' },
+    { id: 'jobs', name: 'Job Opportunities', icon: '💼' },
+    { id: 'lifeexpectancy', name: 'Life Expectancy', icon: '❤️' }
 ];
 
 // City data mapping - maps criterion IDs to actual GeoJSON property names
@@ -207,74 +207,70 @@ const cityDataAttributes = {
 };
 
 // Initialize the application when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCriteriaPanel();
-    // Initialize the map structure (SVG, base layers) without cities
-    initializeMapStructure();
-    
-    // Setup panel toggle button
-    const toggleBtn = document.getElementById('togglePanelBtn');
-    const panel = document.getElementById('criteriaPanel');
-    
-    if (toggleBtn && panel) {
-        toggleBtn.addEventListener('click', function() {
-            panel.classList.toggle('minimized');
-            
-            // Wait for CSS transition to complete, then update positions
-            setTimeout(function() {
-                updateMapElementPositions();
-            }, 300);
-        });
-    }
-    
-    // Setup user type filter (tourist/migrant)
-    const userTypeRadios = document.querySelectorAll('input[name="userType"]');
-    userTypeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const previousUserType = userType;
-            userType = this.value;
-            console.log('User type changed from', previousUserType, 'to:', userType);
-            
-            // Reset map and criteria if there was a previous selection
-            if (selectedCriteria.length > 0) {
-                resetMapAndCriteria();
-            } else {
-                // Just refresh criteria panel to show appropriate criteria
-                initializeCriteriaPanel();
-            }
-            
-            // Update cursor style for all city markers
-            updateCityCursorStyle();
-        });
-    });
-    
-    // Setup city search functionality
-    initializeCitySearch();
-    
-    // Setup methodology modal
+// Initialize the application when page loads
+document.addEventListener('DOMContentLoaded', function () {
+    // Don't initialize map automatically - wait for call interaction
+    // Only setup button handlers that don't depend on map being visible
+
+    // Setup methodology modal (can be done in background)
     setupMethodologyModal();
+
+    // Setup back button for city detail view
+    const backBtn = document.getElementById('backToMapBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', hideCityDetailView);
+    }
+
+    console.log('Page loaded. Waiting for call interaction...');
 });
+
+// Setup user type filter (tourist/migrant)
+const userTypeRadios = document.querySelectorAll('input[name="userType"]');
+userTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function () {
+        const previousUserType = userType;
+        userType = this.value;
+        console.log('User type changed from', previousUserType, 'to:', userType);
+
+        // Reset map and criteria if there was a previous selection
+        if (selectedCriteria.length > 0) {
+            resetMapAndCriteria();
+        } else {
+            // Just refresh criteria panel to show appropriate criteria
+            initializeCriteriaPanel();
+        }
+
+        // Update cursor style for all city markers
+        updateCityCursorStyle();
+    });
+});
+
+// Setup city search functionality
+initializeCitySearch();
+
+// Setup methodology modal
+setupMethodologyModal();
 
 // Function to reset map and criteria when user type changes
 function resetMapAndCriteria() {
     console.log('Resetting map and criteria...');
-    
+
     // Clear selected criteria
     selectedCriteria = [];
     userCriteriaWeights = {};
-    
+
     // Hide weights section
     const weightsSection = document.getElementById('weightsSection');
     if (weightsSection) {
         weightsSection.style.display = 'none';
     }
-    
+
     // Clear weights list
     const weightsList = document.getElementById('criteriaWeightsList');
     if (weightsList) {
         weightsList.innerHTML = '';
     }
-    
+
     // Remove pie chart if it exists
     const pieChartContainer = document.getElementById('criteriaWeightsList');
     if (pieChartContainer) {
@@ -283,41 +279,41 @@ function resetMapAndCriteria() {
             pieChartSvg.remove();
         }
     }
-    
+
     // Also remove any standalone pie chart SVG
     if (typeof d3 !== 'undefined') {
         d3.select('#criteriaWeightsList').selectAll('svg').remove();
     }
-    
+
     // Reinitialize criteria panel with new criteria filter
     initializeCriteriaPanel();
-    
+
     // Clear city circles (results)
     if (typeof g_cities !== 'undefined') {
         g_cities.selectAll(".city-point").remove();
     }
-    
+
     // Clear city labels
     if (typeof g_labels !== 'undefined') {
         g_labels.selectAll("text").remove();
     }
-    
+
     // Remove proportional legend completely and reset the variable
     if (typeof proportionalLegendGroup !== 'undefined' && proportionalLegendGroup) {
         proportionalLegendGroup.remove(); // Remove the entire group
         proportionalLegendGroup = null; // Reset to null so it can be recreated
     }
-    
+
     // Reset currentRadiusScale
     if (typeof window !== 'undefined') {
         window.currentRadiusScale = null;
     }
-    
+
     // Reload initial city markers
     if (typeof loadInitialCityMarkers === 'function') {
         loadInitialCityMarkers();
     }
-    
+
     console.log('Map and criteria reset complete');
 }
 
@@ -326,53 +322,53 @@ function resetMapAndCriteria() {
 function initializeCitySearch() {
     const searchInput = document.getElementById('citySearchInput');
     const searchResults = document.getElementById('citySearchResults');
-    
+
     if (!searchInput || !searchResults) return;
-    
+
     // Load cities data for search
     d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
-        .then(function(data) {
+        .then(function (data) {
             allCitiesData = data.features;
             console.log('Cities data loaded for search:', allCitiesData.length);
         });
-    
+
     // Search input event
-    searchInput.addEventListener('input', function() {
+    searchInput.addEventListener('input', function () {
         const query = this.value.trim().toLowerCase();
-        
+
         if (query.length < 2) {
             searchResults.classList.remove('active');
             return;
         }
-        
+
         if (!allCitiesData) {
             searchResults.innerHTML = '<div class="search-result-item">Loading cities...</div>';
             searchResults.classList.add('active');
             return;
         }
-        
+
         // Filter cities
         const matches = allCitiesData.filter(d => {
             const cityName = (d.properties.city || "").toLowerCase();
             return cityName.includes(query);
         }).slice(0, 10); // Limit to 10 results
-        
+
         if (matches.length === 0) {
             searchResults.innerHTML = '<div class="search-result-item">No cities found</div>';
             searchResults.classList.add('active');
             return;
         }
-        
+
         // Display results
-        searchResults.innerHTML = matches.map(d => 
+        searchResults.innerHTML = matches.map(d =>
             `<div class="search-result-item" data-city="${d.properties.city}">${d.properties.city}</div>`
         ).join('');
-        
+
         searchResults.classList.add('active');
-        
+
         // Add click handlers to results
         searchResults.querySelectorAll('.search-result-item').forEach(item => {
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function () {
                 const cityName = this.getAttribute('data-city');
                 if (cityName) {
                     highlightCity(cityName);
@@ -382,9 +378,9 @@ function initializeCitySearch() {
             });
         });
     });
-    
+
     // Close search results when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
             searchResults.classList.remove('active');
         }
@@ -393,32 +389,32 @@ function initializeCitySearch() {
 
 function highlightCity(cityName) {
     console.log('Highlighting city:', cityName);
-    
+
     // Find the city in the data
     const cityFeature = allCitiesData.find(d => d.properties.city === cityName);
     if (!cityFeature) {
         console.error('City not found:', cityName);
         return;
     }
-    
+
     // Get city coordinates
     const coords = projection(cityFeature.geometry.coordinates);
     if (!coords) return;
-    
+
     // Highlight the city marker temporarily
     const marker = g_cities.selectAll('.city-point, .initial-city-marker')
         .filter(d => d.properties.city === cityName);
-    
+
     if (marker.empty()) {
         console.log('City marker not found on map');
         return;
     }
-    
+
     // Pulse animation
-    marker.each(function() {
+    marker.each(function () {
         const originalStroke = d3.select(this).attr('stroke');
         const originalStrokeWidth = d3.select(this).attr('stroke-width');
-        
+
         d3.select(this)
             .attr('stroke', '#FFD700')
             .attr('stroke-width', 3)
@@ -436,12 +432,12 @@ function highlightCity(cityName) {
             .attr('stroke', originalStroke)
             .attr('stroke-width', originalStrokeWidth);
     });
-    
+
     // Show tooltip if criteria have been selected
     if (selectedCriteria.length > 0) {
         // Trigger tooltip display
         marker.dispatch('mouseover');
-        
+
         // Keep tooltip visible for 5 seconds
         setTimeout(() => {
             marker.dispatch('mouseout');
@@ -462,17 +458,17 @@ function updateCityCursorStyle() {
 function updateMapElementPositions() {
     const panel = document.getElementById('criteriaPanel');
     const isPanelMinimized = panel && panel.classList.contains('minimized');
-    
+
     // Don't change width - keep it at 450 so elements stay within viewBox
     // The CSS handles expanding the container, but viewBox stays the same
     // This keeps all elements visible and at the same positions
-    
+
     // Update proportional legend position (uses width value which stays at 450)
     if (proportionalLegendGroup && window.currentRadiusScale) {
         const currentTransform = d3.zoomTransform(svg.node());
         updateProportionalLegend(currentTransform.k);
     }
-    
+
     // Update scale bar position (uses width value which stays at 450)
     if (svg) {
         const currentTransform = d3.zoomTransform(svg.node());
@@ -484,17 +480,17 @@ function updateMapElementPositions() {
 function initializeCriteriaPanel() {
     const checkboxList = document.getElementById('criteriaCheckboxList');
     checkboxList.innerHTML = ''; // Clear existing items
-    
+
     // Filter criteria based on user type
-    const availableCriteria = userType === 'tourist' 
+    const availableCriteria = userType === 'tourist'
         ? criteria.filter(c => TOURIST_ALLOWED_CRITERIA.includes(c.id))
         : criteria;
-    
+
     availableCriteria.forEach(criterion => {
         const item = document.createElement('div');
         item.className = 'criterion-checkbox-item';
         item.dataset.criterionId = criterion.id;
-        
+
         item.innerHTML = `
             <input type="checkbox" id="cb_${criterion.id}" value="${criterion.id}">
             <label class="criterion-checkbox-label" for="cb_${criterion.id}">
@@ -502,21 +498,55 @@ function initializeCriteriaPanel() {
                 <span>${criterion.name}</span>
             </label>
         `;
-        
+
         const checkbox = item.querySelector('input[type="checkbox"]');
-        checkbox.addEventListener('change', function() {
+        checkbox.addEventListener('change', function () {
             handleCriterionSelection(criterion, this.checked);
         });
-        
+
         // Make the whole item clickable
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function (e) {
             if (e.target.tagName !== 'INPUT') {
                 checkbox.click();
             }
         });
-        
+
         checkboxList.appendChild(item);
     });
+    
+    // Setup toggle panel button functionality
+    setupTogglePanelButton();
+}
+
+// Setup toggle panel button to show/hide criteria panel
+function setupTogglePanelButton() {
+    const toggleBtn = document.getElementById('togglePanelBtn');
+    const criteriaPanel = document.getElementById('criteriaPanel');
+    const panelContent = document.getElementById('panelContent');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (!toggleBtn || !criteriaPanel) return;
+    
+    // Remove any existing listeners
+    const newToggleBtn = toggleBtn.cloneNode(true);
+    toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+    
+    // Add click listener
+    newToggleBtn.addEventListener('click', function() {
+        criteriaPanel.classList.toggle('minimized');
+        
+        if (criteriaPanel.classList.contains('minimized')) {
+            // Panel is minimized
+            if (panelContent) panelContent.style.display = 'none';
+            if (toggleIcon) toggleIcon.textContent = '◀'; // Point left when minimized
+        } else {
+            // Panel is expanded
+            if (panelContent) panelContent.style.display = 'block';
+            if (toggleIcon) toggleIcon.textContent = '▶'; // Point right when expanded
+        }
+    });
+    
+    console.log('Toggle panel button initialized');
 }
 
 // Handle criterion selection/deselection
@@ -529,16 +559,16 @@ function handleCriterionSelection(criterion, isSelected) {
             alert(`Maximum ${MAX_CRITERIA} criteria allowed. Please deselect one to add another.`);
             return;
         }
-        
+
         // Add to selected criteria with default equal weight
         selectedCriteria.push({
             ...criterion,
             weight: (100 / (selectedCriteria.length + 1)).toFixed(2)
         });
-        
+
         // Recalculate weights to be equal
         redistributeWeights();
-        
+
         // Update UI
         document.querySelector(`[data-criterion-id="${criterion.id}"]`).classList.add('selected');
     } else {
@@ -548,14 +578,14 @@ function handleCriterionSelection(criterion, isSelected) {
             selectedCriteria.splice(index, 1);
             redistributeWeights();
         }
-        
+
         // Update UI
         document.querySelector(`[data-criterion-id="${criterion.id}"]`).classList.remove('selected');
     }
-    
+
     // Update the weights section
     updateWeightsSection();
-    
+
     // Enable/disable checkboxes based on max criteria
     updateCheckboxStates();
 }
@@ -563,7 +593,7 @@ function handleCriterionSelection(criterion, isSelected) {
 // Redistribute weights equally
 function redistributeWeights() {
     if (selectedCriteria.length === 0) return;
-    
+
     const equalWeight = (100 / selectedCriteria.length).toFixed(2);
     selectedCriteria.forEach(c => {
         c.weight = equalWeight;
@@ -589,19 +619,19 @@ function updateCheckboxStates() {
 function updateWeightsSection() {
     const weightsSection = document.getElementById('weightsSection');
     const weightsList = document.getElementById('criteriaWeightsList');
-    
+
     if (selectedCriteria.length === 0) {
         weightsSection.style.display = 'none';
         return;
     }
-    
+
     weightsSection.style.display = 'block';
     weightsList.innerHTML = '';
-    
+
     selectedCriteria.forEach(criterion => {
         const item = document.createElement('div');
         item.className = 'weight-slider-item';
-        
+
         item.innerHTML = `
             <div class="weight-slider-header">
                 <span class="weight-slider-icon">${criterion.icon}</span>
@@ -611,12 +641,12 @@ function updateWeightsSection() {
             <input type="range" min="1" max="100" value="${criterion.weight}" 
                    class="weight-slider" id="slider_${criterion.id}">
         `;
-        
+
         const slider = item.querySelector('input[type="range"]');
-        slider.addEventListener('input', function() {
+        slider.addEventListener('input', function () {
             handleWeightChange(criterion.id, parseFloat(this.value));
         });
-        
+
         weightsList.appendChild(item);
     });
 }
@@ -628,10 +658,10 @@ function handleWeightChange(criterionId, newWeight) {
     if (criterion) {
         criterion.weight = newWeight.toFixed(2);
     }
-    
+
     // Normalize weights to sum to 100
     normalizeWeights();
-    
+
     // Update all displays
     selectedCriteria.forEach(c => {
         const valueDisplay = document.getElementById('weight_' + c.id);
@@ -652,29 +682,29 @@ function normalizeWeights() {
 }
 
 // Update map button handler
-document.getElementById('updateMapBtn').addEventListener('click', function() {
+document.getElementById('updateMapBtn').addEventListener('click', function () {
     if (selectedCriteria.length === 0) {
         alert('Please select at least one criterion');
         return;
     }
-    
+
     // Normalize weights one final time
     normalizeWeights();
-    
+
     // Convert to user criteria format expected by map
     window.userCriteria = selectedCriteria.map((c, index) => ({
         ...c,
         rank: index + 1
     }));
-    
+
     // Update user criteria weights for calculation
     userCriteriaWeights = {};
     window.userCriteria.forEach(criterion => {
         userCriteriaWeights[criterion.id] = parseFloat(criterion.weight) / 100;
     });
-    
+
     console.log('Updating map with criteria:', window.userCriteria);
-    
+
     // If map already exists, update it; otherwise initialize
     if (window.mapInitialized) {
         updateMap();
@@ -702,7 +732,7 @@ function initializeMapStructure() {
     s = svg.append("g").attr("class", "scale-bar");
 
     // Define Projection and Path Generator
-    projection = d3.geoConicEqualArea()
+    projection = d3.geoAzimuthalEqualArea()
         .scale(1)
         .translate([0, 0]);
 
@@ -720,7 +750,7 @@ function initializeMapStructure() {
 
     // Apply the zoom behavior to the SVG element
     svg.call(zoom);
-    
+
     // Disable double-click zoom (we use double-click for city selection in tourist mode)
     svg.on("dblclick.zoom", null);
 
@@ -742,12 +772,12 @@ function initializeMapStructure() {
             .duration(750)
             .call(zoom.transform, d3.zoomIdentity);
     }
-    
+
     // Setup zoom control button event listeners
     const zoomInBtn = document.getElementById('zoomInBtn');
     const zoomOutBtn = document.getElementById('zoomOutBtn');
     const zoomResetBtn = document.getElementById('zoomResetBtn');
-    
+
     if (zoomInBtn) zoomInBtn.addEventListener('click', window.zoomIn);
     if (zoomOutBtn) zoomOutBtn.addEventListener('click', window.zoomOut);
     if (zoomResetBtn) zoomResetBtn.addEventListener('click', window.zoomReset);
@@ -766,7 +796,7 @@ function initializeMap() {
 
     // Load cities with current criteria
     loadCities();
-    
+
     // Create pie chart
     if (window.userCriteria && window.userCriteria.length > 0) {
         createCriteriaPieChart();
@@ -776,13 +806,13 @@ function initializeMap() {
 // Function to update map with new criteria
 function updateMap() {
     console.log('Updating map with new criteria:', window.userCriteria);
-    
+
     // Remove existing pie chart if it exists
     d3.select("#pieChartContainer").remove();
-    
+
     // Recreate pie chart with new criteria
     createCriteriaPieChart();
-    
+
     // Reload cities with new calculations
     loadCities();
 }
@@ -793,8 +823,11 @@ function createCriteriaPieChart() {
         return;
     }
 
-    // Create container for pie chart in top-left
-    const pieContainer = d3.select("#mapContainer")
+    // Remove any existing pie chart container
+    d3.select("#pieChartContainer").remove();
+
+    // Create combined container for pie chart and proportional legend
+    const combinedContainer = d3.select("#mapContainer")
         .append("div")
         .attr("id", "pieChartContainer")
         .style("position", "absolute")
@@ -802,28 +835,31 @@ function createCriteriaPieChart() {
         .style("left", "20px")
         .style("background", "white")
         .style("border-radius", "12px")
-        .style("padding", "15px")
+        .style("padding", "12px")
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("z-index", "1000")
-        .style("pointer-events", "all");
+        .style("pointer-events", "all")
+        .style("max-width", "200px");
 
-    // Add title
-    pieContainer.append("div")
-        .style("font-size", "16px")
+    // Add title for pie chart
+    combinedContainer.append("div")
+        .style("font-size", "14px")
         .style("font-weight", "bold")
-        .style("margin-bottom", "8px")
+        .style("margin-bottom", "6px")
         .style("text-align", "center")
         .style("color", "#333")
         .text("Selected Priorities");
 
-    // Create SVG for pie chart
-    const pieWidth = 180;
-    const pieHeight = 180;
+    // Create SVG for smaller pie chart
+    const pieWidth = 120;
+    const pieHeight = 120;
     const radius = Math.min(pieWidth, pieHeight) / 2 - 10;
 
-    const pieSvg = pieContainer.append("svg")
+    const pieSvg = combinedContainer.append("svg")
         .attr("width", pieWidth)
         .attr("height", pieHeight)
+        .style("display", "block")
+        .style("margin", "0 auto")
         .append("g")
         .attr("transform", `translate(${pieWidth / 2}, ${pieHeight / 2})`);
 
@@ -856,11 +892,11 @@ function createCriteriaPieChart() {
         .attr("stroke", "white")
         .attr("stroke-width", 2)
         .style("opacity", 0.85)
-        .on("mouseover", function(event, d) {
+        .on("mouseover", function (event, d) {
             d3.select(this)
                 .style("opacity", 1)
                 .style("cursor", "pointer");
-            
+
             // Show tooltip
             div.html(`
                 <div style="font-family: Arial, sans-serif; padding: 5px;">
@@ -868,43 +904,71 @@ function createCriteriaPieChart() {
                     <div style="font-size: 14px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
             `)
-            .style("left", (event.pageX + 5) + "px")
-            .style("top", (event.pageY - 5) + "px")
-            .style("opacity", 0.98)
-            .style("display", "block");
+                .style("left", (event.pageX + 5) + "px")
+                .style("top", (event.pageY - 5) + "px")
+                .style("opacity", 0.98)
+                .style("display", "block");
         })
-        .on("mouseout", function() {
+        .on("mouseout", function () {
             d3.select(this)
                 .style("opacity", 0.85);
             div.style("opacity", 0).style("display", "none");
         });
 
-    // Add legend below pie chart
-    const legend = pieContainer.append("div")
-        .style("margin-top", "0px")
-        .style("max-height", "120px")
-        .style("overflow-y", "auto");
+    // Add separator line
+    combinedContainer.append("div")
+        .style("border-top", "1px solid #ddd")
+        .style("margin", "10px 0");
 
-    window.userCriteria.forEach((criterion, i) => {
-        const legendItem = legend.append("div")
+    // Add "Index of Choice" title
+    combinedContainer.append("div")
+        .style("font-size", "13px")
+        .style("font-weight", "bold")
+        .style("text-align", "center")
+        .style("color", "#00a04b")
+        .style("margin-bottom", "8px")
+        .text("Index of Choice");
+
+    // Add proportional legend circles container
+    const legendCirclesContainer = combinedContainer.append("div")
+        .attr("id", "proportionalLegendInContainer")
+        .style("display", "flex")
+        .style("flex-direction", "column")
+        .style("align-items", "center")
+        .style("gap", "6px");
+
+    // Create legend items with circles
+    const legendValues = [
+        { label: "High", size: 20, color: "#3dde83" },
+        { label: "Mid", size: 14, color: "#2e8d57" },
+        { label: "Low", size: 9, color: "#044613" }
+    ];
+
+    legendValues.forEach(item => {
+        const legendItem = legendCirclesContainer.append("div")
             .style("display", "flex")
             .style("align-items", "center")
-            .style("margin-bottom", "5px")
-            .style("font-size", "13px");
+            .style("gap", "8px")
+            .style("width", "100%");
 
+        // Circle
         legendItem.append("div")
-            .style("width", "12px")
-            .style("height", "12px")
-            .style("background", colorScale(criterion.id))
-            .style("border-radius", "2px")
-            .style("margin-right", "6px")
+            .style("width", item.size + "px")
+            .style("height", item.size + "px")
+            .style("background", item.color)
+            .style("border-radius", "50%")
+            .style("border", "1px solid #000")
             .style("flex-shrink", "0");
 
+        // Label
         legendItem.append("div")
-            .style("flex", "1")
+            .style("font-size", "12px")
             .style("color", "#333")
-            .html(`${criterion.icon} ${criterion.name}: <strong>${criterion.weight}%</strong>`);
+            .style("font-weight", "500")
+            .text(item.label);
     });
+
+    console.log("Combined pie chart and proportional legend created");
 }
 
 // Calculate index of choice for a city based on user criteria
@@ -1014,134 +1078,16 @@ function zoomed(event) {
 let proportionalLegendGroup = null;
 
 function initializeProportionalLegend() {
-    if (!svg) return;
-    
-    // Add legend group to SVG (fixed position, doesn't move with zoom)
-    proportionalLegendGroup = svg.append("g")
-        .attr("class", "proportional-legend");
-    
-    // Add semi-transparent background (will be sized dynamically)
-    proportionalLegendGroup.append("rect")
-        .attr("class", "legend-background")
-        .attr("fill", "rgba(255, 255, 255, 0.9)")
-        .attr("rx", 6)
-        .attr("ry", 6)
-        .attr("stroke", "#ccc")
-        .attr("stroke-width", 0.5);
-    
-    // Add title
-    proportionalLegendGroup.append("text")
-        .attr("class", "legend-title")
-        .attr("font-size", "5px")
-        .attr("font-weight", "800")
-        .attr("fill", "#00a04bff")
-        .text("Index of Choice");
+    // This function is now deprecated - proportional legend is included in the pie chart container
+    // Kept for compatibility but does nothing
+    console.log("Proportional legend now integrated with pie chart container");
+    return;
 }
 
 function updateProportionalLegend(zoomLevel) {
-    if (!proportionalLegendGroup || !window.currentRadiusScale) return;
-    
-    // Sample values for legend (high to low, top to bottom)
-    const legendValues = [
-        { label: "High", value: 0.9 },
-        { label: "Mid", value: 0.5 },
-        { label: "Low", value: 0.1 }
-    ];
-    
-    // Get current min/max from the radius scale domain
-    const domain = window.currentRadiusScale.domain();
-    const minIndex = domain[0];
-    const maxIndex = domain[1];
-    
-    // Calculate actual index values for legend
-    const legendIndices = legendValues.map(v => 
-        minIndex + (maxIndex - minIndex) * v.value
-    );
-    
-    // Get actual radii as they appear on the map (scaled by zoom)
-    const legendRadii = legendIndices.map(idx => 
-        window.currentRadiusScale(idx) * zoomLevel
-    );
-    
-    // Calculate layout dimensions - now expanding downwards
-    const maxRadius = Math.max(...legendRadii);
-    const padding = 8;
-    const titleHeight = 8;
-    const startY = titleHeight + padding;
-    const labelOffset = 35;
-    
-    // Calculate total height needed (expands down as circles grow)
-    let totalHeight = startY + padding;
-    legendRadii.forEach(r => {
-        totalHeight += r * 1.8 + 6; // Add space for each circle plus gap
-    });
-    
-    // Position at top of map, expanding downwards
-    const bgWidth = labelOffset + 20;
-    const bgHeight = totalHeight;
-    const legendX = width - bgWidth - 20;
-    const legendY = 10; // Fixed near top, expands downwards (changed from -23 to 10)
-    
-    // Update background position and size
-    proportionalLegendGroup.select(".legend-background")
-        .attr("x", legendX)
-        .attr("y", legendY-8)
-        .attr("width", bgWidth)
-        .attr("height", bgHeight);
-    
-    // Update title position
-    proportionalLegendGroup.select(".legend-title")
-        .attr("x", legendX + bgWidth / 2)
-        .attr("y", legendY+2)
-        .attr("text-anchor", "middle");
-    
-    // Remove old circles, labels, and lines
-    proportionalLegendGroup.selectAll(".legend-circle").remove();
-    proportionalLegendGroup.selectAll(".legend-label").remove();
-    proportionalLegendGroup.selectAll(".legend-line").remove();
-    
-    // Draw circles from largest to smallest (top to bottom)
-    let currentY = legendY + startY;
-    
-    legendValues.forEach((item, i) => {
-        const radius = legendRadii[i];
-        const circleY = currentY + radius;
-        const circleX = legendX + padding + maxRadius;
-        
-        // Draw circles
-        proportionalLegendGroup.append("circle")
-            .attr("class", "legend-circle")
-            .attr("cx", circleX-4)
-            .attr("cy", circleY-8)
-            .attr("r", radius)
-            .attr("fill", "rgba(219, 255, 209, 1)")
-            .attr("stroke", "#000000ff")
-            .attr("stroke-width", 0.4);
-        
-        // Draw lines from circle edge to label
-        proportionalLegendGroup.append("line")
-            .attr("class", "legend-line")
-            .attr("x1", circleX + radius-2)
-            .attr("y1", circleY-8)
-            .attr("x2", legendX + labelOffset+2)
-            .attr("y2", circleY-8)
-            .attr("stroke", "#818181ff")
-            .attr("stroke-width", 0.3)
-            .attr("stroke-dasharray", "1,1");
-        
-        // Add label
-        proportionalLegendGroup.append("text")
-            .attr("class", "legend-label")
-            .attr("x", legendX + labelOffset+5)
-            .attr("y", circleY - 6.2)
-            .attr("font-size", "4px")
-            .attr("font-weight", "600")
-            .attr("fill", "#333")
-            .text(item.label);
-        
-        // Move down for next circle
-        currentY += radius * 2 + 8;
-    });
+    // This function is now deprecated - proportional legend is static in the pie chart container
+    // Kept for compatibility but does nothing
+    return;
 }
 
 // --- SCALE BAR FUNCTION ---
@@ -1165,20 +1111,20 @@ function updateScaleBar(transform) {
 
     // Check if mobile device
     const isMobile = window.innerWidth <= 768;
-    
+
     // Position adjustments for mobile - scale bar now more prominent
-    const xPos = isMobile ? 
+    const xPos = isMobile ?
         (width - dynamicScaleLength) / 2 : // Center on mobile
         (width - dynamicScaleLength - 20); // Right side on desktop
-    const yPos = isMobile ? 
+    const yPos = isMobile ?
         (height - 115) : // Higher position on mobile (well above zoom controls)
         (height - 20); // Bottom on desktop
-    
+
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
     const segment = dynamicScaleLength / 4;
 
     s.html("");
-    
+
     // Add background rectangle for better visibility
     const bgPadding = isMobile ? 12 : 8;
     const bgHeight = isMobile ? 30 : 20;
@@ -1192,20 +1138,20 @@ function updateScaleBar(transform) {
         .attr("ry", isMobile ? 10 : 6)
         .attr("stroke", "#667eea")
         .attr("stroke-width", isMobile ? 2 : 0.5);
-    
+
     // Main scale line
     const lineWeight = isMobile ? 2 : 0.5;
     s.append("line")
         .attr("x1", xPos)
-        .attr("y1", yPos+2)
+        .attr("y1", yPos + 2)
         .attr("x2", xPos + dynamicScaleLength)
-        .attr("y2", yPos+2)
+        .attr("y2", yPos + 2)
         .attr("stroke", "#333")
         .attr("stroke-width", lineWeight);
 
     // Add intermediate tick marks and labels
-    const divisions = [0, 1/4, 2/4, 3/4, 1];
-    
+    const divisions = [0, 1 / 4, 2 / 4, 3 / 4, 1];
+
     // Calculate distance values and convert to appropriate units
     const distanceValues = divisions.map(d => {
         const distanceInMeters = adaptive.distance * d;
@@ -1218,21 +1164,21 @@ function updateScaleBar(transform) {
             return distanceInMeters.toFixed(distanceInMeters >= 100 ? 0 : 1);
         }
     });
-    
+
     divisions.forEach((division, index) => {
         const x = xPos + (dynamicScaleLength * division);
-        
+
         // Tick mark
         const tickHeight = isMobile ? 10 : 6;
         const tickWeight = isMobile ? 2 : 0.5;
         s.append("line")
             .attr("x1", x)
-            .attr("y1", yPos+2)
+            .attr("y1", yPos + 2)
             .attr("x2", x)
             .attr("y2", yPos + tickHeight)
             .attr("stroke", "#333")
             .attr("stroke-width", index === 0 || index === divisions.length - 1 ? tickWeight : tickWeight);
-        
+
         // Label below tick
         if (index < divisions.length) {
             const fontSize = isMobile ? "11px" : "4.5px";
@@ -1247,7 +1193,7 @@ function updateScaleBar(transform) {
                 .text(distanceValues[index]);
         }
     });
-    
+
     // Unit label at the top center
     const titleFontSize = isMobile ? "11px" : "5px";
     const titleYOffset = isMobile ? -2 : 0;
@@ -1258,7 +1204,7 @@ function updateScaleBar(transform) {
         .attr("font-size", titleFontSize)
         .attr("font-weight", "800")
         .attr("fill", "#667eea")
-        .text('Scale Bar '+ '('+adaptive.unit+')' || 'km');
+        .text('Scale Bar ' + '(' + adaptive.unit + ')' || 'km');
 }
 
 // --- CENTRALIZED BASE MAP LOADING (without cities) ---
@@ -1287,11 +1233,11 @@ function loadBaseMapLayers() {
             .enter()
             .append("path")
             .attr("d", path)
-            .attr("fill", "#d4d4d4")
+            .attr("fill", "#d4d4d476")
             .attr("stroke", "#8c8c8cff")
             .attr("stroke-width", 0.5)
             .attr("class", "autonoma-boundary")
-            .style("fill-opacity", 0.3)
+            .style("fill-opacity", 0.9)
             .style("pointer-events", "none"); // Disable autonoma interactivity
 
         // 4. Draw the Provinces - Detail Layer on top
@@ -1367,7 +1313,7 @@ function loadInitialCityMarkers() {
                 .attr("stroke-width", 0.3)
                 .attr("opacity", 0.8)
                 .style("cursor", userType === 'tourist' ? 'pointer' : 'default')
-                .on("dblclick", function(event, d) {
+                .on("dblclick", function (event, d) {
                     if (userType === 'tourist') {
                         const cityName = d.properties.city || "";
                         if (cityName) {
@@ -1375,7 +1321,7 @@ function loadInitialCityMarkers() {
                         }
                     }
                 });
-            
+
             // Draw labels for cities
             const initialLabels = g_labels.selectAll(".initial-city-label")
                 .data(cities.features)
@@ -1391,7 +1337,7 @@ function loadInitialCityMarkers() {
                 .attr("font-weight", "800")
                 .attr("opacity", 0.9)
                 .style("pointer-events", "none");
-            
+
             console.log('Initial city markers loaded');
         })
         .catch(function (error) {
@@ -1403,10 +1349,10 @@ function loadCities(currentTransform = null) {
     // Remove initial city markers and labels when loading actual cities
     g_cities.selectAll(".initial-city-marker").remove();
     g_labels.selectAll(".initial-city-label").remove();
-    
+
     // Clear existing cities
     g_cities.selectAll("*").remove();
-    
+
     d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
         .then(function (cities) {
 
@@ -1434,7 +1380,7 @@ function loadCities(currentTransform = null) {
             const radiusScale = d3.scaleSqrt()
                 .domain([minIndex, maxIndex])
                 .range([1, 5]); // Reduced from [2, 10] to [1, 5]
-            
+
             // Store globally for legend
             window.currentRadiusScale = radiusScale;
 
@@ -1499,7 +1445,7 @@ function loadCities(currentTransform = null) {
 
                     window.userCriteria.forEach(criterion => {
                         const attributeInfo = cityDataAttributes[criterion.id];
-                        
+
                         // Get NORMALIZED value for bar chart (0-10 scale typically)
                         const normalizedValue = d.properties[attributeInfo.normalized];
                         const scoreValue = parseEuropeanFloat(normalizedValue);
@@ -1509,11 +1455,11 @@ function loadCities(currentTransform = null) {
                         // Get REAL value for display
                         const realValue = d.properties[attributeInfo.real];
                         const realValueParsed = parseEuropeanFloat(realValue);
-                        const displayValue = (realValue !== undefined && realValue !== null) ? 
+                        const displayValue = (realValue !== undefined && realValue !== null) ?
                             realValueParsed.toLocaleString(undefined, {
                                 minimumFractionDigits: 0,
                                 maximumFractionDigits: 2
-                            }) + attributeInfo.unit : 
+                            }) + attributeInfo.unit :
                             'N/A';
 
                         // Determine bar color based on normalized score (0-10 scale)
@@ -1531,7 +1477,7 @@ function loadCities(currentTransform = null) {
                         } else {
                             barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">✓ higher real values are     better</span>';
                         }
-                        
+
                         // Always show normalized score on the right side
                         const normalizedScoreText = scoreValue.toFixed(1) + '/10';
 
@@ -1562,41 +1508,41 @@ function loadCities(currentTransform = null) {
                 div.html(tooltipHTML)
                     .style("display", "block")
                     .style("opacity", 0); // Make invisible first to measure size
-                
+
                 // Get tooltip dimensions
                 const tooltipNode = div.node();
                 const tooltipRect = tooltipNode.getBoundingClientRect();
                 const tooltipWidth = tooltipRect.width;
                 const tooltipHeight = tooltipRect.height;
-                
+
                 // Get viewport dimensions
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
-                
+
                 // Calculate initial position (offset from cursor)
                 let left = x + 15;
                 let top = y - 15;
-                
+
                 // Adjust horizontal position if tooltip goes off right edge
                 if (left + tooltipWidth > viewportWidth) {
                     left = x - tooltipWidth - 15; // Show on left side of cursor
                 }
-                
+
                 // Adjust horizontal position if tooltip goes off left edge
                 if (left < 0) {
                     left = 10; // Pin to left edge with padding
                 }
-                
+
                 // Adjust vertical position if tooltip goes off bottom edge
                 if (top + tooltipHeight > viewportHeight) {
                     top = viewportHeight - tooltipHeight - 10; // Pin above bottom
                 }
-                
+
                 // Adjust vertical position if tooltip goes off top edge
                 if (top < 0) {
                     top = 10; // Pin below top with padding
                 }
-                
+
                 // Apply final position and make visible
                 div.style("left", left + "px")
                     .style("top", top + "px")
@@ -1615,9 +1561,9 @@ function loadCities(currentTransform = null) {
                 div.style("opacity", 0)
                     .style("display", "none");
             });
-            
+
             // Double-click handler for tourist mode (opens city detail view)
-            cityCircles.on("dblclick", function(event, d) {
+            cityCircles.on("dblclick", function (event, d) {
                 if (userType === 'tourist') {
                     const cityName = d.properties.city || "";
                     if (cityName) {
@@ -1625,7 +1571,7 @@ function loadCities(currentTransform = null) {
                     }
                 }
             });
-            
+
             // Initialize proportional symbol legend
             if (!proportionalLegendGroup) {
                 initializeProportionalLegend();
@@ -1642,50 +1588,50 @@ function loadCities(currentTransform = null) {
 
 function showCityDetailView(cityName) {
     console.log('Opening city detail view for:', cityName);
-    
+
     // Hide main map and UI elements
     document.getElementById('mapContainer').style.display = 'none';
     document.getElementById('legend').style.display = 'none';
     document.getElementById('zoomControls').style.display = 'none';
-    
+
     // Hide criteria panel
     const criteriaPanel = document.getElementById('criteriaPanel');
     if (criteriaPanel) {
         criteriaPanel.style.display = 'none';
     }
-    
+
     // Show city detail view
     const cityDetailView = document.getElementById('cityDetailView');
     cityDetailView.style.display = 'block';
-    
+
     // Set city title
     document.getElementById('cityDetailTitle').textContent = cityName;
-    
+
     // Load city detail map
     loadCityDetailMap(cityName);
 }
 
 function hideCityDetailView() {
     console.log('Returning to Spain map');
-    
+
     // Show main map and UI elements
     document.getElementById('mapContainer').style.display = 'block';
     document.getElementById('legend').style.display = 'block';
     document.getElementById('zoomControls').style.display = 'flex';
-    
+
     // Show criteria panel
     const criteriaPanel = document.getElementById('criteriaPanel');
     if (criteriaPanel) {
         criteriaPanel.style.display = 'block';
     }
-    
+
     // Hide city detail view
     document.getElementById('cityDetailView').style.display = 'none';
-    
+
     // Clear city detail map
     const container = document.getElementById('cityDetailMapContainer');
     container.innerHTML = '';
-    
+
     // Remove tourism legend if exists
     const existingLegend = document.querySelector('.tourism-legend');
     if (existingLegend) {
@@ -1696,13 +1642,13 @@ function hideCityDetailView() {
 function loadCityDetailMap(cityName) {
     const container = document.getElementById('cityDetailMapContainer');
     container.innerHTML = ''; // Clear previous content
-    
+
     console.log('Loading city detail map for:', cityName);
     console.log('Container dimensions:', container.clientWidth, 'x', container.clientHeight);
-    
+
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
-    
+
     // Create SVG for city detail map (completely independent from main map)
     const citySvg = d3.select("#cityDetailMapContainer")
         .append("svg")
@@ -1711,33 +1657,33 @@ function loadCityDetailMap(cityName) {
         .attr("viewBox", [0, 0, width, height])
         .attr("preserveAspectRatio", "xMidYMid meet")
         .style("background", "radial-gradient(circle, rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%)");
-    
+
     // Create groups for layers (only border and tourism)
     const g_border = citySvg.append("g").attr("class", "city-border-layer");
     const g_tourism = citySvg.append("g").attr("class", "city-tourism-layer");
-    
+
     // Create projection (independent from main map)
     const cityProjection = d3.geoMercator();
     const cityPath = d3.geoPath().projection(cityProjection);
-    
+
     console.log('Loading city data from GitHub...');
-    
+
     // Load city borders and tourism data
     Promise.all([
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities_borders.geojson"),
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities_tourism.geojson")
-    ]).then(function([bordersData, tourismData]) {
-        
+    ]).then(function ([bordersData, tourismData]) {
+
         console.log('Data loaded successfully');
         console.log('Total borders:', bordersData.features.length);
         console.log('Total tourism points:', tourismData.features.length);
-        
+
         // Log first border properties to see structure
         if (bordersData.features.length > 0) {
             console.log('First border properties:', Object.keys(bordersData.features[0].properties));
             console.log('First border sample:', bordersData.features[0].properties);
         }
-        
+
         // Filter for the specific city - try ALL property values
         const cityBorder = bordersData.features.filter(d => {
             // Get ALL property values and check if any matches the city name
@@ -1751,12 +1697,12 @@ function loadCityDetailMap(cityName) {
             }
             return false;
         });
-        
+
         console.log('Matching city borders found:', cityBorder.length);
-        
+
         if (cityBorder.length === 0) {
             console.error(`No border found for city: ${cityName}`);
-            
+
             // Log all unique city-like property values
             const allCityValues = new Set();
             bordersData.features.forEach(d => {
@@ -1767,7 +1713,7 @@ function loadCityDetailMap(cityName) {
                 });
             });
             console.log('All unique values in borders (first 20):', Array.from(allCityValues).slice(0, 20));
-            
+
             // Show error message with better info
             citySvg.append("text")
                 .attr("x", width / 2)
@@ -1777,7 +1723,7 @@ function loadCityDetailMap(cityName) {
                 .attr("font-size", "18px")
                 .attr("font-weight", "bold")
                 .text(`City border not found: ${cityName}`);
-            
+
             citySvg.append("text")
                 .attr("x", width / 2)
                 .attr("y", height / 2 + 10)
@@ -1785,50 +1731,50 @@ function loadCityDetailMap(cityName) {
                 .attr("fill", "#666")
                 .attr("font-size", "14px")
                 .text('Check console for available cities');
-            
+
             return;
         }
-        
+
         // Log first tourism point properties to see structure
         if (tourismData.features.length > 0) {
             console.log('First tourism point properties:', Object.keys(tourismData.features[0].properties));
             console.log('First tourism point sample:', tourismData.features[0].properties);
         }
-        
+
         // Filter tourism points for THIS CITY ONLY using the "layer" attribute
         const cityTourism = tourismData.features.filter(d => {
             const props = d.properties;
-            
+
             // PRIMARY STRATEGY: Check the "layer" attribute
             // It has format "Tourism_CityName", so we strip "Tourism_" prefix
             if (props.layer) {
                 const layerValue = String(props.layer);
                 // Remove "Tourism_" prefix (case-insensitive)
                 const layerCity = layerValue.replace(/^Tourism_/i, '');
-                
+
                 if (layerCity.toLowerCase() === cityName.toLowerCase()) {
                     return true;
                 }
             }
-            
+
             // FALLBACK STRATEGY: Check all other properties for city name match
             for (let key in props) {
                 if (key === 'layer') continue; // Already checked above
-                
+
                 const value = String(props[key] || "");
                 if (value.toLowerCase() === cityName.toLowerCase()) {
                     return true;
                 }
             }
-            
+
             return false; // Don't include points that don't match this city
         });
-        
+
         console.log('Tourism points found for city:', cityTourism.length);
-        console.log('Sample tourism types:', cityTourism.slice(0, 5).map(d => 
+        console.log('Sample tourism types:', cityTourism.slice(0, 5).map(d =>
             d.properties.tourism_ty || d.properties.tourism_type || d.properties.type
         ));
-        
+
         // Fit projection to TOURISM POINTS extent instead of city border
         if (cityTourism.length > 0) {
             // Create a FeatureCollection from tourism points for fitting
@@ -1843,7 +1789,7 @@ function loadCityDetailMap(cityName) {
             cityProjection.fitSize([width, height], cityBorder[0]);
             console.log('Projection fitted to city border (no tourism points found)');
         }
-        
+
         // Draw city border (will be shown in background)
         g_border.selectAll("path")
             .data(cityBorder)
@@ -1854,19 +1800,19 @@ function loadCityDetailMap(cityName) {
             .attr("stroke", "#667eea")
             .attr("stroke-width", 2)
             .attr("stroke-dasharray", "5,5");
-        
+
         console.log('City border drawn');
-        
+
         // Store current zoom level for symbol scaling
         let currentCityZoom = 1;
-        
+
         // Function to calculate symbol size based on zoom (10x smaller than before)
         function getSymbolSize(zoomLevel) {
             // Base size 1.6px at zoom 1, scales up to 3.2px at zoom 8
             // This makes symbols about 10 times smaller
             return Math.max(1.6, Math.min(3.2, 1.6 * Math.sqrt(zoomLevel)));
         }
-        
+
         // Draw tourism points with dynamic sizing
         const tourismPoints = g_tourism.selectAll("text")
             .data(cityTourism)
@@ -1882,8 +1828,8 @@ function loadCityDetailMap(cityName) {
                 return coords ? coords[1] : 0;
             })
             .text(d => {
-                const type = d.properties.tourism_ty || d.properties.tourism_type || 
-                            d.properties.type || d.properties.tourism || '';
+                const type = d.properties.tourism_ty || d.properties.tourism_type ||
+                    d.properties.type || d.properties.tourism || '';
                 const emoji = tourismEmojis[type] || tourismEmojis[type.toLowerCase()] || '📍';
                 return emoji;
             })
@@ -1893,16 +1839,16 @@ function loadCityDetailMap(cityName) {
             .attr("cursor", "pointer")
             .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.4))")
             .style("pointer-events", "all")
-            .on("mouseover", function(event, d) {
-                const type = d.properties.tourism_ty || d.properties.tourism_type || 
-                            d.properties.type || d.properties.tourism || 'Unknown';
+            .on("mouseover", function (event, d) {
+                const type = d.properties.tourism_ty || d.properties.tourism_type ||
+                    d.properties.type || d.properties.tourism || 'Unknown';
                 const name = d.properties.name || d.properties.NAME || d.properties.Name || 'Unnamed';
-                
+
                 d3.select(this)
                     .transition()
                     .duration(200)
                     .attr("font-size", (getSymbolSize(currentCityZoom) * 2.5) + "px");
-                
+
                 // Show simple tooltip
                 const tooltip = d3.select("body").append("div")
                     .attr("class", "city-tourism-tooltip")
@@ -1919,67 +1865,67 @@ function loadCityDetailMap(cityName) {
                     .style("left", (event.pageX + 15) + "px")
                     .style("top", (event.pageY - 10) + "px")
                     .style("opacity", 0);
-                
+
                 tooltip.transition().duration(200).style("opacity", 1);
             })
-            .on("mouseout", function() {
+            .on("mouseout", function () {
                 d3.select(this)
                     .transition()
                     .duration(200)
                     .attr("font-size", getSymbolSize(currentCityZoom) + "px");
-                
+
                 d3.selectAll(".city-tourism-tooltip").remove();
             });
-        
+
         console.log('Tourism points drawn:', tourismPoints.size());
-        
+
         // Create tourism legend
         createTourismLegend(cityTourism);
-        
+
         // Setup zoom for city detail map with dynamic symbol scaling
         const cityZoom = d3.zoom()
             .scaleExtent([1, 8])
-            .on("zoom", function(event) {
+            .on("zoom", function (event) {
                 g_border.attr("transform", event.transform);
                 g_tourism.attr("transform", event.transform);
-                
+
                 // Update current zoom level and symbol sizes
                 currentCityZoom = event.transform.k;
                 const newSize = getSymbolSize(currentCityZoom);
-                
+
                 g_tourism.selectAll(".tourism-point")
                     .attr("font-size", newSize + "px");
             });
-        
+
         citySvg.call(cityZoom);
         citySvg.on("dblclick.zoom", null); // Disable double-click zoom
-        
+
         // Setup city zoom button controls
         const cityZoomInBtn = document.getElementById('cityZoomInBtn');
         const cityZoomOutBtn = document.getElementById('cityZoomOutBtn');
         const cityZoomResetBtn = document.getElementById('cityZoomResetBtn');
-        
+
         if (cityZoomInBtn) {
-            cityZoomInBtn.onclick = function() {
+            cityZoomInBtn.onclick = function () {
                 citySvg.transition().duration(750).call(cityZoom.scaleBy, 1.5);
             };
         }
         if (cityZoomOutBtn) {
-            cityZoomOutBtn.onclick = function() {
+            cityZoomOutBtn.onclick = function () {
                 citySvg.transition().duration(750).call(cityZoom.scaleBy, 0.67);
             };
         }
         if (cityZoomResetBtn) {
-            cityZoomResetBtn.onclick = function() {
+            cityZoomResetBtn.onclick = function () {
                 citySvg.transition().duration(750).call(cityZoom.transform, d3.zoomIdentity);
             };
         }
-        
+
         console.log('City detail map fully loaded');
-        
-    }).catch(function(error) {
+
+    }).catch(function (error) {
         console.error("Error loading city detail data:", error);
-        
+
         // Show error message on map
         citySvg.append("text")
             .attr("x", width / 2)
@@ -1995,14 +1941,14 @@ function createTourismLegend(tourismData) {
     // Get unique tourism types
     const types = new Set();
     tourismData.forEach(d => {
-        const type = d.properties.tourism_ty || d.properties.tourism_type || 
-                    d.properties.type || '';
+        const type = d.properties.tourism_ty || d.properties.tourism_type ||
+            d.properties.type || '';
         if (type) types.add(type);
     });
-    
+
     // Create legend HTML
     let legendHTML = '<div class="tourism-legend"><h3>Tourism Sites</h3>';
-    
+
     const sortedTypes = Array.from(types).sort();
     sortedTypes.forEach(type => {
         const emoji = tourismEmojis[type] || '📍';
@@ -2014,9 +1960,9 @@ function createTourismLegend(tourismData) {
             </div>
         `;
     });
-    
+
     legendHTML += '</div>';
-    
+
     // Add legend to city detail view
     const cityDetailView = document.getElementById('cityDetailView');
     const existingLegend = cityDetailView.querySelector('.tourism-legend');
@@ -2027,7 +1973,7 @@ function createTourismLegend(tourismData) {
 }
 
 // Setup back button
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const backBtn = document.getElementById('backToMapBtn');
     if (backBtn) {
         backBtn.addEventListener('click', hideCityDetailView);
@@ -2148,29 +2094,29 @@ function setupMethodologyModal() {
     const methodologyBtn = document.getElementById('methodologyBtn');
     const modal = document.getElementById('methodologyModal');
     const closeBtn = document.getElementById('closeMethodologyBtn');
-    
+
     if (!methodologyBtn || !modal || !closeBtn) return;
-    
+
     // Open modal
-    methodologyBtn.addEventListener('click', function() {
+    methodologyBtn.addEventListener('click', function () {
         modal.style.display = 'flex';
         loadMethodologyContent();
     });
-    
+
     // Close modal
-    closeBtn.addEventListener('click', function() {
+    closeBtn.addEventListener('click', function () {
         modal.style.display = 'none';
     });
-    
+
     // Close on outside click
-    modal.addEventListener('click', function(e) {
+    modal.addEventListener('click', function (e) {
         if (e.target === modal) {
             modal.style.display = 'none';
         }
     });
-    
+
     // Close on escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && modal.style.display === 'flex') {
             modal.style.display = 'none';
         }
@@ -2180,7 +2126,7 @@ function setupMethodologyModal() {
 function loadMethodologyContent() {
     const container = document.getElementById('methodologyContent');
     if (!container) return;
-    
+
     container.innerHTML = methodologyData.map(item => `
         <div class="methodology-card">
             <div class="methodology-card-header">
@@ -2197,3 +2143,166 @@ function loadMethodologyContent() {
         </div>
     `).join('');
 }
+
+// ===== INCOMING CALL & INTRO MODAL LOGIC =====
+
+const startExperienceOverlay = document.getElementById("startExperienceOverlay");
+const startExperienceBtn = document.getElementById("startExperienceBtn");
+const callOverlay = document.getElementById("callOverlay");
+const introModal = document.getElementById("introModal");
+const mapSection = document.getElementById("mapSection");
+const zoomControls = document.getElementById("zoomControls");
+
+const answerBtn = document.getElementById("answerCall");
+const declineBtn = document.getElementById("declineCall");
+const closeIntroBtn = document.getElementById("closeIntro");
+const closeCallBtn = document.getElementById("closeCallOverlay");
+
+// Create audio element for ringtone
+const ringtone = new Audio(
+    "https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/nokia-ringtone.mp3"
+);
+ringtone.loop = true;
+ringtone.preload = "auto";
+ringtone.volume = 1.0;
+
+// Track ringtone playback state
+let ringtoneHasPlayed = false;
+let audioUnlocked = false;
+let experienceStarted = false;
+
+// Wait for audio to be loaded
+ringtone.addEventListener('canplaythrough', () => {
+    console.log("Audio loaded and ready");
+}, { once: true });
+
+// Force load the audio
+ringtone.load();
+
+// START EXPERIENCE BUTTON - This is the key to unlocking audio
+startExperienceBtn.addEventListener("click", async () => {
+    console.log("Start Experience button clicked - unlocking audio");
+    
+    // Hide start overlay with fade out
+    startExperienceOverlay.style.transition = "opacity 0.5s ease";
+    startExperienceOverlay.style.opacity = "0";
+    
+    setTimeout(() => {
+        startExperienceOverlay.style.display = "none";
+    }, 500);
+    
+    // Mark experience as started
+    experienceStarted = true;
+    
+    // Unlock and play audio immediately after user click
+    try {
+        ringtone.currentTime = 0;
+        await ringtone.play();
+        audioUnlocked = true;
+        console.log("✓ Audio unlocked and playing!");
+        
+        // Show call overlay after a short delay
+        setTimeout(() => {
+            callOverlay.style.display = "flex";
+        }, 800);
+        
+    } catch (error) {
+        console.log("Audio playback error:", error);
+        // Even if audio fails, show the call overlay
+        setTimeout(() => {
+            callOverlay.style.display = "flex";
+            // Try playing again
+            ringtone.currentTime = 0;
+            ringtone.play().catch(e => console.log("Second play attempt failed:", e));
+        }, 800);
+    }
+});
+
+// Function to stop ringtone
+function stopRingtone() {
+    ringtone.pause();
+    ringtone.currentTime = 0;
+    ringtoneHasPlayed = true;
+    console.log("Ringtone stopped and reset");
+}
+
+// Show call overlay after page loads
+// Show start experience overlay when page loads
+window.addEventListener('load', () => {
+    console.log("Page loaded - showing start experience overlay");
+    // Start experience overlay is already visible by default
+    // User must click the button to begin
+});
+
+// Answer button - show intro modal
+answerBtn.addEventListener("click", () => {
+    stopRingtone();
+    callOverlay.style.display = "none";
+    introModal.style.display = "flex";
+});
+
+// Decline button - go directly to map
+declineBtn.addEventListener("click", () => {
+    stopRingtone();
+    callOverlay.style.display = "none";
+    showMapSection();
+});
+
+// Close call overlay button - go directly to map
+closeCallBtn.addEventListener("click", () => {
+    stopRingtone();
+    callOverlay.style.display = "none";
+    showMapSection();
+});
+
+// Close intro button - show map
+closeIntroBtn.addEventListener("click", () => {
+    introModal.style.display = "none";
+    showMapSection();
+});
+
+// Function to show map section
+function showMapSection() {
+    // Map section is always visible now (no map-hidden class removal needed)
+    // Just make sure it's displayed
+    mapSection.style.display = "block";
+    if (zoomControls) {
+        zoomControls.style.display = "flex";
+    }
+
+    // Initialize the map if not already initialized
+    if (!window.mapInitialized) {
+        console.log("Initializing map after user interaction");
+        initializeCriteriaPanel();
+        initializeMapStructure();
+        window.mapInitialized = true;
+    }
+}
+
+// Close intro modal by clicking outside
+introModal.addEventListener("click", function (e) {
+    if (e.target === introModal) {
+        introModal.style.display = "none";
+        showMapSection();
+    }
+});
+
+// Close intro modal with Escape key
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        if (introModal.style.display === "flex") {
+            introModal.style.display = "none";
+            showMapSection();
+        }
+        if (callOverlay.style.display === "flex") {
+            stopRingtone();
+            callOverlay.style.display = "none";
+            showMapSection();
+        }
+    }
+});
+
+// Ensure ringtone stops if user navigates away
+window.addEventListener('beforeunload', () => {
+    stopRingtone();
+});
