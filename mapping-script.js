@@ -833,34 +833,39 @@ function createCriteriaPieChart() {
     // Remove any existing pie chart container
     d3.select("#pieChartContainer").remove();
 
+    // Detect if mobile
+    const isMobile = window.innerWidth <= 768;
+
     // Create combined container for pie chart and proportional legend
     const combinedContainer = d3.select("#mapContainer")
         .append("div")
         .attr("id", "pieChartContainer")
+        .attr("class", isMobile ? "pie-container-mobile" : "pie-container-desktop")
         .style("position", "absolute")
-        .style("top", "10px")
-        .style("left", "20px")
+        .style("top", isMobile ? "5px" : "10px")
+        .style("left", isMobile ? "5px" : "20px")
         .style("background", "white")
-        .style("border-radius", "12px")
-        .style("padding", "12px")
+        .style("border-radius", isMobile ? "6px" : "12px")
+        .style("padding", isMobile ? "3px" : "12px")
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("z-index", "1000")
         .style("pointer-events", "all")
-        .style("max-width", "200px");
+        .style("max-width", isMobile ? "90px" : "200px");
 
     // Add title for pie chart
     combinedContainer.append("div")
-        .style("font-size", "14px")
+        .style("font-size", isMobile ? "7px" : "14px")
         .style("font-weight", "bold")
-        .style("margin-bottom", "6px")
+        .style("margin-bottom", isMobile ? "2px" : "6px")
         .style("text-align", "center")
         .style("color", "#333")
-        .text("Selected Priorities");
+        .style("line-height", "1")
+        .text("Priorities");
 
-    // Create SVG for smaller pie chart
-    const pieWidth = 120;
-    const pieHeight = 120;
-    const radius = Math.min(pieWidth, pieHeight) / 2 - 10;
+    // Create SVG for pie chart - much smaller on mobile
+    const pieWidth = isMobile ? 30 : 120;
+    const pieHeight = isMobile ? 30 : 120;
+    const radius = Math.min(pieWidth, pieHeight) / 2 - (isMobile ? 2 : 10);
 
     const pieSvg = combinedContainer.append("svg")
         .attr("width", pieWidth)
@@ -897,18 +902,19 @@ function createCriteriaPieChart() {
         .attr("d", arc)
         .attr("fill", d => colorScale(d.data.id))
         .attr("stroke", "white")
-        .attr("stroke-width", 2)
+        .attr("stroke-width", isMobile ? 0.5 : 2)
         .style("opacity", 0.85)
         .on("mouseover", function (event, d) {
             d3.select(this)
                 .style("opacity", 1)
                 .style("cursor", "pointer");
 
-            // Show tooltip
+            // Show tooltip - responsive sizing
+            const isMobileTooltip = window.innerWidth <= 768;
             div.html(`
-                <div style="font-family: Arial, sans-serif; padding: 5px;">
-                    <div style="font-size: 16px; margin-bottom: 5px;">${d.data.icon} ${d.data.name}</div>
-                    <div style="font-size: 14px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
+                <div style="font-family: Arial, sans-serif; padding: ${isMobileTooltip ? '3px' : '5px'};">
+                    <div style="font-size: ${isMobileTooltip ? '8px' : '16px'}; margin-bottom: ${isMobileTooltip ? '2px' : '5px'};">${d.data.icon} ${d.data.name}</div>
+                    <div style="font-size: ${isMobileTooltip ? '7px' : '14px'}; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
             `)
                 .style("left", (event.pageX + 5) + "px")
@@ -920,21 +926,36 @@ function createCriteriaPieChart() {
             d3.select(this)
                 .style("opacity", 0.85);
             div.style("opacity", 0).style("display", "none");
+        })
+        .on("touchstart", function (event, d) {
+            // Mobile touch support - 50% smaller
+            d3.select(this).style("opacity", 1);
+            div.html(`
+                <div style="font-family: Arial, sans-serif; padding: 3px;">
+                    <div style="font-size: 8px; margin-bottom: 2px;">${d.data.icon} ${d.data.name}</div>
+                    <div style="font-size: 7px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
+                </div>
+            `)
+                .style("left", (event.touches[0].pageX + 5) + "px")
+                .style("top", (event.touches[0].pageY - 5) + "px")
+                .style("opacity", 0.98)
+                .style("display", "block");
         });
 
     // Add separator line
     combinedContainer.append("div")
         .style("border-top", "1px solid #ddd")
-        .style("margin", "10px 0");
+        .style("margin", isMobile ? "2px 0" : "10px 0");
 
     // Add "Index of Choice" title
     combinedContainer.append("div")
-        .style("font-size", "13px")
+        .style("font-size", isMobile ? "6px" : "13px")
         .style("font-weight", "bold")
         .style("text-align", "center")
         .style("color", "#00a04b")
-        .style("margin-bottom", "8px")
-        .text("Index of Choice");
+        .style("margin-bottom", isMobile ? "2px" : "8px")
+        .style("line-height", "1")
+        .text("Index");
 
     // Add proportional legend circles container
     const legendCirclesContainer = combinedContainer.append("div")
@@ -942,10 +963,14 @@ function createCriteriaPieChart() {
         .style("display", "flex")
         .style("flex-direction", "column")
         .style("align-items", "center")
-        .style("gap", "6px");
+        .style("gap", isMobile ? "1px" : "6px");
 
-    // Create legend items with circles
-    const legendValues = [
+    // Create legend items with circles - scaled for mobile
+    const legendValues = isMobile ? [
+        { label: "High", size: 8, color: "#3dde83" },
+        { label: "Mid", size: 6, color: "#2e8d57" },
+        { label: "Low", size: 4, color: "#044613" }
+    ] : [
         { label: "High", size: 20, color: "#3dde83" },
         { label: "Mid", size: 14, color: "#2e8d57" },
         { label: "Low", size: 9, color: "#044613" }
@@ -955,7 +980,7 @@ function createCriteriaPieChart() {
         const legendItem = legendCirclesContainer.append("div")
             .style("display", "flex")
             .style("align-items", "center")
-            .style("gap", "8px")
+            .style("gap", isMobile ? "3px" : "8px")
             .style("width", "100%");
 
         // Circle
@@ -964,18 +989,19 @@ function createCriteriaPieChart() {
             .style("height", item.size + "px")
             .style("background", item.color)
             .style("border-radius", "50%")
-            .style("border", "1px solid #000")
+            .style("border", isMobile ? "0.5px solid #000" : "1px solid #000")
             .style("flex-shrink", "0");
 
         // Label
         legendItem.append("div")
-            .style("font-size", "12px")
+            .style("font-size", isMobile ? "6px" : "12px")
             .style("color", "#333")
             .style("font-weight", "500")
+            .style("line-height", "1")
             .text(item.label);
     });
 
-    console.log("Combined pie chart and proportional legend created");
+    console.log("Combined pie chart and proportional legend created for", isMobile ? "mobile" : "desktop");
 }
 
 // Calculate index of choice for a city based on user criteria
@@ -1118,15 +1144,18 @@ function updateScaleBar(transform) {
     const adaptive = getAdaptiveScaleDistance(currentPixelLengthPerMeter);
     const dynamicScaleLength = adaptive.distance * currentPixelLengthPerMeter;
 
+    // Check if mobile device
+    const isMobile = window.innerWidth <= 768;
+
     // FIXED POSITIONS: Independent of right panel state
-    // Desktop: Fixed at 120px from left
+    // Desktop: Fixed at 120px from left, aligned with zoom controls (bottom: 20px)
     // Mobile: Centered, higher to avoid zoom controls
     const xPos = isMobile ?
         (width - dynamicScaleLength) / 2 : // Center on mobile
         120; // Fixed left position on desktop (independent of panel)
     const yPos = isMobile ?
-        (height+160) : // A little bit higher on mobile to avoid zoom controls
-        (height + 8); // Desktop: just above bottom
+        (height + 240) : // Higher on mobile to avoid zoom controls
+        (height - 20); // Desktop: same height as zoom controls (bottom: 20px)
 
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
     const segment = dynamicScaleLength / 4;
@@ -1142,6 +1171,9 @@ function updateScaleBar(transform) {
         .attr("width", dynamicScaleLength + (bgPadding * 2))
         .attr("height", bgHeight)
         .attr("fill", "rgba(255, 255, 255, 0.98)")
+        .attr("rx", isMobile ? 10 : 6)
+        .attr("ry", isMobile ? 10 : 6)
+        .attr("opacity",0.7)
         .attr("rx", isMobile ? 10 : 6)
         .attr("ry", isMobile ? 10 : 6)
         .attr("opacity",0.7)
@@ -1408,22 +1440,64 @@ function loadCities(currentTransform = null) {
                 const x = event.pageX;
                 const y = event.pageY;
 
+                // Detect mobile for responsive tooltip sizing
+                const isMobileTooltip = window.innerWidth <= 768;
+                
+                // Responsive sizing variables (50% smaller on mobile)
+                const sizes = isMobileTooltip ? {
+                    minWidth: '125px',
+                    headerPadding: '5px',
+                    headerFont: '8px',
+                    subtitleFont: '8px',
+                    subtitlePadding: '3px',
+                    cellPadding: '3px',
+                    cellFont: '8px',
+                    prioritiesFont: '8px',
+                    prioritiesPadding: '4px 3px 3px 3px',
+                    iconFont: '10px',
+                    nameFont: '8px',
+                    barHeight: '9px',
+                    barRadius: '2px',
+                    valueFont: '6px',
+                    valuePadding: '1px',
+                    indicatorFont: '5px',
+                    gap: '4px'
+                } : {
+                    minWidth: '250px',
+                    headerPadding: '10px',
+                    headerFont: '16px',
+                    subtitleFont: '16px',
+                    subtitlePadding: '6px',
+                    cellPadding: '6px',
+                    cellFont: '16px',
+                    prioritiesFont: '16px',
+                    prioritiesPadding: '8px 6px 6px 6px',
+                    iconFont: '20px',
+                    nameFont: '16px',
+                    barHeight: '18px',
+                    barRadius: '4px',
+                    valueFont: '12px',
+                    valuePadding: '2px',
+                    indicatorFont: '10px',
+                    gap: '8px'
+                };
+
                 // Build detailed tooltip with inline styles
                 let tooltipHTML = '<div style="font-family: Arial, sans-serif;">';
-                tooltipHTML += '<table style="border-collapse: collapse; min-width: 250px; background: white;">';
+                tooltipHTML += '<table style="border-collapse: collapse; min-width: ' + sizes.minWidth + '; background: white;">';
 
                 const bgColor = colorScale(d.properties.indexOfChoice);
-                tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: white; padding: 10px; text-align: center; font-size: 16px; font-weight: bold;">' + d.properties.city + '</th></tr>';
+                tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: white; padding: ' + sizes.headerPadding + '; text-align: center; font-size: ' + sizes.headerFont + '; font-weight: bold;">' + d.properties.city + '</th></tr>';
 
-                tooltipHTML += '<tr><td colspan="2" style="font-size: 16px; font-style: italic; padding: 6px; text-align: center; color: #666;">Ciudad</td></tr>';
+                tooltipHTML += '<tr><td colspan="2" style="font-size: ' + sizes.subtitleFont + '; font-style: italic; padding: ' + sizes.subtitlePadding + '; text-align: center; color: #666;">Ciudad</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold; font-size: 16px;">Population:</td><td style="padding: 6px; text-align: right; font-size: 16px;">' + d.properties.population.toLocaleString() + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString() + '</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: 6px; font-weight: bold; font-size: 16px;">Index of Choice:</td><td style="padding: 6px; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: 16px;">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Index of Choice:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
                 // Show which criteria contributed with bar charts
                 if (window.userCriteria && window.userCriteria.length > 0) {
-                    tooltipHTML += '<tr><td colspan="2" style="padding: 8px 6px 6px 6px; font-weight: bold; font-size: 16px; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
+                    tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.prioritiesPadding + '; font-weight: bold; font-size: ' + sizes.prioritiesFont + '; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
 
                     window.userCriteria.forEach(criterion => {
                         const attributeInfo = cityDataAttributes[criterion.id];
@@ -1455,24 +1529,24 @@ function loadCities(currentTransform = null) {
                         // Prepare bar content - show relationship indicator
                         let barContent = '';
                         if (attributeInfo.inverse) {
-                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">⚠ lower real values are better</span>';
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">⚠ lower is better</span>';
                         } else {
-                            barContent = '<span style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: #333;">✓ higher real values are     better</span>';
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher is better</span>';
                         }
 
                         // Always show normalized score on the right side
                         const normalizedScoreText = scoreValue.toFixed(1) + '/10';
 
-                        tooltipHTML += '<tr><td colspan="2" style="padding: 6px;">';
-                        tooltipHTML += '<div style="display: flex; align-items: center; gap: 8px;">';
-                        tooltipHTML += '<span style="font-size: 20px;">' + criterion.icon + '</span>';
+                        tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.cellPadding + ';">';
+                        tooltipHTML += '<div style="display: flex; align-items: center; gap: ' + sizes.gap + ';">';
+                        tooltipHTML += '<span style="font-size: ' + sizes.iconFont + ';">' + criterion.icon + '</span>';
                         tooltipHTML += '<div style="flex: 1;">';
-                        tooltipHTML += '<div style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">' + criterion.name + '</div>';
-                        tooltipHTML += '<div style="background: #e9ecef; height: 18px; border-radius: 4px; overflow: hidden; position: relative;">';
+                        tooltipHTML += '<div style="font-size: ' + sizes.nameFont + '; font-weight: 600; margin-bottom: 1px;">' + criterion.name + '</div>';
+                        tooltipHTML += '<div style="background: #e9ecef; height: ' + sizes.barHeight + '; border-radius: ' + sizes.barRadius + '; overflow: hidden; position: relative;">';
                         tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
                         tooltipHTML += barContent;
                         tooltipHTML += '</div>';
-                        tooltipHTML += '<div style="font-size: 12px; color: #666; margin-top: 2px; display: flex; justify-content: space-between;">';
+                        tooltipHTML += '<div style="font-size: ' + sizes.valueFont + '; color: #666; margin-top: ' + sizes.valuePadding + '; display: flex; justify-content: space-between;">';
                         tooltipHTML += '<span>Value: ' + displayValue + '</span>';
                         tooltipHTML += '<span style="color: #667eea; font-weight: 600;">' + normalizedScoreText + '</span>';
                         tooltipHTML += '</div>';

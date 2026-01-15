@@ -1809,7 +1809,7 @@ html, body {
 
   /* ===== ZOOM CONTROLS MOBILE ===== */
   #zoomControls {
-    bottom: 70px;
+    bottom: 60px;
     left: 50%;
     transform: translateX(-50%);
     padding: 4px;
@@ -1966,17 +1966,15 @@ html, body {
   }
 
   /* Pie Chart - hide on mobile or make tiny */
-  #pieChartContainer {
-    display: none !important; /* Hide completely on mobile for more map space */
-  }
-
   /* Alternative: if you want to keep it, make it tiny */
-  /* #pieChartContainer {
-    top: 60px !important;
+  #pieChartContainer {
+    top: 140px !important;
     left: 5px !important;
-    padding: 5px !important;
-    max-width: 90px;
-    font-size: 0.65em;
+    padding: 3px !important;
+    max-width: 70px;
+    width: 50px !important;
+    height: 80px !important;
+    font-size: 0.5em;
   }
 
   #pieChartContainer > div:first-child {
@@ -1985,15 +1983,15 @@ html, body {
   }
 
   #pieChartContainer svg {
-    width: 80px !important;
-    height: 80px !important;
+    width: 30px !important;
+    height: 30px !important;
   } */
 
   /* ===== TOOLTIP MOBILE ===== */
   .tooltip {
-    font-size: 10px;
-    padding: 6px;
-    max-width: 85vw;
+    font-size: 6px;
+    padding: 3px;
+    max-width: 80vw;
   }
 
   .tooltip table {
@@ -2001,13 +1999,13 @@ html, body {
   }
 
   .tooltip th {
-    padding: 4px 5px;
-    font-size: 11px;
+    padding: 3px 4px;
+    font-size: 6px;
   }
 
   .tooltip td {
-    padding: 2px 4px;
-    font-size: 9px;
+    padding: 1px 2px;
+    font-size: 6px;
   }
 
   /* ===== CITY DETAIL VIEW MOBILE ===== */
