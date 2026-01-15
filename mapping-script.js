@@ -1,6 +1,6 @@
 // This script handles the interactive map with dynamic criteria selection
-var width = 450;
-var height = 250;
+var width = 550;
+var height = 350;
 var svg, g_map, g_autonomas, g_prov, g_labels, g_cities, s, projection, path, zoom;
 
 var div = d3.select("body")
@@ -748,10 +748,10 @@ function initializeMapStructure() {
     /* D3 ZOOM CONTROL */
     // Define the zoom behavior with tighter limits
     zoom = d3.zoom()
-        .scaleExtent([0.85, 3]) // Restricted zoom: slightly out to moderately in
+        .scaleExtent([0.75, 3.5]) // Restricted zoom: slightly out to moderately in
         .translateExtent([
-            [-width * 0.2, -height * 0.2],  // Top-left limit (20% beyond)
-            [width * 1.2, height * 1.2]      // Bottom-right limit (20% beyond)
+            [-width * 0.25, -height * 0.25],  // Top-left limit (20% beyond)
+            [width * 1.25, height * 1.25]      // Bottom-right limit (20% beyond)
         ])
         .on("zoom", zoomed); // Specify the function to call on zoom events
 

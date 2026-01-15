@@ -1073,7 +1073,7 @@ html, body {
 #legend {
   position: absolute;
   left: 20px;
-  bottom: 20px;
+  bottom: 160px;
   width: 280px;
   background: white;
   padding: 15px;
@@ -1694,7 +1694,7 @@ html, body {
     left: 0;
     width: auto; /* Not full width - just content width */
     max-width: 80%;
-    height: 70px;
+    height: 100px;
     padding: 2px 4px; /* Minimal padding */
     border-radius: 0 0 6px 6px;
     overflow: visible;
@@ -1720,7 +1720,7 @@ html, body {
   .legend-title {
     font-size: 0.8em !important;
     margin: 0 !important;
-    line-height: 1;
+    line-height: 2;
     font-weight: 700;
     white-space: nowrap;
   }
@@ -1730,14 +1730,14 @@ html, body {
     display: block !important;
     font-size: 0.7em !important;
     margin: 0 !important;
-    line-height: 1 !important;
+    line-height: 1.5 !important;
   }
 
   .legend-credits {
     display: block !important;
     font-size: 0.7em !important;
     margin: 0 !important;
-    line-height: 1 !important;
+    line-height: 1.5 !important;
   }
 
   .credits-subtitle {
@@ -1748,7 +1748,7 @@ html, body {
     display: block !important; /* Show the note */
     font-size: 0.7em !important;
     margin: 0 !important;
-    line-height: 1 !important;
+    line-height: 1.5 !important;
     text-align: left;
   }
 
@@ -1757,12 +1757,14 @@ html, body {
     display: block !important;
     font-size: 0.7em !important;
     margin: 0 !important;
+    line-height: 1.5 !important;
   }
   
   #legend .legend-note {
     display: block !important;
     font-size: 0.7em !important;
     margin: 0 !important;
+    line-height: 1.5 !important;
   }
 
   /* City Search - ultra compact */
@@ -1771,14 +1773,14 @@ html, body {
   }
 
   #citySearchInput {
-    font-size: 0.55em;
+    font-size: 0.7em;
     padding: 2px 3px;
     border-width: 1px;
   }
 
   #citySearchResults {
     max-height: 150px;
-    font-size: 0.55em;
+    font-size: 0.7em;
   }
 
   .search-result-item {
@@ -1794,6 +1796,7 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 1px;
+    line-height: 1.5 !important;
   }
 
   .methodology-icon {
@@ -1801,7 +1804,7 @@ html, body {
   }
 
   .methodology-label {
-    display: none !important; /* Hide text on mobile */
+    font-size: 0.8em;/* Hide text on mobile */
   }
 
   /* ===== ZOOM CONTROLS MOBILE ===== */
