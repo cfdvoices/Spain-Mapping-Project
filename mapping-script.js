@@ -454,27 +454,7 @@ function updateCityCursorStyle() {
     g_cities.selectAll(".city-point").style("cursor", cursorStyle);
 }
 
-// Function to update positions of map elements based on panel state
-function updateMapElementPositions() {
-    const panel = document.getElementById('criteriaPanel');
-    const isPanelMinimized = panel && panel.classList.contains('minimized');
 
-    // Don't change width - keep it at 450 so elements stay within viewBox
-    // The CSS handles expanding the container, but viewBox stays the same
-    // This keeps all elements visible and at the same positions
-
-    // Update proportional legend position (uses width value which stays at 450)
-    if (proportionalLegendGroup && window.currentRadiusScale) {
-        const currentTransform = d3.zoomTransform(svg.node());
-        updateProportionalLegend(currentTransform.k);
-    }
-
-    // Update scale bar position (uses width value which stays at 450)
-    if (svg) {
-        const currentTransform = d3.zoomTransform(svg.node());
-        updateScaleBar(currentTransform);
-    }
-}
 
 // Initialize the criteria selection panel
 function initializeCriteriaPanel() {
@@ -527,6 +507,22 @@ function setupTogglePanelButton() {
     
     if (!toggleBtn || !criteriaPanel) return;
     
+    // Function to update icon based on screen size and state
+    function updateToggleIcon() {
+        const isMobile = window.innerWidth <= 768;
+        const isMinimized = criteriaPanel.classList.contains('minimized');
+        
+        if (toggleIcon) {
+            if (isMobile) {
+                // Mobile: vertical toggle
+                toggleIcon.textContent = isMinimized ? '▼' : '▲';
+            } else {
+                // Desktop: horizontal toggle
+                toggleIcon.textContent = isMinimized ? '◀' : '▶';
+            }
+        }
+    }
+    
     // Remove any existing listeners
     const newToggleBtn = toggleBtn.cloneNode(true);
     toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
@@ -538,12 +534,23 @@ function setupTogglePanelButton() {
         if (criteriaPanel.classList.contains('minimized')) {
             // Panel is minimized
             if (panelContent) panelContent.style.display = 'none';
-            if (toggleIcon) toggleIcon.textContent = '◀'; // Point left when minimized
         } else {
             // Panel is expanded
             if (panelContent) panelContent.style.display = 'block';
-            if (toggleIcon) toggleIcon.textContent = '▶'; // Point right when expanded
         }
+        
+        // Update icon after toggle
+        updateToggleIcon();
+    });
+    
+    // Set initial icon
+    updateToggleIcon();
+    
+    // Update icon on window resize (orientation change, etc.)
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(updateToggleIcon, 100);
     });
     
     console.log('Toggle panel button initialized');
@@ -1036,10 +1043,12 @@ function calculateIndexOfChoice(cityProperties) {
 
     return index;
 }
+    // Check if mobile device
+    const isMobile = window.innerWidth <= 768;
 
 // --- ADAPTIVE SCALE BAR HELPER ---
 function getAdaptiveScaleDistance(pixelLengthPerMeter) {
-    const targetPixelLength = 70;
+    const targetPixelLength = isMobile ? 180 : 70; //CHANGE HERE TO FIND OUT IF THERE IS AVAILABLE INFORMATION AND TO DETECT THE ACCURATE SCALE BAR SIZE
     let idealDistanceMeters = targetPixelLength / pixelLengthPerMeter;
     let powerOfTen = Math.pow(10, Math.floor(Math.log10(idealDistanceMeters)));
     let roundFactors = [1, 2, 5];
@@ -1109,16 +1118,15 @@ function updateScaleBar(transform) {
     const adaptive = getAdaptiveScaleDistance(currentPixelLengthPerMeter);
     const dynamicScaleLength = adaptive.distance * currentPixelLengthPerMeter;
 
-    // Check if mobile device
-    const isMobile = window.innerWidth <= 768;
-
-    // UPDATED POSITION: Lower bottom, shifted 70px to the right to avoid legend
+    // FIXED POSITIONS: Independent of right panel state
+    // Desktop: Fixed at 120px from left
+    // Mobile: Centered, higher to avoid zoom controls
     const xPos = isMobile ?
         (width - dynamicScaleLength) / 2 : // Center on mobile
-        120; // Left side on desktop, 70px more to the right (20 + 70 = 90)
+        120; // Fixed left position on desktop (independent of panel)
     const yPos = isMobile ?
-        (height - 35) : // Higher position on mobile (well above zoom controls)
-        (height + 8); // Desktop: lower bottom, just above zoom controls
+        (height+160) : // A little bit higher on mobile to avoid zoom controls
+        (height + 8); // Desktop: just above bottom
 
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
     const segment = dynamicScaleLength / 4;
@@ -1139,7 +1147,7 @@ function updateScaleBar(transform) {
         .attr("opacity",0.7)
 
     // Main scale line
-    const lineWeight = isMobile ? 2 : 0.5;
+    const lineWeight = isMobile ? 0.5 : 0.5;
     s.append("line")
         .attr("x1", xPos)
         .attr("y1", yPos + 2)
@@ -1169,7 +1177,7 @@ function updateScaleBar(transform) {
 
         // Tick mark
         const tickHeight = isMobile ? 9 : 5;
-        const tickWeight = isMobile ? 2 : 0.5;
+        const tickWeight = isMobile ? 0.5 : 0.5;
         s.append("line")
             .attr("x1", x)
             .attr("y1", yPos + 2)
