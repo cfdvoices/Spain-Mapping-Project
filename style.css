@@ -934,6 +934,44 @@ html, body {
   transition: color 0.2s ease;
 }
 
+/* Season Selector */
+.season-selector {
+  margin-top: 12px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.season-label {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #333;
+}
+
+.season-select {
+  padding: 8px 12px;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.season-select:hover {
+  border-color: #764ba2;
+  background: #f0f0ff;
+}
+
+.season-select:focus {
+  border-color: #764ba2;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 .panel-section {
   margin-bottom: 25px;
 }
@@ -1833,7 +1871,7 @@ html, body {
     max-width: 100%;
     height: auto;
     max-height: 65vh;
-    border-radius: 15px 15px 0 0;
+    border-radius: 10px 10px 0 0; /* Match button radius */
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.25);
     overflow: hidden;
     z-index: 1000;
@@ -1843,10 +1881,10 @@ html, body {
   }
 
   #criteriaPanel.minimized {
-    height: 40px;
-    max-height: 40px;
+    height: 20px; /* Match new button height */
+    max-height: 20px;
     /* Slide down when minimized */
-    transform: translateY(calc(100% - 40px));
+    transform: translateY(calc(100% - 20px));
   }
 
   .toggle-panel-btn {
@@ -1855,32 +1893,32 @@ html, body {
     left: 0;
     right: 0;
     width: 100%;
-    height: 40px;
-    min-height: 40px; /* Ensure consistent height */
-    border-radius: 15px 15px 0 0;
+    height: 20px; /* Reduced to half */
+    min-height: 20px; /* Ensure consistent height */
+    border-radius: 10px 10px 0 0; /* Adjusted for smaller height */
     transform: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1em;
+    font-size: 0.9em; /* Slightly smaller font */
     padding: 0;
     transition: background-color 0.2s ease; /* Smooth color transition only */
   }
 
   #criteriaPanel.minimized .toggle-panel-btn {
-    border-radius: 15px 15px 0 0;
-    height: 40px; /* Lock height */
-    min-height: 40px;
+    border-radius: 10px 10px 0 0;
+    height: 20px; /* Lock height */
+    min-height: 20px;
   }
 
   #toggleIcon {
     transform: rotate(90deg);
-    font-size: 1.1em;
+    font-size: 0.85em; /* Smaller icon for smaller button */
     transition: transform 0.3s ease; /* Smooth icon rotation */
     display: inline-block; /* Prevent size changes */
-    width: 20px; /* Fixed width */
-    height: 20px; /* Fixed height */
-    line-height: 20px;
+    width: 16px; /* Reduced width */
+    height: 16px; /* Reduced height */
+    line-height: 16px;
     text-align: center;
   }
 
@@ -1891,7 +1929,7 @@ html, body {
   #panelContent {
     padding: 10px;
     overflow-y: auto;
-    max-height: calc(65vh - 40px);
+    max-height: calc(65vh - 20px); /* Adjusted for smaller button */
   }
 
   .panel-header h3 {

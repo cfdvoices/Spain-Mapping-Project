@@ -25,6 +25,9 @@ const MAX_CRITERIA = 5;
 // Global variable for user type (tourist or migrant)
 var userType = 'migrant'; // Default
 
+// Global variable for selected season (for tourists)
+var selectedSeason = 'summer'; // Default season
+
 // Criteria allowed for tourists (subset of all criteria)
 // Using actual criterion IDs from the criteria array
 const TOURIST_ALLOWED_CRITERIA = [
@@ -70,8 +73,12 @@ const tourismEmojis = {
 // Helper function to parse European-formatted numbers (comma as decimal separator)
 function parseEuropeanFloat(value) {
     if (value === undefined || value === null) return 0;
-    // Convert to string and replace comma with dot
-    const stringValue = String(value).replace(',', '.');
+    // Convert to string, remove currency symbols and other non-numeric chars (except comma, dot, minus)
+    const stringValue = String(value)
+        .replace(/[€$£¥]/g, '') // Remove currency symbols
+        .replace(/\s/g, '') // Remove spaces
+        .replace(',', '.') // Replace comma with dot for decimal
+        .trim();
     const parsed = parseFloat(stringValue);
     return isNaN(parsed) ? 0 : parsed;
 }
@@ -98,113 +105,140 @@ const criteria = [
 // City data mapping - maps criterion IDs to actual GeoJSON property names
 // Each criterion has both normalized (for calculations) and real (for display) values
 // inverse: true means higher real values = lower scores (e.g., costs, crime)
-const cityDataAttributes = {
-    'gdp': {
-        normalized: 'norm_GDP_percapita',
-        real: 'real_GDP_percapita',
-        unit: '€',
-        label: 'GDP per Capita',
-        inverse: false // Higher is better
-    },
-    'population': {
-        normalized: 'norm_Population_density',
-        real: 'real_Population_density',
-        unit: ' people/km²',
-        label: 'Population Density',
-        inverse: false // Context dependent, treating as neutral
-    },
-    'transport': {
-        normalized: 'norm_Avg_Closest_station',
-        real: 'real_Avg_Closest_station',
-        unit: ' km',
-        label: 'Stop Remoteness',
-        inverse: true // Lower distance is better
-    },
-    'housing': {
-        normalized: 'norm_Rent_cost',
-        real: 'real_Rent_cost',
-        unit: '€',
-        label: 'Housing Cost',
-        inverse: true // Lower cost is better
-    },
-    'food': {
-        normalized: 'norm_Food_cost',
-        real: 'real_Food_cost',
-        unit: '€',
-        label: 'Food Cost',
-        inverse: true // Lower cost is better
-    },
-    'services': {
-        normalized: 'norm_Services_cost',
-        real: 'real_Services_cost',
-        unit: '€',
-        label: 'Service Cost',
-        inverse: true // Lower cost is better
-    },
-    'climate': {
-        normalized: 'norm_Weather',
-        real: 'real_Weather',
-        unit: '',
-        label: 'Climate Quality',
-        inverse: false // Higher is better
-    },
-    'crime': {
-        normalized: 'norm_Criminality_rate',
-        real: 'real_Criminality_rate',
-        unit: '',
-        label: 'Criminality Rate',
-        inverse: true // Lower crime is better
-    },
-    'water': {
-        normalized: 'norm_Water_quality',
-        real: 'real_Water_quality',
-        unit: '',
-        label: 'Water Quality',
-        inverse: false // Higher is better
-    },
-    'recycling': {
-        normalized: 'norm_Recycling_rate',
-        real: 'real_Recycling_rate',
-        unit: '%',
-        label: 'Recycling Rate',
-        inverse: false // Higher is better
-    },
-    'greenspace': {
-        normalized: 'norm_Green_space_per_capita',
-        real: 'real_Green_space_per_capita',
-        unit: ' m²',
-        label: 'Green Space',
-        inverse: false // Higher is better
-    },
-    'hazards': {
-        normalized: 'norm_Natural_risks',
-        real: 'real_Natural_risks',
-        unit: '',
-        label: 'Natural Safety',
-        inverse: true // Lower risk is better
-    },
-    'education': {
-        normalized: 'norm_Education_years',
-        real: 'real_Education_years',
-        unit: ' years',
-        label: 'Education Level',
-        inverse: false // Higher is better
-    },
-    'jobs': {
-        normalized: 'norm_Job_offers',
-        real: 'real_Job_offers',
-        unit: '',
-        label: 'Job Opportunities',
-        inverse: false // Higher is better
-    },
-    'lifeexpectancy': {
-        normalized: 'norm_Life_expectancy',
-        real: 'real_Life_expectancy',
-        unit: ' years',
-        label: 'Life Expectancy',
-        inverse: false // Higher is better
+// Function to get city data attributes dynamically based on user type and season
+function getCityDataAttributes(userType = 'migrant', season = 'general') {
+    // Determine housing cost attributes based on user type
+    const housingNorm = userType === 'tourist' ? 'norm_Rent_cost_tourists' : 'norm_Rent_cost_migrants';
+    const housingReal = userType === 'tourist' ? 'real_Rent_cost_tourists' : 'real_Rent_cost_migrants';
+    
+    // Determine weather attributes based on user type and season
+    let weatherNorm, weatherReal;
+    if (userType === 'migrant') {
+        weatherNorm = 'norm_Weather_general';
+        weatherReal = 'real_Weather_general';
+    } else {
+        // Tourist - use seasonal data
+        const seasonMap = {
+            'spring': { norm: 'norm_Weather_spring', real: 'real_Weather_spring' },
+            'summer': { norm: 'norm_Weather_summer', real: 'real_Weather_summer' },
+            'fall': { norm: 'norm_Weather_fall', real: 'real_Weather_fall' },
+            'winter': { norm: 'norm_Weather_winter', real: 'real_Weather_winter' }
+        };
+        weatherNorm = seasonMap[season]?.norm || 'norm_Weather_general';
+        weatherReal = seasonMap[season]?.real || 'real_Weather_general';
     }
-};
+    
+    return {
+        'gdp': {
+            normalized: 'norm_GDP_percapita',
+            real: 'real_GDP_percapita',
+            unit: '€',
+            label: 'GDP per Capita',
+            inverse: false
+        },
+        'population': {
+            normalized: 'norm_Population_density',
+            real: 'real_Population_density',
+            unit: ' people/km²',
+            label: 'Population Density',
+            inverse: false
+        },
+        'transport': {
+            normalized: 'norm_Avg_Closest_station',
+            real: 'real_Avg_Closest_station',
+            unit: ' km',
+            label: 'Stop Remoteness',
+            inverse: true
+        },
+        'housing': {
+            normalized: housingNorm,
+            real: housingReal,
+            unit: '€',
+            label: 'Housing Cost',
+            inverse: true
+        },
+        'food': {
+            normalized: 'norm_Food_cost',
+            real: 'real_Food_cost',
+            unit: '€',
+            label: 'Food Cost',
+            inverse: true
+        },
+        'services': {
+            normalized: 'norm_Services_cost',
+            real: 'real_Services_cost',
+            unit: '€',
+            label: 'Service Cost',
+            inverse: true
+        },
+        'climate': {
+            normalized: weatherNorm,
+            real: weatherReal,
+            unit: '',
+            label: 'Climate Quality',
+            inverse: false
+        },
+        'crime': {
+            normalized: 'norm_Criminality_rate',
+            real: 'real_Criminality_rate',
+            unit: '',
+            label: 'Criminality Rate',
+            inverse: true
+        },
+        'water': {
+            normalized: 'norm_Water_quality',
+            real: 'real_Water_quality',
+            unit: '',
+            label: 'Water Quality',
+            inverse: false
+        },
+        'recycling': {
+            normalized: 'norm_Recycling_rate',
+            real: 'real_Recycling_rate',
+            unit: '%',
+            label: 'Recycling Rate',
+            inverse: false
+        },
+        'greenspace': {
+            normalized: 'norm_Green_space_per_capita',
+            real: 'real_Green_space_per_capita',
+            unit: ' m²',
+            label: 'Green Space',
+            inverse: false
+        },
+        'hazards': {
+            normalized: 'norm_Natural_risks',
+            real: 'real_Natural_risks',
+            unit: '',
+            label: 'Natural Safety',
+            inverse: true
+        },
+        'education': {
+            normalized: 'norm_Education_years',
+            real: 'real_Education_years',
+            unit: ' years',
+            label: 'Education Level',
+            inverse: false
+        },
+        'jobs': {
+            normalized: 'norm_Job_offers',
+            real: 'real_Job_offers',
+            unit: '',
+            label: 'Job Opportunities',
+            inverse: false
+        },
+        'lifeexpectancy': {
+            normalized: 'norm_Life_expectancy',
+            real: 'real_Life_expectancy',
+            unit: ' years',
+            label: 'Life Expectancy',
+            inverse: false
+        }
+    };
+}
+
+// Keep backward compatibility - default cityDataAttributes
+const cityDataAttributes = getCityDataAttributes('migrant', 'general');
 
 // Initialize the application when page loads
 // Initialize the application when page loads
@@ -226,6 +260,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Setup user type filter (tourist/migrant)
 const userTypeRadios = document.querySelectorAll('input[name="userType"]');
+const seasonSelector = document.getElementById('seasonSelector');
+const seasonSelect = document.getElementById('seasonSelect');
+
 userTypeRadios.forEach(radio => {
     radio.addEventListener('change', function () {
         const previousUserType = userType;
@@ -240,10 +277,28 @@ userTypeRadios.forEach(radio => {
             initializeCriteriaPanel();
         }
 
+        // Update season selector visibility (considers both user type and climate selection)
+        updateSeasonSelectorVisibility();
+
         // Update cursor style for all city markers
         updateCityCursorStyle();
     });
 });
+
+// Setup season selector change handler
+if (seasonSelect) {
+    seasonSelect.addEventListener('change', function() {
+        const previousSeason = selectedSeason;
+        selectedSeason = this.value;
+        console.log('Season changed from', previousSeason, 'to:', selectedSeason);
+        
+        // If criteria are selected and user is tourist, update the map
+        if (userType === 'tourist' && selectedCriteria.length > 0) {
+            // Recalculate and update cities with new season data
+            updateMap();
+        }
+    });
+}
 
 // Setup city search functionality
 initializeCitySearch();
@@ -595,6 +650,25 @@ function handleCriterionSelection(criterion, isSelected) {
 
     // Enable/disable checkboxes based on max criteria
     updateCheckboxStates();
+    
+    // Update season selector visibility (only show for tourists with climate selected)
+    updateSeasonSelectorVisibility();
+}
+
+// Update season selector visibility based on user type and climate selection
+function updateSeasonSelectorVisibility() {
+    const seasonSelector = document.getElementById('seasonSelector');
+    if (!seasonSelector) return;
+    
+    // Check if climate is in selected criteria
+    const isClimateSelected = selectedCriteria.some(c => c.id === 'climate');
+    
+    // Show season selector only if: tourist mode AND climate is selected
+    if (userType === 'tourist' && isClimateSelected) {
+        seasonSelector.style.display = 'flex';
+    } else {
+        seasonSelector.style.display = 'none';
+    }
 }
 
 // Redistribute weights equally
@@ -837,6 +911,7 @@ function createCriteriaPieChart() {
     const isMobile = window.innerWidth <= 768;
 
     // Create combined container for pie chart and proportional legend
+    // Mobile calculation: 80px pie + 12px padding each side = 104px minimum, use 180px for comfort
     const combinedContainer = d3.select("#mapContainer")
         .append("div")
         .attr("id", "pieChartContainer")
@@ -845,27 +920,36 @@ function createCriteriaPieChart() {
         .style("top", isMobile ? "5px" : "10px")
         .style("left", isMobile ? "5px" : "20px")
         .style("background", "white")
-        .style("border-radius", isMobile ? "6px" : "12px")
-        .style("padding", isMobile ? "3px" : "12px")
+        .style("border-radius", isMobile ? "12px" : "12px")
+        .style("padding", isMobile ? "12px" : "12px")
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("z-index", "1000")
         .style("pointer-events", "all")
-        .style("max-width", isMobile ? "90px" : "200px");
+        .style("max-width", isMobile ? "180px" : "200px")
+        .style("min-width", isMobile ? "180px" : "200px")
+        .style("width", isMobile ? "180px" : "200px");
 
-    // Add title for pie chart
-    combinedContainer.append("div")
-        .style("font-size", isMobile ? "7px" : "14px")
+    // Add title for pie chart - larger and on two lines for mobile
+    const titleContainer = combinedContainer.append("div")
+        .style("font-size", isMobile ? "15px" : "1.2em")
         .style("font-weight", "bold")
-        .style("margin-bottom", isMobile ? "2px" : "6px")
+        .style("margin-bottom", isMobile ? "8px" : "6px")
         .style("text-align", "center")
         .style("color", "#333")
-        .style("line-height", "1")
-        .text("Priorities");
+        .style("line-height", isMobile ? "1.4" : "1.3")
+        .style("padding", isMobile ? "0 5px" : "0");
+    
+    // Add title text with line break for mobile
+    if (isMobile) {
+        titleContainer.html("Selected<br>Priorities");
+    } else {
+        titleContainer.text("Selected Priorities");
+    }
 
-    // Create SVG for pie chart - much smaller on mobile
-    const pieWidth = isMobile ? 30 : 120;
-    const pieHeight = isMobile ? 30 : 120;
-    const radius = Math.min(pieWidth, pieHeight) / 2 - (isMobile ? 2 : 10);
+    // Create SVG for pie chart - 80x80px on mobile, fully centered
+    const pieWidth = isMobile ? 80 : 120;
+    const pieHeight = isMobile ? 80 : 120;
+    const radius = Math.min(pieWidth, pieHeight) / 2 - (isMobile ? 6 : 10);
 
     const pieSvg = combinedContainer.append("svg")
         .attr("width", pieWidth)
@@ -945,17 +1029,17 @@ function createCriteriaPieChart() {
     // Add separator line
     combinedContainer.append("div")
         .style("border-top", "1px solid #ddd")
-        .style("margin", isMobile ? "2px 0" : "10px 0");
+        .style("margin", isMobile ? "6px 0" : "10px 0");
 
-    // Add "Index of Choice" title
+    // Add "Index of Choice" title - slightly larger on mobile
     combinedContainer.append("div")
-        .style("font-size", isMobile ? "6px" : "13px")
+        .style("font-size", isMobile ? "10px" : "13px")
         .style("font-weight", "bold")
         .style("text-align", "center")
         .style("color", "#00a04b")
-        .style("margin-bottom", isMobile ? "2px" : "8px")
-        .style("line-height", "1")
-        .text("Index");
+        .style("margin-bottom", isMobile ? "5px" : "8px")
+        .style("line-height", "1.3")
+        .text(isMobile ? "Index" : "Index of Choice");
 
     // Add proportional legend circles container
     const legendCirclesContainer = combinedContainer.append("div")
@@ -963,13 +1047,14 @@ function createCriteriaPieChart() {
         .style("display", "flex")
         .style("flex-direction", "column")
         .style("align-items", "center")
-        .style("gap", isMobile ? "1px" : "6px");
+        .style("gap", isMobile ? "4px" : "6px")
+        .style("padding", isMobile ? "0 5px" : "0");
 
-    // Create legend items with circles - scaled for mobile
+    // Create legend items with circles - larger and more readable on mobile
     const legendValues = isMobile ? [
-        { label: "High", size: 8, color: "#3dde83" },
-        { label: "Mid", size: 6, color: "#2e8d57" },
-        { label: "Low", size: 4, color: "#044613" }
+        { label: "High", size: 15, color: "#3dde83" },
+        { label: "Mid", size: 12, color: "#2e8d57" },
+        { label: "Low", size: 9, color: "#044613" }
     ] : [
         { label: "High", size: 20, color: "#3dde83" },
         { label: "Mid", size: 14, color: "#2e8d57" },
@@ -980,8 +1065,9 @@ function createCriteriaPieChart() {
         const legendItem = legendCirclesContainer.append("div")
             .style("display", "flex")
             .style("align-items", "center")
-            .style("gap", isMobile ? "3px" : "8px")
-            .style("width", "100%");
+            .style("gap", isMobile ? "6px" : "8px")
+            .style("width", "100%")
+            .style("justify-content", "flex-start");
 
         // Circle
         legendItem.append("div")
@@ -989,15 +1075,15 @@ function createCriteriaPieChart() {
             .style("height", item.size + "px")
             .style("background", item.color)
             .style("border-radius", "50%")
-            .style("border", isMobile ? "0.5px solid #000" : "1px solid #000")
+            .style("border", isMobile ? "1px solid #000" : "1px solid #000")
             .style("flex-shrink", "0");
 
-        // Label
+        // Label - more readable font size on mobile
         legendItem.append("div")
-            .style("font-size", isMobile ? "6px" : "12px")
+            .style("font-size", isMobile ? "10px" : "12px")
             .style("color", "#333")
             .style("font-weight", "500")
-            .style("line-height", "1")
+            .style("line-height", "1.3")
             .text(item.label);
     });
 
@@ -1015,10 +1101,13 @@ function calculateIndexOfChoice(cityProperties) {
         return cityProperties.population || 100000;
     }
 
+    // Get the correct attributes based on user type and season
+    const currentAttributes = getCityDataAttributes(userType, selectedSeason);
+
     // For each selected criterion, multiply its weight by the city's NORMALIZED value
     Object.keys(userCriteriaWeights).forEach(criterionId => {
         const weight = userCriteriaWeights[criterionId];
-        const attributeInfo = cityDataAttributes[criterionId];
+        const attributeInfo = currentAttributes[criterionId];
 
         if (!attributeInfo) {
             console.warn(`No attribute mapping found for criterion: ${criterionId}`);
@@ -1154,7 +1243,7 @@ function updateScaleBar(transform) {
         (width - dynamicScaleLength) / 2 : // Center on mobile
         120; // Fixed left position on desktop (independent of panel)
     const yPos = isMobile ?
-        (height + 240) : // Higher on mobile to avoid zoom controls
+        (height + 200) : // Higher on mobile to avoid zoom controls
         (height - 20); // Desktop: same height as zoom controls (bottom: 20px)
 
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
@@ -1499,8 +1588,11 @@ function loadCities(currentTransform = null) {
                 if (window.userCriteria && window.userCriteria.length > 0) {
                     tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.prioritiesPadding + '; font-weight: bold; font-size: ' + sizes.prioritiesFont + '; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
 
+                    // Get current attributes based on user type and season
+                    const currentAttributes = getCityDataAttributes(userType, selectedSeason);
+
                     window.userCriteria.forEach(criterion => {
-                        const attributeInfo = cityDataAttributes[criterion.id];
+                        const attributeInfo = currentAttributes[criterion.id];
 
                         // Get NORMALIZED value for bar chart (0-10 scale typically)
                         const normalizedValue = d.properties[attributeInfo.normalized];
@@ -1510,13 +1602,26 @@ function loadCities(currentTransform = null) {
 
                         // Get REAL value for display
                         const realValue = d.properties[attributeInfo.real];
-                        const realValueParsed = parseEuropeanFloat(realValue);
-                        const displayValue = (realValue !== undefined && realValue !== null) ?
-                            realValueParsed.toLocaleString(undefined, {
+                        
+                        // Check if realValue exists and is not an empty string
+                        let displayValue;
+                        if (realValue === undefined || realValue === null || realValue === '') {
+                            displayValue = 'N/A';
+                        } else {
+                            const realValueParsed = parseEuropeanFloat(realValue);
+                            
+                            // Determine unit based on criterion and user type
+                            let unit = attributeInfo.unit;
+                            if (criterion.id === 'housing') {
+                                // Housing costs: €/month for migrants, €/night for tourists
+                                unit = userType === 'tourist' ? '€/night' : '€/month';
+                            }
+                            
+                            displayValue = realValueParsed.toLocaleString(undefined, {
                                 minimumFractionDigits: 0,
                                 maximumFractionDigits: 2
-                            }) + attributeInfo.unit :
-                            'N/A';
+                            }) + unit;
+                        }
 
                         // Determine bar color based on normalized score (0-10 scale)
                         let barColor = '#ff4444'; // Red for low scores
