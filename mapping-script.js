@@ -456,6 +456,21 @@ function highlightCity(cityName) {
     const coords = projection(cityFeature.geometry.coordinates);
     if (!coords) return;
 
+    // Center the map on the city with smooth transition
+    const [x, y] = coords;
+    const scale = 2; // Zoom level (adjust as needed)
+    
+    // Calculate the transform to center the city
+    const transform = d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(scale)
+        .translate(-x, -y);
+    
+    // Apply the transform with smooth transition
+    svg.transition()
+        .duration(750)
+        .call(zoom.transform, transform);
+
     // Highlight the city marker temporarily
     const marker = g_cities.selectAll('.city-point, .initial-city-marker')
         .filter(d => d.properties.city === cityName);
@@ -786,6 +801,41 @@ document.getElementById('updateMapBtn').addEventListener('click', function () {
 
     console.log('Updating map with criteria:', window.userCriteria);
 
+    // Auto-minimize the criteria panel with animation
+    const criteriaPanel = document.getElementById('criteriaPanel');
+    const panelContent = document.getElementById('panelContent');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (criteriaPanel && !criteriaPanel.classList.contains('minimized')) {
+        criteriaPanel.classList.add('minimized');
+        if (panelContent) panelContent.style.display = 'none';
+        
+        // Update toggle icon - use correct arrows for mobile/desktop
+        const isMobile = window.innerWidth <= 768;
+        if (toggleIcon) {
+            // Mobile: ▼ when minimized (down = hidden), ▲ when maximized (up = showing)
+            // Desktop: ◀ when minimized (left = hidden), ▶ when maximized (right = showing)
+            const isMinimized = criteriaPanel.classList.contains('minimized');
+            if (isMobile) {
+                toggleIcon.textContent = isMinimized ? '▼' : '▲';
+            } else {
+                toggleIcon.textContent = isMinimized ? '◀' : '▶';
+            }
+        }
+    }
+
+    // Add fancy update animation to map container
+    const mapContainer = document.getElementById('mapContainer');
+    if (mapContainer) {
+        // Add animation class
+        mapContainer.classList.add('map-updating');
+        
+        // Remove class after animation completes
+        setTimeout(() => {
+            mapContainer.classList.remove('map-updating');
+        }, 1200);
+    }
+
     // If map already exists, update it; otherwise initialize
     if (window.mapInitialized) {
         updateMap();
@@ -925,15 +975,15 @@ function createCriteriaPieChart() {
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("z-index", "1000")
         .style("pointer-events", "all")
-        .style("max-width", isMobile ? "180px" : "200px")
-        .style("min-width", isMobile ? "180px" : "200px")
-        .style("width", isMobile ? "180px" : "200px");
+        .style("max-width", isMobile ? "100px" : "140px")
+        .style("min-width", isMobile ? "100px" : "140px")
+        .style("width", isMobile ? "100px" : "140px");
 
     // Add title for pie chart - larger and on two lines for mobile
     const titleContainer = combinedContainer.append("div")
-        .style("font-size", isMobile ? "15px" : "1.2em")
+        .style("font-size", isMobile ? "9em" : "1em")
         .style("font-weight", "bold")
-        .style("margin-bottom", isMobile ? "8px" : "6px")
+        .style("margin-bottom", isMobile ? "4px" : "6px")
         .style("text-align", "center")
         .style("color", "#333")
         .style("line-height", isMobile ? "1.4" : "1.3")
@@ -947,8 +997,8 @@ function createCriteriaPieChart() {
     }
 
     // Create SVG for pie chart - 80x80px on mobile, fully centered
-    const pieWidth = isMobile ? 80 : 120;
-    const pieHeight = isMobile ? 80 : 120;
+    const pieWidth = isMobile ? 70 : 140;
+    const pieHeight = isMobile ? 70 : 140;
     const radius = Math.min(pieWidth, pieHeight) / 2 - (isMobile ? 6 : 10);
 
     const pieSvg = combinedContainer.append("svg")
@@ -996,8 +1046,8 @@ function createCriteriaPieChart() {
             // Show tooltip - responsive sizing
             const isMobileTooltip = window.innerWidth <= 768;
             div.html(`
-                <div style="font-family: Arial, sans-serif; padding: ${isMobileTooltip ? '3px' : '5px'};">
-                    <div style="font-size: ${isMobileTooltip ? '8px' : '16px'}; margin-bottom: ${isMobileTooltip ? '2px' : '5px'};">${d.data.icon} ${d.data.name}</div>
+                <div style="font-family: Arial, sans-serif; padding: ${isMobileTooltip ? '2px' : '3px'};">
+                    <div style="font-size: ${isMobileTooltip ? '8px' : '16px'}; margin-bottom: ${isMobileTooltip ? '1px' : '5px'};">${d.data.icon} ${d.data.name}</div>
                     <div style="font-size: ${isMobileTooltip ? '7px' : '14px'}; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
             `)
@@ -1029,11 +1079,11 @@ function createCriteriaPieChart() {
     // Add separator line
     combinedContainer.append("div")
         .style("border-top", "1px solid #ddd")
-        .style("margin", isMobile ? "6px 0" : "10px 0");
+        .style("margin", isMobile ? "2px 0" : "7px 0");
 
     // Add "Index of Choice" title - slightly larger on mobile
     combinedContainer.append("div")
-        .style("font-size", isMobile ? "10px" : "13px")
+        .style("font-size", isMobile ? "10px" : "15px")
         .style("font-weight", "bold")
         .style("text-align", "center")
         .style("color", "#00a04b")
@@ -1047,8 +1097,8 @@ function createCriteriaPieChart() {
         .style("display", "flex")
         .style("flex-direction", "column")
         .style("align-items", "center")
-        .style("gap", isMobile ? "4px" : "6px")
-        .style("padding", isMobile ? "0 5px" : "0");
+        .style("gap", isMobile ? "1px" : "4px")
+        .style("padding", isMobile ? "0 3px" : "0");
 
     // Create legend items with circles - larger and more readable on mobile
     const legendValues = isMobile ? [
@@ -1080,7 +1130,7 @@ function createCriteriaPieChart() {
 
         // Label - more readable font size on mobile
         legendItem.append("div")
-            .style("font-size", isMobile ? "10px" : "12px")
+            .style("font-size", isMobile ? "10px" : "14px")
             .style("color", "#333")
             .style("font-weight", "500")
             .style("line-height", "1.3")
@@ -1535,29 +1585,29 @@ function loadCities(currentTransform = null) {
                 // Responsive sizing variables (50% smaller on mobile)
                 const sizes = isMobileTooltip ? {
                     minWidth: '125px',
-                    headerPadding: '5px',
+                    headerPadding: '3px',
                     headerFont: '8px',
                     subtitleFont: '8px',
-                    subtitlePadding: '3px',
+                    subtitlePadding: '2px',
                     cellPadding: '3px',
                     cellFont: '8px',
                     prioritiesFont: '8px',
-                    prioritiesPadding: '4px 3px 3px 3px',
+                    prioritiesPadding: '3px 3px 3px 3px',
                     iconFont: '10px',
                     nameFont: '8px',
-                    barHeight: '9px',
+                    barHeight: '6px',
                     barRadius: '2px',
                     valueFont: '6px',
                     valuePadding: '1px',
                     indicatorFont: '5px',
-                    gap: '4px'
+                    gap: '2px'
                 } : {
                     minWidth: '250px',
-                    headerPadding: '10px',
+                    headerPadding: '7px',
                     headerFont: '16px',
                     subtitleFont: '16px',
-                    subtitlePadding: '6px',
-                    cellPadding: '6px',
+                    subtitlePadding: '4px',
+                    cellPadding: '5px',
                     cellFont: '16px',
                     prioritiesFont: '16px',
                     prioritiesPadding: '8px 6px 6px 6px',
@@ -1566,7 +1616,7 @@ function loadCities(currentTransform = null) {
                     barHeight: '18px',
                     barRadius: '4px',
                     valueFont: '12px',
-                    valuePadding: '2px',
+                    valuePadding: '1px',
                     indicatorFont: '10px',
                     gap: '8px'
                 };
@@ -2405,8 +2455,13 @@ answerBtn.addEventListener("click", () => {
 // Decline button - go directly to map
 declineBtn.addEventListener("click", () => {
     stopRingtone();
-    callOverlay.style.display = "none";
-    showMapSection();
+    // Close the browser tab when user hangs up
+    window.close();
+    // Fallback: If window.close() doesn't work (some browsers block it),
+    // redirect to a blank page as a secondary option
+    setTimeout(() => {
+        window.location.href = 'about:blank';
+    }, 100);
 });
 
 // Close call overlay button - go directly to map

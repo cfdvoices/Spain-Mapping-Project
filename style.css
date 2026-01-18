@@ -813,6 +813,80 @@ html, body {
   height: 100%;
 }
 
+/* Fancy Map Update Animation */
+@keyframes mapUpdatePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    transform: scale(1);
+  }
+  25% {
+    box-shadow: 0 0 30px 10px rgba(102, 126, 234, 0.4);
+    transform: scale(1.005);
+  }
+  50% {
+    box-shadow: 0 0 50px 20px rgba(102, 126, 234, 0);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    transform: scale(1);
+  }
+}
+
+@keyframes mapUpdateFlash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes mapUpdateGlow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.1);
+  }
+}
+
+.map-updating {
+  animation: 
+    mapUpdatePulse 1.2s ease-out,
+    mapUpdateFlash 0.6s ease-in-out,
+    mapUpdateGlow 1.2s ease-in-out;
+  position: relative;
+}
+
+.map-updating::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+  animation: mapUpdateOverlay 1.2s ease-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes mapUpdateOverlay {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
 /* Criteria Panel Sidebar */
 #criteriaPanel {
   position: fixed;
@@ -822,12 +896,14 @@ html, body {
   height: 100vh;
   background: white;
   box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-  z-index: 1000;
-  transition: transform 0.3s ease;
+  z-index: 10000; /* Very high z-index when maximized to be above all elements */
+  transition: transform 0.3s ease, z-index 0s;
 }
 
 #criteriaPanel.minimized {
   transform: translateX(320px);
+  z-index: 1000; /* Lower z-index when minimized */
+  transition: transform 0.3s ease, z-index 0s 0.3s; /* Delay z-index change until after slide */
 }
 
 #panelContent {
@@ -1112,7 +1188,7 @@ html, body {
   position: absolute;
   left: 20px;
   bottom: 160px;
-  width: 280px;
+  width: 260px;
   background: white;
   padding: 15px;
   opacity: 0.95;
@@ -1874,9 +1950,9 @@ html, body {
     border-radius: 10px 10px 0 0; /* Match button radius */
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.25);
     overflow: hidden;
-    z-index: 1000;
+    z-index: 10000; /* Very high z-index when maximized */
     /* Add vertical slide transition */
-    transition: transform 0.3s ease, max-height 0.3s ease;
+    transition: transform 0.3s ease, max-height 0.3s ease, z-index 0s;
     transform: translateY(0);
   }
 
@@ -1885,6 +1961,8 @@ html, body {
     max-height: 20px;
     /* Slide down when minimized */
     transform: translateY(calc(100% - 20px));
+    z-index: 1000; /* Lower z-index when minimized */
+    transition: transform 0.3s ease, max-height 0.3s ease, z-index 0s 0.3s;
   }
 
   .toggle-panel-btn {
@@ -2008,21 +2086,21 @@ html, body {
   #pieChartContainer {
     top: 140px !important;
     left: 5px !important;
-    padding: 3px !important;
-    max-width: 70px;
-    width: 50px !important;
-    height: 80px !important;
-    font-size: 0.5em;
+    padding: 1px !important;
+    max-width: 60px;
+    width: 40px !important;
+    height: 170px !important;
+    font-size: 0.65em;
   }
 
   #pieChartContainer > div:first-child {
-    font-size: 0.65em !important;
-    margin-bottom: 3px !important;
+    font-size: 1.2em !important;
+    margin-bottom: 0.5px !important;
   }
 
   #pieChartContainer svg {
-    width: 30px !important;
-    height: 30px !important;
+    width: 70px !important;
+    height: 70px !important;
   } */
 
   /* ===== TOOLTIP MOBILE ===== */
@@ -2243,7 +2321,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000; /* Above everything */
+  z-index: 15000; /* Highest - appears first before everything */
   animation: fadeIn 0.5s ease;
 }
 
@@ -2391,7 +2469,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5000; /* Above map but below modals */
+  z-index: 14000; /* Second highest - appears after start screen */
   backdrop-filter: blur(5px); /* Blur the map behind */
 }
 
@@ -2517,7 +2595,7 @@ html, body {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.75); /* Semi-transparent */
-  z-index: 5000;
+  z-index: 13000; /* Third highest - appears after call overlay */
   align-items: center;
   justify-content: center;
   overflow-y: auto;
