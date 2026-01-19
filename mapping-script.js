@@ -1088,9 +1088,9 @@ function createCriteriaPieChart() {
             // Show tooltip - responsive sizing
             const isMobileTooltip = window.innerWidth <= 768;
             div.html(`
-                <div style="font-family: Arial, sans-serif; padding: ${isMobileTooltip ? '1px' : '3px'};">
-                    <div style="font-size: ${isMobileTooltip ? '8px' : '16px'}; margin-bottom: ${isMobileTooltip ? '1px' : '5px'};">${d.data.icon} ${d.data.name}</div>
-                    <div style="font-size: ${isMobileTooltip ? '7px' : '14px'}; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
+                <div style="font-family: Arial, sans-serif; padding: ${isMobileTooltip ? '0.5px' : '3px'};">
+                    <div style="font-size: ${isMobileTooltip ? '10px' : '16px'}; margin-bottom: ${isMobileTooltip ? '0.5px' : '5px'};">${d.data.icon} ${d.data.name}</div>
+                    <div style="font-size: ${isMobileTooltip ? '9px' : '14px'}; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
             `)
                 .style("left", (event.pageX + 5) + "px")
@@ -1107,9 +1107,9 @@ function createCriteriaPieChart() {
             // Mobile touch support - 50% smaller
             d3.select(this).style("opacity", 1);
             div.html(`
-                <div style="font-family: Arial, sans-serif; padding: 1px;">
-                    <div style="font-size: 8px; margin-bottom: 1px;">${d.data.icon} ${d.data.name}</div>
-                    <div style="font-size: 7px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
+                <div style="font-family: Arial, sans-serif; padding: 0.5px;">
+                    <div style="font-size: 10px; margin-bottom: 0.5px;">${d.data.icon} ${d.data.name}</div>
+                    <div style="font-size: 9px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
             `)
                 .style("left", (event.touches[0].pageX + 5) + "px")
@@ -1627,21 +1627,21 @@ function loadCities(currentTransform = null) {
                 // Responsive sizing variables (50% smaller on mobile)
                 const sizes = isMobileTooltip ? {
                     minWidth: '125px',
-                    headerPadding: '3px',
-                    headerFont: '8px',
-                    subtitleFont: '8px',
+                    headerPadding: '1.5px',
+                    headerFont: '10px',
+                    subtitleFont: '10px',
                     subtitlePadding: '2px',
                     cellPadding: '3px',
-                    cellFont: '8px',
-                    prioritiesFont: '8px',
+                    cellFont: '9px',
+                    prioritiesFont: '9px',
                     prioritiesPadding: '3px 3px 3px 3px',
                     iconFont: '10px',
-                    nameFont: '8px',
+                    nameFont: '9px',
                     barHeight: '6px',
                     barRadius: '2px',
-                    valueFont: '6px',
+                    valueFont: '7px',
                     valuePadding: '1px',
-                    indicatorFont: '5px',
+                    indicatorFont: '7px',
                     gap: '2px'
                 } : {
                     minWidth: '250px',
