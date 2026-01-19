@@ -1335,7 +1335,7 @@ function updateScaleBar(transform) {
         (width - dynamicScaleLength) / 2 : // Center on mobile
         120; // Fixed left position on desktop (independent of panel)
     const yPos = isMobile ?
-        (height + 200) : // Higher on mobile to avoid zoom controls
+        (height + 160) : // Higher on mobile to avoid zoom controls
         (height - 20); // Desktop: same height as zoom controls (bottom: 20px)
 
     // Calculate segment widths for the scale bar divisions (0, 1/3, 2/3, 1)
