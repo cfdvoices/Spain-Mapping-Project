@@ -55,18 +55,18 @@
 
         <h3>📊 How the index works</h3>
         <p>
-          All variables were <strong>normalised</strong> to a common scale, allowing
+          All variables were <strong>normalised</strong> to a common scale (1-10), allowing
           very different indicators to be compared and combined fairly.
         </p>
 
         <ul>
           <li>
-            <strong>Directly proportional variables</strong><br>
+            <strong>Directly proportional criteria</strong><br>
             Higher values = better score
-            <em>(e.g. income potential, accessibility, services)</em>
+            <em>(e.g. income potential, life expectancy, quality of water)</em>
           </li>
           <li>
-            <strong>Inversely proportional variables</strong><br>
+            <strong>Inversely proportional criteria</strong><br>
             Higher values = worse score
             <em>(e.g. crime rate, pollution, cost burdens)</em>
           </li>
@@ -74,11 +74,14 @@
 
         <p>
           After normalisation, your selected criteria are weighted and combined into
-          a single index that determines each city's size and colour on the map.
+          a single index that determines each point size and color on the map. If you
+          want to learn more about the sources and methodology, you can acess the 
+          Methodology and Sources button located in the left lower area of the map.
         </p>
 
         <p class="closing">
-          In short: you choose what matters — Spain does the maths.
+          In short: you choose what matters — the platform reccommends you the best cities
+          for your specific case.
         </p>
       </div>
     </div>
@@ -113,6 +116,12 @@
         <span class="methodology-label">Methodology & Sources</span>
       </button>
 
+      <!-- Data Table Button -->
+      <button id="dataTableBtn" class="methodology-btn" title="View City Rankings & Data" style="display: none;">
+        <span class="methodology-icon">📋</span>
+        <span class="methodology-label">View Data Table</span>
+      </button>
+
       <!-- Legend Note -->
       <p class="legend-note">Cities are sized and colored based on <b>your own preferences</b></p>
     </div>
@@ -127,7 +136,7 @@
     <!-- Right Sidebar for Criteria Selection -->
     <div id="criteriaPanel">
       <button id="togglePanelBtn" class="toggle-panel-btn" title="Minimize/Maximize Panel">
-        <span id="toggleIcon">▶</span>
+        <span id="toggleIcon">◀</span>
       </button>
 
       <div id="panelContent">
@@ -200,6 +209,32 @@
 
         <div id="methodologyContent" class="methodology-grid">
           <!-- Content will be dynamically loaded -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table Modal -->
+    <div id="dataTableModal" class="modal" style="display: none;">
+      <div class="modal-content data-table-modal-content">
+        <button id="closeDataTableBtn" class="modal-close">✕</button>
+        <div class="data-table-header">
+          <h1 class="modal-title">📋 City Rankings & Data</h1>
+          <p class="modal-subtitle">Explore detailed rankings based on your selected criteria</p>
+          <div class="table-info">
+            <span id="tableInfoCriteria"></span>
+            <span id="tableInfoCities"></span>
+          </div>
+        </div>
+
+        <div id="dataTableContainer" class="data-table-container">
+          <table id="cityDataTable" class="city-data-table">
+            <thead id="tableHead">
+              <!-- Headers will be dynamically generated -->
+            </thead>
+            <tbody id="tableBody">
+              <!-- Data rows will be dynamically generated -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

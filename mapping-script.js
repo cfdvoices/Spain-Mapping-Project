@@ -11,7 +11,7 @@ var div = d3.select("body")
     .style("position", "absolute")
     .style("pointer-events", "none")
     .style("background", "white")
-    .style("border", "2px solid #333")
+    .style("border", "1px solid #333")
     .style("border-radius", "8px")
     .style("padding", "10px")
     .style("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.3)")
@@ -249,6 +249,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Setup methodology modal (can be done in background)
     setupMethodologyModal();
 
+    // Setup data table modal
+    setupDataTableModal();
+
     // Setup back button for city detail view
     const backBtn = document.getElementById('backToMapBtn');
     if (backBtn) {
@@ -346,6 +349,12 @@ function resetMapAndCriteria() {
     // Clear city circles (results)
     if (typeof g_cities !== 'undefined') {
         g_cities.selectAll(".city-point").remove();
+    }
+
+    // Hide data table button since no criteria are selected
+    const dataTableBtn = document.getElementById('dataTableBtn');
+    if (dataTableBtn) {
+        dataTableBtn.style.display = 'none';
     }
 
     // Clear city labels
@@ -588,6 +597,8 @@ function setupTogglePanelButton() {
                 toggleIcon.textContent = isMinimized ? '▼' : '▲';
             } else {
                 // Desktop: horizontal toggle
+                // When maximized (showing): ▶ (right arrow to hide)
+                // When minimized (hidden): ◀ (left arrow to show)
                 toggleIcon.textContent = isMinimized ? '◀' : '▶';
             }
         }
@@ -739,7 +750,25 @@ function updateWeightsSection() {
         `;
 
         const slider = item.querySelector('input[type="range"]');
+        
+        // Function to update slider background color based on value
+        function updateSliderColor(value) {
+            // Calculate gray shade: higher weight = darker gray
+            // Range: 1-100 maps to light gray (#e0e0e0) to dark gray (#404040)
+            const percentage = (value - 1) / 99; // Normalize to 0-1
+            const lightness = 98 - (percentage * 50); // 98% to 38% lightness
+            const grayColor = `hsl(0, 0%, ${lightness}%)`;
+            
+            // Update the slider track color
+            slider.style.setProperty('--slider-value', value);
+            slider.style.background = `linear-gradient(to right, ${grayColor} 0%, ${grayColor} ${value}%, #f0f0f0 ${value}%, #f0f0f0 100%)`;
+        }
+        
+        // Set initial color
+        updateSliderColor(criterion.weight);
+        
         slider.addEventListener('input', function () {
+            updateSliderColor(parseFloat(this.value));
             handleWeightChange(criterion.id, parseFloat(this.value));
         });
 
@@ -763,7 +792,14 @@ function handleWeightChange(criterionId, newWeight) {
         const valueDisplay = document.getElementById('weight_' + c.id);
         const slider = document.getElementById('slider_' + c.id);
         if (valueDisplay) valueDisplay.textContent = c.weight + '%';
-        if (slider) slider.value = c.weight;
+        if (slider) {
+            slider.value = c.weight;
+            // Update slider color to match new weight
+            const percentage = (c.weight - 1) / 99;
+            const lightness = 88 - (percentage * 50);
+            const grayColor = `hsl(0, 0%, ${lightness}%)`;
+            slider.style.background = `linear-gradient(to right, ${grayColor} 0%, ${grayColor} ${c.weight}%, #f0f0f0 ${c.weight}%, #f0f0f0 100%)`;
+        }
     });
 }
 
@@ -813,12 +849,12 @@ document.getElementById('updateMapBtn').addEventListener('click', function () {
         // Update toggle icon - use correct arrows for mobile/desktop
         const isMobile = window.innerWidth <= 768;
         if (toggleIcon) {
-            // Mobile: ▼ when minimized (down = hidden), ▲ when maximized (up = showing)
-            // Desktop: ◀ when minimized (left = hidden), ▶ when maximized (right = showing)
             const isMinimized = criteriaPanel.classList.contains('minimized');
             if (isMobile) {
+                // Mobile: ▼ when minimized (down = hidden), ▲ when maximized (up = showing)
                 toggleIcon.textContent = isMinimized ? '▼' : '▲';
             } else {
+                // Desktop: ▶ when maximized (right = showing), ◀ when minimized (left = hidden)
                 toggleIcon.textContent = isMinimized ? '◀' : '▶';
             }
         }
@@ -842,6 +878,12 @@ document.getElementById('updateMapBtn').addEventListener('click', function () {
     } else {
         initializeMap();
         window.mapInitialized = true;
+    }
+
+    // Show the data table button since we now have criteria selected
+    const dataTableBtn = document.getElementById('dataTableBtn');
+    if (dataTableBtn) {
+        dataTableBtn.style.display = 'block';
     }
 });
 
@@ -1046,7 +1088,7 @@ function createCriteriaPieChart() {
             // Show tooltip - responsive sizing
             const isMobileTooltip = window.innerWidth <= 768;
             div.html(`
-                <div style="font-family: Arial, sans-serif; padding: ${isMobileTooltip ? '2px' : '3px'};">
+                <div style="font-family: Arial, sans-serif; padding: ${isMobileTooltip ? '1px' : '3px'};">
                     <div style="font-size: ${isMobileTooltip ? '8px' : '16px'}; margin-bottom: ${isMobileTooltip ? '1px' : '5px'};">${d.data.icon} ${d.data.name}</div>
                     <div style="font-size: ${isMobileTooltip ? '7px' : '14px'}; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
@@ -1065,8 +1107,8 @@ function createCriteriaPieChart() {
             // Mobile touch support - 50% smaller
             d3.select(this).style("opacity", 1);
             div.html(`
-                <div style="font-family: Arial, sans-serif; padding: 3px;">
-                    <div style="font-size: 8px; margin-bottom: 2px;">${d.data.icon} ${d.data.name}</div>
+                <div style="font-family: Arial, sans-serif; padding: 1px;">
+                    <div style="font-size: 8px; margin-bottom: 1px;">${d.data.icon} ${d.data.name}</div>
                     <div style="font-size: 7px; font-weight: bold; color: ${colorScale(d.data.id)};">Weight: ${d.data.weight}%</div>
                 </div>
             `)
@@ -2334,6 +2376,269 @@ function setupMethodologyModal() {
     });
 }
 
+// Setup data table modal
+function setupDataTableModal() {
+    const dataTableBtn = document.getElementById('dataTableBtn');
+    const modal = document.getElementById('dataTableModal');
+    const closeBtn = document.getElementById('closeDataTableBtn');
+
+    if (!dataTableBtn || !modal || !closeBtn) return;
+
+    // Open modal
+    dataTableBtn.addEventListener('click', function () {
+        modal.style.display = 'flex';
+        loadDataTable();
+    });
+
+    // Close modal
+    closeBtn.addEventListener('click', function () {
+        modal.style.display = 'none';
+    });
+
+    // Close on outside click
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Close on escape key - updated to handle both modals
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            }
+        }
+    });
+}
+
+// Global variable to store current sort state
+let currentSortColumn = null;
+let currentSortDirection = 'desc'; // Start with descending for Index of Choice
+
+// Load and display data table
+function loadDataTable() {
+    // Fetch cities data
+    d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
+        .then(function (cities) {
+            // Calculate index of choice for each city
+            cities.features.forEach(feature => {
+                feature.properties.indexOfChoice = calculateIndexOfChoice(feature.properties);
+            });
+
+            // Get current attributes based on user type and season
+            const currentAttributes = getCityDataAttributes(userType, selectedSeason);
+
+            // Build table data
+            const tableData = cities.features.map((feature, index) => {
+                const props = feature.properties;
+                const rowData = {
+                    city: props.city || 'Unknown',
+                    indexOfChoice: props.indexOfChoice
+                };
+
+                // Add selected criteria values
+                selectedCriteria.forEach(criterion => {
+                    const attributeInfo = currentAttributes[criterion.id];
+                    if (attributeInfo) {
+                        // Get both normalized and real values
+                        const realValue = parseEuropeanFloat(props[attributeInfo.real]);
+                        rowData[criterion.id] = {
+                            real: realValue,
+                            unit: attributeInfo.unit,
+                            label: attributeInfo.label
+                        };
+                    }
+                });
+
+                return rowData;
+            });
+
+            // Sort by Index of Choice (descending) by default
+            tableData.sort((a, b) => b.indexOfChoice - a.indexOfChoice);
+
+            // Update table info
+            const tableInfoCriteria = document.getElementById('tableInfoCriteria');
+            const tableInfoCities = document.getElementById('tableInfoCities');
+            if (tableInfoCriteria) {
+                tableInfoCriteria.textContent = `${selectedCriteria.length} criteria selected`;
+            }
+            if (tableInfoCities) {
+                tableInfoCities.textContent = `${tableData.length} cities`;
+            }
+
+            // Render table
+            renderDataTable(tableData, currentAttributes);
+
+            // Reset sort state to default
+            currentSortColumn = 'indexOfChoice';
+            currentSortDirection = 'desc';
+        })
+        .catch(function (error) {
+            console.error("Error loading city data for table:", error);
+        });
+}
+
+// Render the data table
+function renderDataTable(tableData, currentAttributes) {
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
+
+    if (!tableHead || !tableBody) return;
+
+    // Clear existing content
+    tableHead.innerHTML = '';
+    tableBody.innerHTML = '';
+
+    // Create header row
+    const headerRow = document.createElement('tr');
+
+    // Rank column
+    const rankTh = document.createElement('th');
+    rankTh.textContent = 'Rank';
+    rankTh.className = 'sortable';
+    rankTh.dataset.column = 'rank';
+    headerRow.appendChild(rankTh);
+
+    // City name column
+    const cityTh = document.createElement('th');
+    cityTh.textContent = 'City';
+    cityTh.className = 'sortable';
+    cityTh.dataset.column = 'city';
+    headerRow.appendChild(cityTh);
+
+    // Index Ranking column (based on Index of Choice)
+    const indexTh = document.createElement('th');
+    indexTh.textContent = 'Index Ranking';
+    indexTh.className = 'sortable sorted-desc';
+    indexTh.dataset.column = 'indexOfChoice';
+    headerRow.appendChild(indexTh);
+
+    // Selected criteria columns
+    selectedCriteria.forEach(criterion => {
+        const th = document.createElement('th');
+        const criterionInfo = criteria.find(c => c.id === criterion.id);
+        th.innerHTML = `${criterionInfo.icon} ${criterionInfo.name}`;
+        th.className = 'sortable hide-mobile';
+        th.dataset.column = criterion.id;
+        headerRow.appendChild(th);
+    });
+
+    tableHead.appendChild(headerRow);
+
+    // Add click handlers to sortable headers
+    const sortableHeaders = tableHead.querySelectorAll('.sortable');
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function () {
+            const column = this.dataset.column;
+            sortTable(tableData, column, currentAttributes);
+        });
+    });
+
+    // Create data rows
+    tableData.forEach((row, index) => {
+        const tr = document.createElement('tr');
+
+        // Rank - only show special styling when sorted by Index of Choice
+        const rankTd = document.createElement('td');
+        rankTd.textContent = index + 1;
+        rankTd.className = 'rank-cell';
+        
+        // Only apply ranking styles (gold, silver, bronze) when sorted by indexOfChoice
+        if (currentSortColumn === 'indexOfChoice' && currentSortDirection === 'desc') {
+            if (index === 0) rankTd.classList.add('top-rank');
+            else if (index === 1) rankTd.classList.add('second-rank');
+            else if (index === 2) rankTd.classList.add('third-rank');
+        }
+        tr.appendChild(rankTd);
+
+        // City name
+        const cityTd = document.createElement('td');
+        cityTd.textContent = row.city;
+        cityTd.className = 'city-name-cell';
+        tr.appendChild(cityTd);
+
+        // Index of Choice value
+        const indexTd = document.createElement('td');
+        indexTd.textContent = row.indexOfChoice.toFixed(2);
+        indexTd.className = 'index-cell';
+        tr.appendChild(indexTd);
+
+        // Selected criteria values
+        selectedCriteria.forEach(criterion => {
+            const td = document.createElement('td');
+            const value = row[criterion.id];
+            if (value) {
+                td.textContent = value.real.toFixed(2) + (value.unit || '');
+            } else {
+                td.textContent = 'N/A';
+            }
+            td.className = 'numeric-cell hide-mobile';
+            tr.appendChild(td);
+        });
+
+        tableBody.appendChild(tr);
+    });
+}
+
+// Sort table by column
+function sortTable(tableData, column, currentAttributes) {
+    // Determine sort direction
+    if (currentSortColumn === column) {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSortColumn = column;
+        currentSortDirection = 'desc'; // Default to descending for new column
+    }
+
+    // Sort the data
+    tableData.sort((a, b) => {
+        let aVal, bVal;
+
+        if (column === 'rank') {
+            // Rank is based on current position, so use indexOfChoice
+            aVal = a.indexOfChoice;
+            bVal = b.indexOfChoice;
+        } else if (column === 'city') {
+            aVal = a.city.toLowerCase();
+            bVal = b.city.toLowerCase();
+            // String comparison
+            if (currentSortDirection === 'asc') {
+                return aVal.localeCompare(bVal);
+            } else {
+                return bVal.localeCompare(aVal);
+            }
+        } else if (column === 'indexOfChoice') {
+            aVal = a.indexOfChoice;
+            bVal = b.indexOfChoice;
+        } else {
+            // Criterion column
+            aVal = a[column]?.real || 0;
+            bVal = b[column]?.real || 0;
+        }
+
+        // Numeric comparison
+        if (currentSortDirection === 'asc') {
+            return aVal - bVal;
+        } else {
+            return bVal - aVal;
+        }
+    });
+
+    // Re-render table with sorted data
+    renderDataTable(tableData, currentAttributes);
+
+    // Update header styling
+    const tableHead = document.getElementById('tableHead');
+    const headers = tableHead.querySelectorAll('.sortable');
+    headers.forEach(header => {
+        header.classList.remove('sorted-asc', 'sorted-desc');
+        if (header.dataset.column === column) {
+            header.classList.add(currentSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        }
+    });
+}
+
 function loadMethodologyContent() {
     const container = document.getElementById('methodologyContent');
     if (!container) return;
@@ -2376,6 +2681,13 @@ const ringtone = new Audio(
 ringtone.loop = true;
 ringtone.preload = "auto";
 ringtone.volume = 1.0;
+
+// Create audio element for instructions
+const instructionsAudio = new Audio(
+    "https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/instructions.mp3"
+);
+instructionsAudio.preload = "auto";
+instructionsAudio.volume = 1.0;
 
 // Track ringtone playback state
 let ringtoneHasPlayed = false;
@@ -2437,6 +2749,13 @@ function stopRingtone() {
     console.log("Ringtone stopped and reset");
 }
 
+// Function to stop instructions audio
+function stopInstructionsAudio() {
+    instructionsAudio.pause();
+    instructionsAudio.currentTime = 0;
+    console.log("Instructions audio stopped and reset");
+}
+
 // Show call overlay after page loads
 // Show start experience overlay when page loads
 window.addEventListener('load', () => {
@@ -2450,6 +2769,16 @@ answerBtn.addEventListener("click", () => {
     stopRingtone();
     callOverlay.style.display = "none";
     introModal.style.display = "flex";
+    
+    // Play instructions audio when intro modal appears
+    try {
+        instructionsAudio.currentTime = 0;
+        instructionsAudio.play().catch(error => {
+            console.log("Instructions audio playback error:", error);
+        });
+    } catch (error) {
+        console.log("Error starting instructions audio:", error);
+    }
 });
 
 // Decline button - go directly to map
@@ -2473,6 +2802,7 @@ closeCallBtn.addEventListener("click", () => {
 
 // Close intro button - show map
 closeIntroBtn.addEventListener("click", () => {
+    stopInstructionsAudio(); // Stop instructions audio when closing
     introModal.style.display = "none";
     showMapSection();
 });
@@ -2498,6 +2828,7 @@ function showMapSection() {
 // Close intro modal by clicking outside
 introModal.addEventListener("click", function (e) {
     if (e.target === introModal) {
+        stopInstructionsAudio(); // Stop instructions audio when closing
         introModal.style.display = "none";
         showMapSection();
     }
@@ -2507,6 +2838,7 @@ introModal.addEventListener("click", function (e) {
 document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
         if (introModal.style.display === "flex") {
+            stopInstructionsAudio(); // Stop instructions audio when closing
             introModal.style.display = "none";
             showMapSection();
         }
@@ -2521,4 +2853,5 @@ document.addEventListener("keydown", function (e) {
 // Ensure ringtone stops if user navigates away
 window.addEventListener('beforeunload', () => {
     stopRingtone();
+    stopInstructionsAudio();
 });
