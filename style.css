@@ -1068,13 +1068,13 @@ html, body {
 #criteriaCheckboxList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .criterion-checkbox-item {
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 6px;
   background: #f8f9fa;
   border-radius: 8px;
   cursor: pointer;
@@ -1121,7 +1121,7 @@ html, body {
 #criteriaWeightsList {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
@@ -1915,6 +1915,7 @@ html, body {
     align-items: center;
     gap: 1px;
     line-height: 1.5 !important;
+    display: block;
   }
 
   .methodology-icon {
@@ -2015,12 +2016,12 @@ html, body {
   }
 
   .panel-header h3 {
-    font-size: 0.95em;
+    font-size: 1em;
     margin-bottom: 4px; /* Reduced from 6px */
   }
 
   .panel-subtitle {
-    font-size: 0.7em;
+    font-size: 0.9em;
     margin-bottom: 5px; /* Reduced from 8px */
   }
 
@@ -2033,7 +2034,7 @@ html, body {
 
   .filter-option {
     padding: 4px 8px; /* Reduced from 5px 10px */
-    font-size: 0.75em;
+    font-size: 0.85em;
   }
 
   .season-selector {
@@ -2043,12 +2044,12 @@ html, body {
   }
 
   .season-label {
-    font-size: 0.75em;
+    font-size: 0.85em;
   }
 
   .season-select {
     padding: 5px 8px; /* Reduced from 8px 12px */
-    font-size: 0.8em;
+    font-size: 0.85em;
   }
 
   .panel-section {
@@ -2056,13 +2057,13 @@ html, body {
   }
 
   .panel-section h4 {
-    font-size: 0.85em;
+    font-size: 0.9em;
     margin-bottom: 4px; /* Reduced from 6px */
   }
 
   .criteria-checkbox-item {
     padding: 4px; /* Reduced from 5px */
-    font-size: 0.75em; /* Match filter option size */
+    font-size: 0.8em; /* Match filter option size */
     margin-bottom: 2px; /* Reduced from 3px */
     min-height: 32px; /* Reduce overall height */
   }
@@ -2089,19 +2090,20 @@ html, body {
   .weight-slider-header {
     gap: 4px; /* Reduced from 8px */
     margin-bottom: 4px; /* Reduced from 8px */
+    font-size: 1em;
   }
 
   .weight-slider-icon {
-    font-size: 0.9em; /* Reduced from 1.2em */
+    font-size: 1em; /* Reduced from 1.2em */
   }
 
   .weight-slider-name {
-    font-size: 0.75em; /* Match filter option size */
+    font-size: 0.9em; /* Match filter option size */
     font-weight: 600;
   }
 
   .weight-slider-value {
-    font-size: 0.75em; /* Match filter option size */
+    font-size: 0.95em; /* Match filter option size */
     min-width: 35px; /* Reduced from 45px */
   }
 
@@ -2120,18 +2122,18 @@ html, body {
   }
 
   .criterion-label {
-    font-size: 0.75em;
+    font-size: 0.9em;
   }
 
   .weight-input {
     width: 42px;
     padding: 3px 4px;
-    font-size: 0.75em;
+    font-size: 0.9em;
   }
 
   .action-button {
     padding: 7px 14px; /* Reduced from 8px 16px */
-    font-size: 0.8em;
+    font-size: 0.9em;
     width: 100%;
     margin-top: 5px; /* Reduced from 8px */
   }
@@ -2148,8 +2150,7 @@ html, body {
     height: 100%;
   }
 
-  /* Pie Chart - hide on mobile or make tiny */
-  /* Alternative: if you want to keep it, make it tiny */
+  /* Pie Chart - make tiny */
   #pieChartContainer {
     top: 140px !important;
     left: 5px !important;

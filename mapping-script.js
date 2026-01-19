@@ -1345,16 +1345,13 @@ function updateScaleBar(transform) {
 
     // Add background rectangle for better visibility
     const bgPadding = isMobile ? 12 : 8;
-    const bgHeight = isMobile ? 30 : 18;
+    const bgHeight = isMobile ? 35 : 18;
     s.append("rect")
         .attr("x", xPos - bgPadding)
         .attr("y", yPos - (isMobile ? 10 : 7))
         .attr("width", dynamicScaleLength + (bgPadding * 2))
         .attr("height", bgHeight)
         .attr("fill", "rgba(255, 255, 255, 0.98)")
-        .attr("rx", isMobile ? 10 : 6)
-        .attr("ry", isMobile ? 10 : 6)
-        .attr("opacity",0.7)
         .attr("rx", isMobile ? 10 : 6)
         .attr("ry", isMobile ? 10 : 6)
         .attr("opacity",0.7)
@@ -1389,7 +1386,7 @@ function updateScaleBar(transform) {
         const x = xPos + (dynamicScaleLength * division);
 
         // Tick mark
-        const tickHeight = isMobile ? 9 : 5;
+        const tickHeight = isMobile ? 8 : 5;
         const tickWeight = isMobile ? 0.5 : 0.5;
         s.append("line")
             .attr("x1", x)
@@ -1402,7 +1399,7 @@ function updateScaleBar(transform) {
         // Label below tick
         if (index < divisions.length) {
             const fontSize = isMobile ? "11px" : "4.5px";
-            const labelYOffset = isMobile ? 14 : 9;
+            const labelYOffset = isMobile ? 18 : 9;
             s.append("text")
                 .attr("x", x)
                 .attr("y", yPos + labelYOffset)
@@ -1415,8 +1412,8 @@ function updateScaleBar(transform) {
     });
 
     // Unit label at the top center
-    const titleFontSize = isMobile ? "9px" : "5px";
-    const titleYOffset = isMobile ? -2 : 0;
+    const titleFontSize = isMobile ? "11px" : "5px";
+    const titleYOffset = isMobile ? -1.5 : 0;
     s.append("text")
         .attr("x", xPos + dynamicScaleLength / 2)
         .attr("y", yPos + titleYOffset)
