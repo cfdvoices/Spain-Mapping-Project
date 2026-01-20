@@ -1116,6 +1116,9 @@ function createCriteriaPieChart() {
                 .style("top", (event.touches[0].pageY - 5) + "px")
                 .style("opacity", 0.98)
                 .style("display", "block");
+        })
+        .on("touchend", function() {
+            d3.select(this).style("opacity", 0.85);
         });
 
     // Add separator line
@@ -1144,13 +1147,13 @@ function createCriteriaPieChart() {
 
     // Create legend items with circles - larger and more readable on mobile
     const legendValues = isMobile ? [
-        { label: "High", size: 15, color: "#3dde83" },
-        { label: "Mid", size: 12, color: "#2e8d57" },
-        { label: "Low", size: 9, color: "#044613" }
+        { label: "High", size: 15, color: "#2ecc71" },  // Orange (high values)
+        { label: "Mid", size: 12, color: "#f39c12" },   // Yellow-orange (mid values)
+        { label: "Low", size: 9, color: "#e16a01" }     // Green (low values)
     ] : [
-        { label: "High", size: 20, color: "#3dde83" },
-        { label: "Mid", size: 14, color: "#2e8d57" },
-        { label: "Low", size: 9, color: "#044613" }
+        { label: "High", size: 20, color: "#2ecc71"},  // Orange (high values)
+        { label: "Mid", size: 14, color: "#f39c12"},   // Yellow-orange (mid values)
+        { label: "Low", size: 9, color: "#e16a01"}     // Green (low values)
     ];
 
     legendValues.forEach(item => {
@@ -1288,6 +1291,20 @@ function zoomed(event) {
     g_cities.attr("transform", event.transform);
     updateScaleBar(event.transform);
     updateProportionalLegend(event.transform.k);
+    
+    // Hide tooltip during zoom/pan to prevent it from staying visible
+    div.style("opacity", 0).style("display", "none");
+    
+    // Update current zoom level
+    currentMapZoom = event.transform.k;
+    
+    // Update city labels if initial markers are still visible (before criteria selection)
+    // Check if initial markers exist
+    if (g_cities.selectAll(".initial-city-marker").size() > 0) {
+        // Need to reload the cities data to update labels
+        // Store cities data globally or re-fetch
+        updateInitialCityLabels(currentMapZoom);
+    }
 }
 
 // --- PROPORTIONAL SYMBOL LEGEND ---
@@ -1491,6 +1508,9 @@ function loadBaseMapLayers() {
 function loadInitialCityMarkers() {
     d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/cities.geojson")
         .then(function (cities) {
+            // Store cities data globally for label updates on zoom
+            initialCitiesData = cities;
+            
             // Draw simple dots for cities
             const initialMarkers = g_cities.selectAll(".initial-city-marker")
                 .data(cities.features)
@@ -1514,7 +1534,7 @@ function loadInitialCityMarkers() {
                     }
                 });
 
-            // Draw labels for cities
+            // Draw labels for cities (hidden - we use the collision-aware system below)
             const initialLabels = g_labels.selectAll(".initial-city-label")
                 .data(cities.features)
                 .enter()
@@ -1527,8 +1547,11 @@ function loadInitialCityMarkers() {
                 .attr("text-anchor", "middle")
                 .attr("fill", "#333")
                 .attr("font-weight", "800")
-                .attr("opacity", 0.9)
+                .attr("opacity", 0)  // Hide these - we use the new label system
                 .style("pointer-events", "none");
+
+            // Add proper city labels with collision avoidance
+            addCityLabels(cities.features, 1);
 
             console.log('Initial city markers loaded');
         })
@@ -1537,10 +1560,193 @@ function loadInitialCityMarkers() {
         });
 }
 
+// Function to add city labels with uniform sizing and collision avoidance
+// This version uses equal font sizes for all cities at each zoom level
+function addCityLabels(cityFeatures, currentZoom = 1) {
+    // Clear existing labels
+    g_labels.selectAll(".city-label").remove();
+    g_labels.selectAll(".city-label-bg").remove();
+
+    // List of important capital cities that should always be shown
+    const capitalCities = [
+        "Santiago de Compostela",
+        "Oviedo", 
+        "Santander",
+        "Vitoria-Gasteiz",
+        "Pamplona",
+        "Logroño",
+        "Toledo",
+        "Mérida",
+        "Santa Cruz de Tenerife",
+        "Madrid",
+        "Barcelona",
+        "Valencia",
+        "Sevilla",
+        "Zaragoza",
+        "Bilbao",
+        "Palma",
+        "Murcia",
+        "Málaga",
+        "Las Palmas"
+    ];
+
+    // Sort cities: capitals first (by population), then others by population
+    const sortedCities = cityFeatures.slice().sort((a, b) => {
+        const aName = a.properties.city || "";
+        const bName = b.properties.city || "";
+        
+        // Check if city name contains capital city name (handles variations like "Mérida" vs "Merida")
+        const aIsCapital = capitalCities.some(cap => 
+            aName.toLowerCase().includes(cap.toLowerCase()) || cap.toLowerCase().includes(aName.toLowerCase())
+        );
+        const bIsCapital = capitalCities.some(cap => 
+            bName.toLowerCase().includes(cap.toLowerCase()) || cap.toLowerCase().includes(bName.toLowerCase())
+        );
+        
+        if (aIsCapital && !bIsCapital) return -1;
+        if (!aIsCapital && bIsCapital) return 1;
+        
+        // Both capitals or both non-capitals: sort by population
+        return b.properties.population - a.properties.population;
+    });
+
+    // Detect if mobile
+    const isMobile = window.innerWidth <= 768;
+
+    // Calculate uniform font size based on zoom level
+    // At zoom 1: base size, at higher zoom: reduce size to half at max zoom (3.5)
+    const baseSize = isMobile ? 6 : 10;
+    const zoomFactor = Math.max(0.5, 1 - ((currentZoom - 1) / 2.5) * 0.5); // Reduces to 0.5 at max zoom
+    const fontSize = baseSize * zoomFactor;
+
+    // Store label positions to check for overlaps
+    const labelBounds = [];
+
+    // Function to check if a label overlaps with existing labels
+    function checkOverlap(x, y, width, height, padding = 2) {
+        for (const bounds of labelBounds) {
+            if (!(x + width + padding < bounds.x - padding ||
+                  x - padding > bounds.x + bounds.width + padding ||
+                  y + height + padding < bounds.y - padding ||
+                  y - padding > bounds.y + bounds.height + padding)) {
+                return true; // Overlap detected
+            }
+        }
+        return false;
+    }
+
+    // Add labels
+    let labelsAdded = 0;
+    let capitalsAdded = 0;
+    
+    sortedCities.forEach((d, i) => {
+        const coords = projection(d.geometry.coordinates);
+        if (!coords) return;
+
+        const cityName = d.properties.city || "";
+        const radius = 1.5; // Fixed radius for initial markers
+        
+        // Check if this is a capital city (with flexible matching)
+        const isCapital = capitalCities.some(cap => 
+            cityName.toLowerCase().includes(cap.toLowerCase()) || cap.toLowerCase().includes(cityName.toLowerCase())
+        );
+
+        // Try different label positions to avoid overlap
+        // More positions for capital cities
+        const positions = isCapital ? [
+            { x: coords[0], y: coords[1] - radius - 2, anchor: "middle" },      // Above
+            { x: coords[0], y: coords[1] + radius + fontSize + 1, anchor: "middle" }, // Below
+            { x: coords[0] + radius + 2, y: coords[1] + fontSize/3, anchor: "start" }, // Right
+            { x: coords[0] - radius - 2, y: coords[1] + fontSize/3, anchor: "end" },   // Left
+            // Additional positions for capitals
+            { x: coords[0] + radius + 4, y: coords[1] - radius, anchor: "start" },      // Top-right
+            { x: coords[0] - radius - 4, y: coords[1] - radius, anchor: "end" },        // Top-left
+            { x: coords[0] + radius + 4, y: coords[1] + radius + fontSize, anchor: "start" }, // Bottom-right
+            { x: coords[0] - radius - 4, y: coords[1] + radius + fontSize, anchor: "end" }    // Bottom-left
+        ] : [
+            { x: coords[0], y: coords[1] - radius - 2, anchor: "middle" },      // Above
+            { x: coords[0], y: coords[1] + radius + fontSize + 1, anchor: "middle" }, // Below
+            { x: coords[0] + radius + 2, y: coords[1] + fontSize/3, anchor: "start" }, // Right
+            { x: coords[0] - radius - 2, y: coords[1] + fontSize/3, anchor: "end" }    // Left
+        ];
+
+        let selectedPosition = null;
+        
+        // Try each position until we find one without overlap
+        for (const pos of positions) {
+            // Estimate label dimensions (approximation)
+            const estimatedWidth = cityName.length * fontSize * 0.55;
+            const estimatedHeight = fontSize;
+            
+            let labelX = pos.x;
+            if (pos.anchor === "middle") labelX -= estimatedWidth / 2;
+            else if (pos.anchor === "end") labelX -= estimatedWidth;
+
+            // Use looser overlap check for capitals
+            const padding = isCapital ? 1 : 2;
+            if (!checkOverlap(labelX, pos.y - estimatedHeight, estimatedWidth, estimatedHeight, padding)) {
+                selectedPosition = pos;
+                labelBounds.push({
+                    x: labelX,
+                    y: pos.y - estimatedHeight,
+                    width: estimatedWidth,
+                    height: estimatedHeight
+                });
+                break;
+            }
+        }
+
+        // For capitals: always add if we found any position
+        // For non-capitals: add if position found AND in top 70%
+        const shouldAdd = isCapital ? selectedPosition : (selectedPosition && i < sortedCities.length * 0.7);
+        
+        if (shouldAdd) {
+            // Add text with outline effect (using white stroke)
+            const label = g_labels.append("text")
+                .attr("class", "city-label")
+                .attr("x", selectedPosition.x)
+                .attr("y", selectedPosition.y)
+                .text(cityName)
+                .attr("font-size", fontSize + "px")
+                .attr("text-anchor", selectedPosition.anchor)
+                .attr("fill", "#222")
+                .attr("font-weight", "600")
+                .attr("opacity", 0.95)
+                .style("pointer-events", "none")
+                .attr("paint-order", "stroke")
+                .attr("stroke", "white")
+                .attr("stroke-width", isMobile ? "2.5px" : "3px")
+                .attr("stroke-linecap", "round")
+                .attr("stroke-linejoin", "round");
+            
+            labelsAdded++;
+            if (isCapital) capitalsAdded++;
+        }
+    });
+
+    console.log(`Added ${labelsAdded} city labels (${capitalsAdded} capitals) at zoom ${currentZoom.toFixed(2)} with uniform font size ${fontSize.toFixed(1)}px`);
+}
+
+// Store current zoom level globally
+let currentMapZoom = 1;
+
+// Store initial cities data globally for label updates
+let initialCitiesData = null;
+
+// Function to update initial city labels based on zoom
+function updateInitialCityLabels(zoomLevel) {
+    if (initialCitiesData && initialCitiesData.features) {
+        addCityLabels(initialCitiesData.features, zoomLevel);
+    }
+}
+
 function loadCities(currentTransform = null) {
     // Remove initial city markers and labels when loading actual cities
     g_cities.selectAll(".initial-city-marker").remove();
     g_labels.selectAll(".initial-city-label").remove();
+    
+    // Remove city labels as well (we don't want labels after criteria selection)
+    g_labels.selectAll(".city-label").remove();
 
     // Clear existing cities
     g_cities.selectAll("*").remove();
@@ -1577,9 +1783,10 @@ function loadCities(currentTransform = null) {
             window.currentRadiusScale = radiusScale;
 
             // Creation of the color scale for the circles representation
+            // Green-orange color ramp
             const colorScale = d3.scaleLinear()
                 .domain([minIndex, (minIndex + maxIndex) / 2, maxIndex])
-                .range(['#044613ff', '#2e8d57ff', '#3dde83ff']);
+                .range(['#e16a01', '#f39c12', '#2ecc71']); // Green to yellow-orange to orange
 
             const cityCircles = g_cities.selectAll("circle")
                 .data(cities.features)
@@ -1713,11 +1920,16 @@ function loadCities(currentTransform = null) {
                         }
 
                         // Determine bar color based on normalized score (0-10 scale)
-                        let barColor = '#ff4444'; // Red for low scores
-                        if (scoreValue >= 7) {
-                            barColor = '#2ca25f'; // Green for high scores (7-10)
-                        } else if (scoreValue >= 4) {
-                            barColor = '#99d8c9'; // Teal for medium scores (4-7)
+                        // 4-class color scheme: 1-2.5=red, 2.5-5=yellow, 5-7.5=blue, 7.5-10=green
+                        let barColor;
+                        if (scoreValue < 2.5) {
+                            barColor = '#ff4444'; // Red for low scores (1-2.5)
+                        } else if (scoreValue < 5) {
+                            barColor = '#ffcc00'; // Yellow for medium-low scores (2.5-5)
+                        } else if (scoreValue < 7.5) {
+                            barColor = '#71a3f9'; // Blue for medium-high scores (5-7.5)
+                        } else {
+                            barColor = '#44ff44'; // Green for high scores (7.5-10)
                         }
 
                         // Prepare bar content - show relationship indicator
@@ -1810,6 +2022,189 @@ function loadCities(currentTransform = null) {
                 // Instant hide tooltip
                 div.style("opacity", 0)
                     .style("display", "none");
+            });
+
+            // Mobile touch support - show tooltip on touch
+            cityCircles.on("touchstart", function (event, d) {
+                // Prevent default to avoid ghost clicks
+                event.preventDefault();
+                
+                // Highlight the circle
+                d3.select(this)
+                    .raise()
+                    .attr("stroke", "#FFD700")
+                    .attr("stroke-width", 0.5)
+                    .style("opacity", 1);
+
+                const touch = event.touches[0];
+                const x = touch.pageX;
+                const y = touch.pageY;
+
+                // Use same tooltip HTML as mouseover
+                const isMobileTooltip = window.innerWidth <= 768;
+                
+                const sizes = isMobileTooltip ? {
+                    minWidth: '125px',
+                    headerPadding: '1.5px',
+                    headerFont: '10px',
+                    subtitleFont: '10px',
+                    subtitlePadding: '2px',
+                    cellPadding: '3px',
+                    cellFont: '9px',
+                    prioritiesFont: '9px',
+                    prioritiesPadding: '3px 3px 3px 3px',
+                    iconFont: '10px',
+                    nameFont: '9px',
+                    barHeight: '6px',
+                    barRadius: '2px',
+                    valueFont: '7px',
+                    valuePadding: '1px',
+                    indicatorFont: '7px',
+                    gap: '2px'
+                } : {
+                    minWidth: '250px',
+                    headerPadding: '7px',
+                    headerFont: '16px',
+                    subtitleFont: '16px',
+                    subtitlePadding: '4px',
+                    cellPadding: '5px',
+                    cellFont: '16px',
+                    prioritiesFont: '16px',
+                    prioritiesPadding: '8px 6px 6px 6px',
+                    iconFont: '20px',
+                    nameFont: '16px',
+                    barHeight: '18px',
+                    barRadius: '4px',
+                    valueFont: '12px',
+                    valuePadding: '1px',
+                    indicatorFont: '10px',
+                    gap: '8px'
+                };
+
+                // Build tooltip HTML (same as mouseover)
+                let tooltipHTML = '<div style="font-family: Arial, sans-serif;">';
+                tooltipHTML += '<table style="border-collapse: collapse; min-width: ' + sizes.minWidth + '; background: white;">';
+
+                const bgColor = colorScale(d.properties.indexOfChoice);
+                tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: white; padding: ' + sizes.headerPadding + '; text-align: center; font-size: ' + sizes.headerFont + '; font-weight: bold;">' + d.properties.city + '</th></tr>';
+
+                tooltipHTML += '<tr><td colspan="2" style="font-size: ' + sizes.subtitleFont + '; font-style: italic; padding: ' + sizes.subtitlePadding + '; text-align: center; color: #666;">Ciudad</td></tr>';
+
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString() + '</td></tr>';
+
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Index of Choice:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
+
+                if (window.userCriteria && window.userCriteria.length > 0) {
+                    tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.prioritiesPadding + '; font-weight: bold; font-size: ' + sizes.prioritiesFont + '; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
+
+                    const currentAttributes = getCityDataAttributes(userType, selectedSeason);
+
+                    window.userCriteria.forEach(criterion => {
+                        const attributeInfo = currentAttributes[criterion.id];
+                        const normalizedValue = d.properties[attributeInfo.normalized];
+                        const scoreValue = parseEuropeanFloat(normalizedValue);
+                        const scorePercent = Math.min(100, Math.max(0, (scoreValue / 10) * 100));
+                        const realValue = d.properties[attributeInfo.real];
+                        
+                        let displayValue;
+                        if (realValue === undefined || realValue === null || realValue === '') {
+                            displayValue = 'N/A';
+                        } else {
+                            const realValueParsed = parseEuropeanFloat(realValue);
+                            let unit = attributeInfo.unit;
+                            if (criterion.id === 'housing') {
+                                unit = userType === 'tourist' ? '€/night' : '€/month';
+                            }
+                            displayValue = realValueParsed.toLocaleString(undefined, {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2
+                            }) + unit;
+                        }
+
+                        let barColor;
+                        if (scoreValue < 2.5) {
+                            barColor = '#ff4444';
+                        } else if (scoreValue < 5) {
+                            barColor = '#ffcc00';
+                        } else if (scoreValue < 7.5) {
+                            barColor = '#4488ff';
+                        } else {
+                            barColor = '#44ff44';
+                        }
+
+                        let barContent = '';
+                        if (attributeInfo.inverse) {
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">⚠ lower is better</span>';
+                        } else {
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher is better</span>';
+                        }
+
+                        const normalizedScoreText = scoreValue.toFixed(1) + '/10';
+
+                        tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.cellPadding + ';">';
+                        tooltipHTML += '<div style="display: flex; align-items: center; gap: ' + sizes.gap + ';">';
+                        tooltipHTML += '<span style="font-size: ' + sizes.iconFont + ';">' + criterion.icon + '</span>';
+                        tooltipHTML += '<div style="flex: 1;">';
+                        tooltipHTML += '<div style="font-size: ' + sizes.nameFont + '; font-weight: 600; margin-bottom: 1px;">' + criterion.name + '</div>';
+                        tooltipHTML += '<div style="background: #e9ecef; height: ' + sizes.barHeight + '; border-radius: ' + sizes.barRadius + '; overflow: hidden; position: relative;">';
+                        tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
+                        tooltipHTML += barContent;
+                        tooltipHTML += '</div>';
+                        tooltipHTML += '<div style="font-size: ' + sizes.valueFont + '; color: #666; margin-top: ' + sizes.valuePadding + '; display: flex; justify-content: space-between;">';
+                        tooltipHTML += '<span>Value: ' + displayValue + '</span>';
+                        tooltipHTML += '<span style="color: #667eea; font-weight: 600;">' + normalizedScoreText + '</span>';
+                        tooltipHTML += '</div>';
+                        tooltipHTML += '</div>';
+                        tooltipHTML += '</div>';
+                        tooltipHTML += '</td></tr>';
+                    });
+                }
+
+                tooltipHTML += '</table>';
+                tooltipHTML += '</div>';
+
+                // Smart positioning
+                div.html(tooltipHTML)
+                    .style("display", "block")
+                    .style("opacity", 0);
+
+                const tooltipNode = div.node();
+                const tooltipRect = tooltipNode.getBoundingClientRect();
+                const tooltipWidth = tooltipRect.width;
+                const tooltipHeight = tooltipRect.height;
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                let left = x + 15;
+                let top = y - 15;
+
+                if (left + tooltipWidth > viewportWidth) {
+                    left = x - tooltipWidth - 15;
+                }
+                if (left < 0) {
+                    left = 10;
+                }
+                if (top + tooltipHeight > viewportHeight) {
+                    top = viewportHeight - tooltipHeight - 10;
+                }
+                if (top < 0) {
+                    top = 10;
+                }
+
+                div.style("left", left + "px")
+                    .style("top", top + "px")
+                    .style("opacity", 0.98);
+            });
+
+            // Hide tooltip on touchend
+            cityCircles.on("touchend", function () {
+                d3.select(this)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 0.2)
+                    .style("opacity", 0.8);
+                
+                // Hide the tooltip
+                div.style("opacity", 0).style("display", "none");
             });
 
             // Double-click handler for tourist mode (opens city detail view)
