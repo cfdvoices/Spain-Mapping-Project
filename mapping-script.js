@@ -1017,8 +1017,8 @@ function createCriteriaPieChart() {
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("z-index", "1000")
         .style("pointer-events", "all")
-        .style("max-width", isMobile ? "180px" : "300px")  // Increased width
-        .style("width", isMobile ? "180px" : "266px");  // Increased width
+        .style("max-width", isMobile ? "400px" : "300px")  // Increased width
+        .style("width", isMobile ? "360px" : "266px");  // Increased width
 
     // Add title for pie chart - larger and on two lines for mobile
     const titleContainer = combinedContainer.append("div")
@@ -1597,25 +1597,26 @@ function addCityLabels(cityFeatures, currentZoom = 1) {
 
     // List of important capital cities that should always be shown
     const capitalCities = [
-        "Santiago de Compostela",
-        "Oviedo", 
-        "Santander",
-        "Vitoria-Gasteiz",
-        "Pamplona",
-        "Logroño",
-        "Toledo",
-        "Mérida",
-        "Santa Cruz de Tenerife",
-        "Madrid",
-        "Barcelona",
-        "Valencia",
-        "Sevilla",
-        "Zaragoza",
-        "Bilbao",
-        "Palma",
-        "Murcia",
-        "Málaga",
-        "Las Palmas"
+        "Santiago de Compostela",  // Galicia
+        "Oviedo",                   // Asturias
+        "Santander",                // Cantabria
+        "Vitoria-Gasteiz",         // Basque Country
+        "Pamplona",                 // Navarra
+        "Logroño",                  // La Rioja
+        "Toledo",                   // Castilla-La Mancha
+        "Mérida",                   // Extremadura
+        "Santa Cruz de Tenerife",   // Canary Islands
+        "Madrid",                   // Madrid
+        "Barcelona",                // Catalonia
+        "Valencia",                 // Valencia
+        "Sevilla",                  // Andalusia
+        "Zaragoza",                 // Aragon
+        "Bilbao",                   // Largest city in Basque Country
+        "Palma",                    // Balearic Islands
+        "Murcia",                   // Murcia
+        "Málaga",                   // Major Andalusian city
+        "Las Palmas",               // Canary Islands co-capital
+        "Valladolid"                // Castile and León
     ];
 
     // Sort cities: capitals first (by population), then others by population
@@ -1643,7 +1644,7 @@ function addCityLabels(cityFeatures, currentZoom = 1) {
 
     // Calculate uniform font size based on zoom level
     // At zoom 1: base size, at higher zoom: reduce size to half at max zoom (3.5)
-    const baseSize = isMobile ? 6 : 10;
+    const baseSize = isMobile ? 5 : 6;
     const zoomFactor = Math.max(0.5, 1 - ((currentZoom - 1) / 2.5) * 0.5); // Reduces to 0.5 at max zoom
     const fontSize = baseSize * zoomFactor;
 
@@ -1724,8 +1725,27 @@ function addCityLabels(cityFeatures, currentZoom = 1) {
             }
         }
 
-        // For capitals: always add if we found any position
+        // For capitals: always add if we found any position, or force add at first position if no position found
         // For non-capitals: add if position found AND in top 70%
+        if (isCapital && !selectedPosition) {
+            // Force add capital at the first position (above) even if there's slight overlap
+            const pos = positions[0];
+            const estimatedWidth = cityName.length * fontSize * 0.55;
+            const estimatedHeight = fontSize;
+            
+            let labelX = pos.x;
+            if (pos.anchor === "middle") labelX -= estimatedWidth / 2;
+            else if (pos.anchor === "end") labelX -= estimatedWidth;
+            
+            selectedPosition = pos;
+            labelBounds.push({
+                x: labelX,
+                y: pos.y - estimatedHeight,
+                width: estimatedWidth,
+                height: estimatedHeight
+            });
+        }
+        
         const shouldAdd = isCapital ? selectedPosition : (selectedPosition && i < sortedCities.length * 0.7);
         
         if (shouldAdd) {
