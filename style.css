@@ -799,7 +799,7 @@ html, body {
   bottom: 0;
   width: calc(100% - 320px);
   height: 100%;
-  background: radial-gradient(circle,rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%);
+  background: radial-gradient(circle, rgb(151, 182, 249) 0%, rgb(175, 210, 255) 50%, rgb(151, 182, 249) 100%);
   transition: right 0.3s ease, width 0.3s ease;
 }
 
@@ -1192,7 +1192,7 @@ html, body {
 #legend {
   position: absolute;
   left: 20px;
-  bottom: 160px;
+  top: 10px;  /* Changed from "bottom: 160px" to "top: 10px" */
   width: 260px;
   background: white;
   padding: 15px;
@@ -1417,7 +1417,7 @@ html, body {
 #cityDetailMapContainer {
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%);
+  background: radial-gradient(circle, rgb(151, 182, 249) 0%, rgb(175, 210, 255) 50%, rgb(151, 182, 249) 100%);
 }
 
 #cityDetailMapContainer svg {

@@ -1003,13 +1003,13 @@ function createCriteriaPieChart() {
     const isMobile = window.innerWidth <= 768;
 
     // Create combined container for pie chart and proportional legend
-    // Mobile calculation: 80px pie + 12px padding each side = 104px minimum, use 180px for comfort
+    // Wider container to accommodate side-by-side layout
     const combinedContainer = d3.select("#mapContainer")
         .append("div")
         .attr("id", "pieChartContainer")
         .attr("class", isMobile ? "pie-container-mobile" : "pie-container-desktop")
         .style("position", "absolute")
-        .style("top", isMobile ? "5px" : "10px")
+        .style("bottom", isMobile ? "25px" : "300px")  // Changed from "top" to "bottom"
         .style("left", isMobile ? "5px" : "20px")
         .style("background", "white")
         .style("border-radius", isMobile ? "12px" : "12px")
@@ -1017,9 +1017,8 @@ function createCriteriaPieChart() {
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("z-index", "1000")
         .style("pointer-events", "all")
-        .style("max-width", isMobile ? "100px" : "140px")
-        .style("min-width", isMobile ? "100px" : "140px")
-        .style("width", isMobile ? "100px" : "140px");
+        .style("max-width", isMobile ? "180px" : "300px")  // Increased width
+        .style("width", isMobile ? "180px" : "266px");  // Increased width
 
     // Add title for pie chart - larger and on two lines for mobile
     const titleContainer = combinedContainer.append("div")
@@ -1038,12 +1037,35 @@ function createCriteriaPieChart() {
         titleContainer.text("Selected Priorities");
     }
 
+    // Add hover reminder below title
+    combinedContainer.append("div")
+        .style("font-size", isMobile ? "8px" : "0.75em")
+        .style("font-style", "italic")
+        .style("margin-bottom", isMobile ? "4px" : "6px")
+        .style("text-align", "center")
+        .style("color", "#666")
+        .text("Hover on each slice");
+
+    // Create horizontal container for pie chart and legend
+    const horizontalContainer = combinedContainer.append("div")
+        .style("display", "flex")
+        .style("flex-direction", "row")
+        .style("align-items", "center")
+        .style("gap", isMobile ? "8px" : "15px")
+        .style("justify-content", "center");
+
+    // Left side: Pie chart container
+    const pieChartContainer = horizontalContainer.append("div")
+        .style("display", "flex")
+        .style("flex-direction", "column")
+        .style("align-items", "center");
+
     // Create SVG for pie chart - 80x80px on mobile, fully centered
     const pieWidth = isMobile ? 70 : 140;
     const pieHeight = isMobile ? 70 : 140;
     const radius = Math.min(pieWidth, pieHeight) / 2 - (isMobile ? 6 : 10);
 
-    const pieSvg = combinedContainer.append("svg")
+    const pieSvg = pieChartContainer.append("svg")
         .attr("width", pieWidth)
         .attr("height", pieHeight)
         .style("display", "block")
@@ -1121,46 +1143,52 @@ function createCriteriaPieChart() {
             d3.select(this).style("opacity", 0.85);
         });
 
-    // Add separator line
-    combinedContainer.append("div")
-        .style("border-top", "1px solid #ddd")
-        .style("margin", isMobile ? "2px 0" : "7px 0");
+    // Right side: Index of Choice legend container
+    const legendContainer = horizontalContainer.append("div")
+        .style("display", "flex")
+        .style("flex-direction", "column")
+        .style("align-items", "flex-start");
 
-    // Add "Index of Choice" title - slightly larger on mobile
-    combinedContainer.append("div")
+    // Add "Index of Choice" title
+    legendContainer.append("div")
         .style("font-size", isMobile ? "10px" : "15px")
         .style("font-weight", "bold")
         .style("text-align", "center")
         .style("color", "#00a04b")
-        .style("margin-bottom", isMobile ? "5px" : "8px")
+        .style("margin-bottom", isMobile ? "3px" : "6px")
         .style("line-height", "1.3")
+        .style("width", "100%")
         .text(isMobile ? "Index" : "Index of Choice");
 
     // Add proportional legend circles container
-    const legendCirclesContainer = combinedContainer.append("div")
+    const legendCirclesContainer = legendContainer.append("div")
         .attr("id", "proportionalLegendInContainer")
         .style("display", "flex")
         .style("flex-direction", "column")
-        .style("align-items", "center")
-        .style("gap", isMobile ? "1px" : "4px")
-        .style("padding", isMobile ? "0 3px" : "0");
+        .style("align-items", "flex-start")
+        .style("gap", isMobile ? "1px" : "3px")
+        .style("padding", "0");
 
     // Create legend items with circles - larger and more readable on mobile
     const legendValues = isMobile ? [
-        { label: "High", size: 15, color: "#2ecc71" },  // Orange (high values)
-        { label: "Mid", size: 12, color: "#f39c12" },   // Yellow-orange (mid values)
-        { label: "Low", size: 9, color: "#e16a01" }     // Green (low values)
+        { label: "Highest", size: 16, color: "#2c7bb6" },  // Blue (highest values)
+        { label: "High", size: 14, color: "#abd9e9" },     // Light blue (high values)
+        { label: "Mid", size: 12, color: "#ffffbf" },      // Yellow (mid values)
+        { label: "Low", size: 10, color: "#fdae61" },      // Orange (low values)
+        { label: "Lowest", size: 8, color: "#d7191c" }     // Red (lowest values)
     ] : [
-        { label: "High", size: 20, color: "#2ecc71"},  // Orange (high values)
-        { label: "Mid", size: 14, color: "#f39c12"},   // Yellow-orange (mid values)
-        { label: "Low", size: 9, color: "#e16a01"}     // Green (low values)
+        { label: "Highest", size: 20, color: "#2c7bb6"},   // Blue (highest values)
+        { label: "High", size: 16, color: "#abd9e9"},      // Light blue (high values)
+        { label: "Mid", size: 13, color: "#ffffbf"},       // Yellow (mid values)
+        { label: "Low", size: 10, color: "#fdae61"},       // Orange (low values)
+        { label: "Lowest", size: 7, color: "#d7191c"}      // Red (lowest values)
     ];
 
     legendValues.forEach(item => {
         const legendItem = legendCirclesContainer.append("div")
             .style("display", "flex")
             .style("align-items", "center")
-            .style("gap", isMobile ? "6px" : "8px")
+            .style("gap", isMobile ? "4px" : "6px")
             .style("width", "100%")
             .style("justify-content", "flex-start");
 
@@ -1175,7 +1203,7 @@ function createCriteriaPieChart() {
 
         // Label - more readable font size on mobile
         legendItem.append("div")
-            .style("font-size", isMobile ? "10px" : "14px")
+            .style("font-size", isMobile ? "9px" : "12px")
             .style("color", "#333")
             .style("font-weight", "500")
             .style("line-height", "1.3")
@@ -1467,9 +1495,9 @@ function loadBaseMapLayers() {
             .enter()
             .append("path")
             .attr("d", path)
-            .attr("fill", "#4d4d4d76")
-            .attr("stroke", "rgb(230, 230, 230)")
-            .attr("stroke-width", 0.2)
+            .attr("fill", "#e0e0e0")
+            .attr("stroke", "rgb(73, 73, 73)")
+            .attr("stroke-width", 0.35)
             .attr("class", "autonoma-boundary")
             .style("fill-opacity", 1)
             .style("pointer-events", "none"); // Disable autonoma interactivity
@@ -1485,8 +1513,8 @@ function loadBaseMapLayers() {
             .enter()
             .append("path")
             .attr("d", path)
-            .attr("fill", "#ffffffff")
-            .attr("stroke", "#d8d8d8ff")
+            .attr("fill", "rgb(255, 255, 255)")
+            .attr("stroke", "rgb(124, 124, 124)")
             .attr("stroke-width", 0.2)
             .attr("class", "province-boundary")
             .style("pointer-events", "none"); // Disable province interactivity
@@ -1523,7 +1551,7 @@ function loadInitialCityMarkers() {
                 .attr("fill", "#667eea")
                 .attr("stroke", "white")
                 .attr("stroke-width", 0.3)
-                .attr("opacity", 0.8)
+                .attr("opacity", 1)
                 .style("cursor", userType === 'tourist' ? 'pointer' : 'default')
                 .on("dblclick", function (event, d) {
                     if (userType === 'tourist') {
@@ -1783,10 +1811,10 @@ function loadCities(currentTransform = null) {
             window.currentRadiusScale = radiusScale;
 
             // Creation of the color scale for the circles representation
-            // Green-orange color ramp
+            // 5-class color ramp: red (low) to blue (high)
             const colorScale = d3.scaleLinear()
-                .domain([minIndex, (minIndex + maxIndex) / 2, maxIndex])
-                .range(['#e16a01', '#f39c12', '#2ecc71']); // Green to yellow-orange to orange
+                .domain([minIndex, minIndex + (maxIndex - minIndex) * 0.25, minIndex + (maxIndex - minIndex) * 0.5, minIndex + (maxIndex - minIndex) * 0.75, maxIndex])
+                .range(['#d7191c', '#fdae61', '#ffffbf', '#abd9e9', '#2c7bb6']); // Red to orange to yellow to light blue to blue
 
             const cityCircles = g_cities.selectAll("circle")
                 .data(cities.features)
@@ -1810,7 +1838,7 @@ function loadCities(currentTransform = null) {
                 .attr("stroke", "black")
                 .attr("stroke-width", 0.2)
                 .style("cursor", userType === 'tourist' ? 'pointer' : 'default')
-                .style("opacity", 0.8)
+                .style("opacity", 1)
                 .style("pointer-events", "all"); // Ensure cities are interactive
 
             // City tooltip (mouseover)
@@ -1872,7 +1900,7 @@ function loadCities(currentTransform = null) {
                 tooltipHTML += '<table style="border-collapse: collapse; min-width: ' + sizes.minWidth + '; background: white;">';
 
                 const bgColor = colorScale(d.properties.indexOfChoice);
-                tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: white; padding: ' + sizes.headerPadding + '; text-align: center; font-size: ' + sizes.headerFont + '; font-weight: bold;">' + d.properties.city + '</th></tr>';
+                tooltipHTML += '<tr><th colspan="2" style="background-color: ' + bgColor + '; color: black; padding: ' + sizes.headerPadding + '; text-align: center; font-size: ' + sizes.headerFont + '; font-weight: bold;">' + d.properties.city + '</th></tr>';
 
                 tooltipHTML += '<tr><td colspan="2" style="font-size: ' + sizes.subtitleFont + '; font-style: italic; padding: ' + sizes.subtitlePadding + '; text-align: center; color: #666;">Ciudad</td></tr>';
 
@@ -2301,7 +2329,7 @@ function loadCityDetailMap(cityName) {
         .attr("height", "100%")
         .attr("viewBox", [0, 0, width, height])
         .attr("preserveAspectRatio", "xMidYMid meet")
-        .style("background", "radial-gradient(circle, rgba(89, 142, 255, 1) 0%, rgba(111, 166, 237, 1) 50%, rgba(89, 142, 255, 1) 100%)");
+        .style("background", "radial-gradient(circle, rgb(151, 182, 249) 0%, rgb(175, 210, 255) 50%, rgb(151, 182, 249) 100%)");
 
     // Create groups for layers (only border and tourism)
     const g_border = citySvg.append("g").attr("class", "city-border-layer");
@@ -2492,7 +2520,7 @@ function loadCityDetailMap(cityName) {
                 d3.select(this)
                     .transition()
                     .duration(200)
-                    .attr("font-size", (getSymbolSize(currentCityZoom) * 2.5) + "px");
+                    .attr("font-size", (getSymbolSize(currentCityZoom) * 1.4) + "px");
 
                 // Show simple tooltip
                 const tooltip = d3.select("body").append("div")
@@ -2529,7 +2557,7 @@ function loadCityDetailMap(cityName) {
 
         // Setup zoom for city detail map with dynamic symbol scaling
         const cityZoom = d3.zoom()
-            .scaleExtent([1, 8])
+            .scaleExtent([0.9, 9])
             .on("zoom", function (event) {
                 g_border.attr("transform", event.transform);
                 g_tourism.attr("transform", event.transform);
@@ -2552,12 +2580,12 @@ function loadCityDetailMap(cityName) {
 
         if (cityZoomInBtn) {
             cityZoomInBtn.onclick = function () {
-                citySvg.transition().duration(750).call(cityZoom.scaleBy, 1.5);
+                citySvg.transition().duration(750).call(cityZoom.scaleBy, 1.05);
             };
         }
         if (cityZoomOutBtn) {
             cityZoomOutBtn.onclick = function () {
-                citySvg.transition().duration(750).call(cityZoom.scaleBy, 0.67);
+                citySvg.transition().duration(750).call(cityZoom.scaleBy, 0.95);
             };
         }
         if (cityZoomResetBtn) {
