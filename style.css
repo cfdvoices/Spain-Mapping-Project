@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   font-size: 16px;
@@ -6,6 +7,14 @@ html, body {
   overflow: hidden;
   width: 100%;
   height: 100%;
+}
+
+
+.buttons-text-adjustment {
+  user-select: none;
+  color: white;
+  font-size: 0.5px;
+  line-height: 20%;
 }
 
 /* ===== TOOLTIP STYLES ===== */
@@ -50,14 +59,12 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    135deg,
-    #AA151B 0%,
-    #C41E3A 25%,
-    #F1BF00 50%,
-    #C41E3A 75%,
-    #AA151B 100%
-  );
+  background: linear-gradient(135deg,
+      #AA151B 0%,
+      #C41E3A 25%,
+      #F1BF00 50%,
+      #C41E3A 75%,
+      #AA151B 100%);
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -77,7 +84,7 @@ html, body {
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
   animation: slideUpBig 0.8s ease;
 }
 
@@ -86,6 +93,7 @@ html, body {
     transform: translateY(80px) scale(0.95);
     opacity: 0;
   }
+
   to {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -105,8 +113,15 @@ html, body {
 }
 
 @keyframes floatFlag {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .onboarding-header h1 {
@@ -135,13 +150,13 @@ html, body {
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-radius: 16px;
   border-left: 5px solid #F1BF00;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
 
 .instruction-card:hover {
   transform: translateX(10px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .instruction-number {
@@ -206,15 +221,20 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    to bottom,
-    #AA151B 0%,   /* Start Red */
-    #AA151B 25%,  /* End Red at 25% */
-    #F1BF00 25%,  /* Start Yellow immediately */
-    #F1BF00 75%,  /* End Yellow at 75% */
-    #AA151B 75%,  /* Start Red immediately */
-    #AA151B 100%  /* End Red */
-  );
+  background: linear-gradient(to bottom,
+      #AA151B 0%,
+      /* Start Red */
+      #AA151B 25%,
+      /* End Red at 25% */
+      #F1BF00 25%,
+      /* Start Yellow immediately */
+      #F1BF00 75%,
+      /* End Yellow at 75% */
+      #AA151B 75%,
+      /* Start Red immediately */
+      #AA151B 100%
+      /* End Red */
+    );
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -223,14 +243,22 @@ html, body {
 }
 
 .flag-icon {
-  width: 80px;       /* Adjust this to make it larger/smaller */
-  height: auto;      /* Maintains the correct aspect ratio */
-  vertical-align: middle; /* Aligns the flag nicely with text */
+  width: 80px;
+  /* Adjust this to make it larger/smaller */
+  height: auto;
+  /* Maintains the correct aspect ratio */
+  vertical-align: middle;
+  /* Aligns the flag nicely with text */
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 #criteriaOverlay.hidden {
@@ -239,8 +267,13 @@ html, body {
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 /* Popup Container */
@@ -252,7 +285,7 @@ html, body {
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.6s ease;
 }
 
@@ -261,6 +294,7 @@ html, body {
     transform: translateY(50px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -321,22 +355,31 @@ html, body {
 
 .criterion-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .criterion-card.selected {
-  background: linear-gradient(135deg, 
-    #ff9985 0%,   /* Desaturated Salmon Red */
-    #ffc68c 100%  /* Soft Apricot Orange */
-  );
+  background: linear-gradient(135deg,
+      #ff9985 0%,
+      /* Desaturated Salmon Red */
+      #ffc68c 100%
+      /* Soft Apricot Orange */
+    );
   border-color: "orange";
   color: black;
   animation: pulse 0.3s ease;
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .criterion-icon {
@@ -363,20 +406,45 @@ html, body {
   justify-content: center;
   font-weight: bold;
   font-size: 0.9em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   animation: popIn 0.3s ease;
 }
 
 @keyframes popIn {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 
 /* Ranking Section */
@@ -422,7 +490,7 @@ html, body {
   border-radius: 20px;
   padding: 35px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .comparison-question {
@@ -448,7 +516,7 @@ html, body {
   padding: 30px 25px;
   text-align: center;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .criterion-display.selected {
@@ -501,7 +569,7 @@ html, body {
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   min-height: 90px;
   display: flex;
   flex-direction: column;
@@ -511,7 +579,7 @@ html, body {
 
 .scale-option:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   border-color: #667eea;
 }
 
@@ -655,7 +723,7 @@ html, body {
 
 .ranking-item:hover {
   background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .ranking-item:hover .delete-btn {
@@ -795,7 +863,8 @@ html, body {
   position: absolute;
   top: 0;
   left: 0;
-  right: 320px; /* Leave space for sidebar */
+  right: 320px;
+  /* Leave space for sidebar */
   bottom: 0;
   width: calc(100% - 320px);
   height: 100%;
@@ -803,7 +872,7 @@ html, body {
   transition: right 0.3s ease, width 0.3s ease;
 }
 
-#criteriaPanel.minimized ~ #mapContainer {
+#criteriaPanel.minimized~#mapContainer {
   right: 0;
   width: 100%;
 }
@@ -819,14 +888,17 @@ html, body {
     box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
     transform: scale(1);
   }
+
   25% {
     box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.6);
     transform: scale(1);
   }
+
   50% {
     box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
     transform: scale(1);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
     transform: scale(1);
@@ -834,25 +906,31 @@ html, body {
 }
 
 @keyframes mapUpdateFlash {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.95;
   }
 }
 
 @keyframes mapUpdateGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: brightness(1);
   }
+
   50% {
     filter: brightness(1.1);
   }
 }
 
 .map-updating {
-  animation: 
+  animation:
     mapUpdatePulse 0.4s ease-out,
     mapUpdateFlash 0.05s ease-in-out,
     mapUpdateGlow 0.4s ease-in-out;
@@ -866,12 +944,14 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(
-    circle,
-    rgba(170, 21, 27, 0.45) 0%,    /* Yellow Center */
-    rgba(241, 191, 0, 0.45) 50%,   /* Red Edges */
-    rgba(170, 21, 27, 0.45) 100%   /* Red Edges */
-  );
+  background: radial-gradient(circle,
+      rgba(170, 21, 27, 0.45) 0%,
+      /* Yellow Center */
+      rgba(241, 191, 0, 0.45) 50%,
+      /* Red Edges */
+      rgba(170, 21, 27, 0.45) 100%
+      /* Red Edges */
+    );
   animation: mapUpdateOverlay 1.3s ease-out;
   pointer-events: none;
   z-index: 1;
@@ -882,10 +962,12 @@ html, body {
     opacity: 0;
     transform: scale(1.01);
   }
+
   50% {
     opacity: 0.6;
     transform: scale(1.1);
   }
+
   100% {
     opacity: 0;
     transform: scale(1.05);
@@ -900,15 +982,18 @@ html, body {
   width: 320px;
   height: 100vh;
   background: white;
-  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-  z-index: 10000; /* Very high z-index when maximized to be above all elements */
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  /* Very high z-index when maximized to be above all elements */
   transition: transform 0.3s ease, z-index 0s;
 }
 
 #criteriaPanel.minimized {
   transform: translateX(320px);
-  z-index: 1000; /* Lower z-index when minimized */
-  transition: transform 0.3s ease, z-index 0s 0.3s; /* Delay z-index change until after slide */
+  z-index: 1000;
+  /* Lower z-index when minimized */
+  transition: transform 0.3s ease, z-index 0s 0.3s;
+  /* Delay z-index change until after slide */
 }
 
 #panelContent {
@@ -930,7 +1015,7 @@ html, body {
   color: white;
   font-size: 18px;
   cursor: pointer;
-  box-shadow: -4px 0 12px rgba(0,0,0,0.15);
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -1000,7 +1085,7 @@ html, body {
   display: none;
 }
 
-.filter-option input[type="radio"]:checked + span {
+.filter-option input[type="radio"]:checked+span {
   color: #667eea;
   font-weight: 600;
 }
@@ -1175,7 +1260,7 @@ html, body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   cursor: pointer;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .weight-slider::-moz-range-thumb {
@@ -1184,7 +1269,7 @@ html, body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   cursor: pointer;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   border: none;
 }
 
@@ -1192,13 +1277,14 @@ html, body {
 #legend {
   position: absolute;
   left: 20px;
-  top: 10px;  /* Changed from "bottom: 160px" to "top: 10px" */
+  top: 10px;
+  /* Changed from "bottom: 160px" to "top: 10px" */
   width: 260px;
   background: white;
   padding: 15px;
   opacity: 0.95;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
 }
 
@@ -1283,7 +1369,7 @@ html, body {
   overflow-y: auto;
   display: none;
   z-index: 1000;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 #citySearchResults.active {
@@ -1473,6 +1559,7 @@ html, body {
   min-width: 25px;
   text-align: center;
 }
+
 /* Credits Styling */
 .credits {
   font-size: 0.75em;
@@ -1492,17 +1579,17 @@ html, body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   color: white;
-  padding: 8px 16px;
+  padding: 6px 10px;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   margin-left: 30px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
   vertical-align: middle;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-weight: 600;
 }
 
@@ -1554,6 +1641,7 @@ html, body {
     opacity: 0;
     transform: translateY(-50px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1701,9 +1789,18 @@ html, body {
 /* Only applies to devices with screen width <= 768px (smartphones and small tablets) */
 
 @media screen and (max-width: 768px) {
+
   /* Body and base elements */
-  html, body {
+  html,
+  body {
     font-size: 12px;
+  }
+
+  .buttons-text-adjustment {
+    user-select: none;
+    color: white;
+    font-size: 0.001px;
+    line-height: 0.001%;
   }
 
   /* ===== ONBOARDING MOBILE ===== */
@@ -1811,10 +1908,12 @@ html, body {
     position: fixed;
     top: 0;
     left: 0;
-    width: auto; /* Not full width - just content width */
+    width: auto;
+    /* Not full width - just content width */
     max-width: 80%;
     height: 110px;
-    padding: 2px 4px; /* Minimal padding */
+    padding: 2px 4px;
+    /* Minimal padding */
     border-radius: 0 0 6px 6px;
     overflow: visible;
     z-index: 900;
@@ -1864,7 +1963,8 @@ html, body {
   }
 
   .legend-note {
-    display: block !important; /* Show the note */
+    display: block !important;
+    /* Show the note */
     font-size: 0.7em !important;
     margin: 0 !important;
     line-height: 1.5 !important;
@@ -1878,7 +1978,7 @@ html, body {
     margin: 0 !important;
     line-height: 1.5 !important;
   }
-  
+
   #legend .legend-note {
     display: block !important;
     font-size: 0.7em !important;
@@ -1910,11 +2010,11 @@ html, body {
   .methodology-btn {
     margin: 1px auto 0 auto;
     padding: 1px 3px;
-    font-size: 0.7em;
+    font-size: 0.6em;
     width: auto;
     align-items: center;
     gap: 1px;
-    line-height: 1.5 !important;
+    line-height: 1.3 !important;
     display: block;
   }
 
@@ -1923,7 +2023,8 @@ html, body {
   }
 
   .methodology-label {
-    font-size: 0.8em;/* Hide text on mobile */
+    font-size: 0.8em;
+    /* Hide text on mobile */
   }
 
   /* ===== ZOOM CONTROLS MOBILE ===== */
@@ -1952,21 +2053,25 @@ html, body {
     max-width: 100%;
     height: auto;
     max-height: 65vh;
-    border-radius: 10px 10px 0 0; /* Match button radius */
+    border-radius: 10px 10px 0 0;
+    /* Match button radius */
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.25);
     overflow: hidden;
-    z-index: 10000; /* Very high z-index when maximized */
+    z-index: 10000;
+    /* Very high z-index when maximized */
     /* Add vertical slide transition */
     transition: transform 0.3s ease, max-height 0.3s ease, z-index 0s;
     transform: translateY(0);
   }
 
   #criteriaPanel.minimized {
-    height: 20px; /* Match new button height */
+    height: 20px;
+    /* Match new button height */
     max-height: 20px;
     /* Slide down when minimized */
     transform: translateY(calc(100% - 20px));
-    z-index: 1000; /* Lower z-index when minimized */
+    z-index: 1000;
+    /* Lower z-index when minimized */
     transition: transform 0.3s ease, max-height 0.3s ease, z-index 0s 0.3s;
   }
 
@@ -1976,71 +2081,93 @@ html, body {
     left: 0;
     right: 0;
     width: 100%;
-    height: 20px; /* Reduced to half */
-    min-height: 20px; /* Ensure consistent height */
-    border-radius: 10px 10px 0 0; /* Adjusted for smaller height */
+    height: 20px;
+    /* Reduced to half */
+    min-height: 20px;
+    /* Ensure consistent height */
+    border-radius: 10px 10px 0 0;
+    /* Adjusted for smaller height */
     transform: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9em; /* Slightly smaller font */
+    font-size: 0.9em;
+    /* Slightly smaller font */
     padding: 0;
-    transition: background-color 0.2s ease; /* Smooth color transition only */
+    transition: background-color 0.2s ease;
+    /* Smooth color transition only */
   }
 
   #criteriaPanel.minimized .toggle-panel-btn {
     border-radius: 10px 10px 0 0;
-    height: 20px; /* Lock height */
+    height: 20px;
+    /* Lock height */
     min-height: 20px;
   }
 
   #toggleIcon {
-    transform: none !important; /* Override desktop rotation */
-    font-size: 0.85em; /* Smaller icon for smaller button */
-    transition: none; /* No transition on mobile */
-    display: inline-block; /* Prevent size changes */
-    width: 16px; /* Reduced width */
-    height: 16px; /* Reduced height */
+    transform: none !important;
+    /* Override desktop rotation */
+    font-size: 0.85em;
+    /* Smaller icon for smaller button */
+    transition: none;
+    /* No transition on mobile */
+    display: inline-block;
+    /* Prevent size changes */
+    width: 16px;
+    /* Reduced width */
+    height: 16px;
+    /* Reduced height */
     line-height: 16px;
     text-align: center;
   }
 
   #criteriaPanel.minimized #toggleIcon {
-    transform: none !important; /* Override desktop rotation */
+    transform: none !important;
+    /* Override desktop rotation */
   }
 
   #panelContent {
     padding: 10px;
     overflow-y: auto;
-    max-height: calc(65vh - 20px); /* Adjusted for smaller button */
+    max-height: calc(65vh - 20px);
+    /* Adjusted for smaller button */
   }
 
   .panel-header h3 {
     font-size: 1em;
-    margin-bottom: 4px; /* Reduced from 6px */
+    margin-bottom: 4px;
+    /* Reduced from 6px */
   }
 
   .panel-subtitle {
     font-size: 0.9em;
-    margin-bottom: 5px; /* Reduced from 8px */
+    margin-bottom: 5px;
+    /* Reduced from 8px */
   }
 
   .filter-toggle {
     flex-direction: row;
-    gap: 4px; /* Reduced from 6px */
+    gap: 4px;
+    /* Reduced from 6px */
     justify-content: center;
-    margin-bottom: 6px; /* Reduced from 10px */
+    margin-bottom: 6px;
+    /* Reduced from 10px */
   }
 
   .filter-option {
-    padding: 4px 8px; /* Reduced from 5px 10px */
+    padding: 4px 8px;
+    /* Reduced from 5px 10px */
     font-size: 0.85em;
   }
 
   .season-selector {
-    margin-top: 6px; /* Reduced from 12px */
-    padding: 6px; /* Reduced from 10px */
-    gap: 4px; /* Reduced from 8px */
+    margin-top: 6px;
+    /* Reduced from 12px */
+    padding: 6px;
+    /* Reduced from 10px */
+    gap: 4px;
+    /* Reduced from 8px */
   }
 
   .season-label {
@@ -2048,77 +2175,101 @@ html, body {
   }
 
   .season-select {
-    padding: 5px 8px; /* Reduced from 8px 12px */
+    padding: 5px 8px;
+    /* Reduced from 8px 12px */
     font-size: 0.85em;
   }
 
   .panel-section {
-    margin-bottom: 6px; /* Reduced from 10px */
+    margin-bottom: 6px;
+    /* Reduced from 10px */
   }
 
   .panel-section h4 {
     font-size: 0.9em;
-    margin-bottom: 4px; /* Reduced from 6px */
+    margin-bottom: 4px;
+    /* Reduced from 6px */
   }
 
   .criteria-checkbox-item {
-    padding: 4px; /* Reduced from 5px */
-    font-size: 0.8em; /* Match filter option size */
-    margin-bottom: 2px; /* Reduced from 3px */
-    min-height: 32px; /* Reduce overall height */
+    padding: 4px;
+    /* Reduced from 5px */
+    font-size: 0.8em;
+    /* Match filter option size */
+    margin-bottom: 2px;
+    /* Reduced from 3px */
+    min-height: 32px;
+    /* Reduce overall height */
   }
 
   .criterion-icon {
-    font-size: 1.2em; /* Reduced from 2em desktop */
-    margin-bottom: 4px; /* Reduced from 10px */
+    font-size: 1.2em;
+    /* Reduced from 2em desktop */
+    margin-bottom: 4px;
+    /* Reduced from 10px */
   }
 
   .criterion-name {
-    font-size: 0.75em; /* Match filter option size (0.75em) */
+    font-size: 0.75em;
+    /* Match filter option size (0.75em) */
   }
 
   .criterion-weight-item {
-    padding: 4px; /* Reduced from 5px */
-    margin-bottom: 3px; /* Reduced from 4px */
+    padding: 4px;
+    /* Reduced from 5px */
+    margin-bottom: 3px;
+    /* Reduced from 4px */
   }
 
   .weight-slider-item {
-    padding: 6px; /* Reduced from 12px desktop */
+    padding: 6px;
+    /* Reduced from 12px desktop */
     margin-bottom: 4px;
   }
 
   .weight-slider-header {
-    gap: 4px; /* Reduced from 8px */
-    margin-bottom: 4px; /* Reduced from 8px */
+    gap: 4px;
+    /* Reduced from 8px */
+    margin-bottom: 4px;
+    /* Reduced from 8px */
     font-size: 1em;
   }
 
   .weight-slider-icon {
-    font-size: 1em; /* Reduced from 1.2em */
+    font-size: 1em;
+    /* Reduced from 1.2em */
   }
 
   .weight-slider-name {
-    font-size: 0.9em; /* Match filter option size */
+    font-size: 0.9em;
+    /* Match filter option size */
     font-weight: 600;
   }
 
   .weight-slider-value {
-    font-size: 0.95em; /* Match filter option size */
-    min-width: 35px; /* Reduced from 45px */
+    font-size: 0.95em;
+    /* Match filter option size */
+    min-width: 35px;
+    /* Reduced from 45px */
   }
 
   .weight-slider {
-    height: 4px; /* Reduced from 6px - thinner bar */
+    height: 4px;
+    /* Reduced from 6px - thinner bar */
   }
 
   .weight-slider::-webkit-slider-thumb {
-    width: 14px; /* Reduced from 18px */
-    height: 14px; /* Reduced from 18px */
+    width: 14px;
+    /* Reduced from 18px */
+    height: 14px;
+    /* Reduced from 18px */
   }
 
   .weight-slider::-moz-range-thumb {
-    width: 14px; /* Reduced from 18px */
-    height: 14px; /* Reduced from 18px */
+    width: 14px;
+    /* Reduced from 18px */
+    height: 14px;
+    /* Reduced from 18px */
   }
 
   .criterion-label {
@@ -2132,10 +2283,12 @@ html, body {
   }
 
   .action-button {
-    padding: 7px 14px; /* Reduced from 8px 16px */
+    padding: 7px 14px;
+    /* Reduced from 8px 16px */
     font-size: 0.9em;
     width: 100%;
-    margin-top: 5px; /* Reduced from 8px */
+    margin-top: 5px;
+    /* Reduced from 8px */
   }
 
   /* ===== MAP CONTAINER MOBILE ===== */
@@ -2152,16 +2305,16 @@ html, body {
 
   /* Pie Chart - make tiny */
   #pieChartContainer {
-    top: 140px !important;
+    top: 130px !important;
     left: 5px !important;
     padding: 1px !important;
-    max-width: 60px;
-    width: 40px !important;
-    height: 170px !important;
+    max-width: 40px;
+    width: 30px !important;
+    height: 130px !important;
     font-size: 0.65em;
   }
 
-  #pieChartContainer > div:first-child {
+  #pieChartContainer>div:first-child {
     font-size: 1.2em !important;
     margin-bottom: 0.5px !important;
   }
@@ -2169,7 +2322,9 @@ html, body {
   #pieChartContainer svg {
     width: 70px !important;
     height: 70px !important;
-  } */
+  }
+
+  */
 
   /* ===== TOOLTIP MOBILE ===== */
   .tooltip {
@@ -2307,7 +2462,9 @@ html, body {
 
   /* ===== ADJUSTMENTS FOR VERY SMALL SCREENS ===== */
   @media screen and (max-width: 400px) {
-    html, body {
+
+    html,
+    body {
       font-size: 13px;
     }
 
@@ -2349,7 +2506,7 @@ html, body {
       margin-bottom: 2px;
     }
 
-    #legend > div:last-of-type > div span {
+    #legend>div:last-of-type>div span {
       font-size: 0.55em !important;
     }
 
@@ -2389,13 +2546,19 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 15000; /* Highest - appears first before everything */
+  z-index: 15000;
+  /* Highest - appears first before everything */
   animation: fadeIn 0.5s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .start-experience-container {
@@ -2413,6 +2576,7 @@ html, body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2427,8 +2591,15 @@ html, body {
 }
 
 @keyframes wave {
-  0%, 100% { transform: rotate(-3deg); }
-  50% { transform: rotate(3deg); }
+
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+
+  50% {
+    transform: rotate(3deg);
+  }
 }
 
 .start-title {
@@ -2469,9 +2640,12 @@ html, body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   }
+
   50% {
     box-shadow: 0 4px 25px rgba(102, 126, 234, 0.7);
   }
@@ -2533,12 +2707,15 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7); /* Semi-transparent instead of solid */
+  background: rgba(0, 0, 0, 0.7);
+  /* Semi-transparent instead of solid */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 14000; /* Second highest - appears after start screen */
-  backdrop-filter: blur(5px); /* Blur the map behind */
+  z-index: 14000;
+  /* Second highest - appears after start screen */
+  backdrop-filter: blur(5px);
+  /* Blur the map behind */
 }
 
 .call-phone {
@@ -2549,7 +2726,7 @@ html, body {
   width: 100%;
   max-width: 300px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
   animation: pulse 2s infinite;
   transition: transform 0.3s ease;
   position: relative;
@@ -2557,7 +2734,7 @@ html, body {
 
 .call-phone:hover {
   transform: scale(1.02);
-  box-shadow: 0 25px 70px rgba(0,0,0,0.9);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
 }
 
 .close-popup-btn {
@@ -2585,8 +2762,15 @@ html, body {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .incoming {
@@ -2629,7 +2813,7 @@ html, body {
 
 .call-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 .call-btn:active {
@@ -2662,12 +2846,15 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75); /* Semi-transparent */
-  z-index: 13000; /* Third highest - appears after call overlay */
+  background: rgba(0, 0, 0, 0.75);
+  /* Semi-transparent */
+  z-index: 13000;
+  /* Third highest - appears after call overlay */
   align-items: center;
   justify-content: center;
   overflow-y: auto;
-  backdrop-filter: blur(5px); /* Blur the map behind */
+  backdrop-filter: blur(5px);
+  /* Blur the map behind */
 }
 
 .intro-content {
@@ -2679,7 +2866,7 @@ html, body {
   position: relative;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.5s ease;
 }
 
@@ -2688,6 +2875,7 @@ html, body {
     opacity: 0;
     transform: translateY(50px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2777,7 +2965,8 @@ html, body {
     font-size: 1.1em;
   }
 
-  .intro-content p, .intro-content li {
+  .intro-content p,
+  .intro-content li {
     font-size: 0.9em;
   }
 
@@ -3087,4 +3276,75 @@ html, body {
 
 .data-table-container::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* ===== PIE CHART CONTAINER RESPONSIVE STYLES ===== */
+
+/* Desktop styles for pie chart container */
+.pie-container-desktop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  left:12px;
+  top:75%;
+}
+
+/* Mobile styles for pie chart container */
+.pie-container-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Ensure proper sizing on all devices */
+#pieChartContainer {
+  box-sizing: border-box;
+}
+
+/* Mobile-specific media query for pie chart container */
+@media screen and (max-width: 768px) {
+  #pieChartContainer {
+    /* Use viewport-based sizing - match legend positioning */
+    max-width: 30vw !important;
+    min-width: 50vw !important;
+    width: 25px !important;
+    
+    /* Match legend positioning - left aligned */
+    bottom: 10px !important;
+    left: 0% !important;
+    transform: none !important;
+    
+    /* Tighter padding on mobile */
+    padding: 8px !important;
+  }
+  
+  /* Ensure pie chart is visible and properly sized */
+  #pieChartContainer svg {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Better spacing for legend items on mobile */
+  #proportionalLegendInContainer > div {
+    padding: 2px 0;
+  }
+}
+
+/* Extra small devices (phones in portrait, less than 375px) */
+@media screen and (max-width: 375px) {
+  #pieChartContainer {
+    max-width: 55vw !important;
+    min-width: 180px !important;
+    padding: 6px !important;
+    font-size: 0.8em;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  #pieChartContainer {
+    bottom: 10px !important;
+    max-width: 40vw !important;
+    left: 10px !important;
+  }
 }

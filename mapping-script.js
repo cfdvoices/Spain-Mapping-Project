@@ -1003,56 +1003,54 @@ function createCriteriaPieChart() {
     const isMobile = window.innerWidth <= 768;
 
     // Create combined container for pie chart and proportional legend
-    // Wider container to accommodate side-by-side layout
+    // Responsive container to accommodate side-by-side layout
     const combinedContainer = d3.select("#mapContainer")
         .append("div")
         .attr("id", "pieChartContainer")
         .attr("class", isMobile ? "pie-container-mobile" : "pie-container-desktop")
         .style("position", "absolute")
-        .style("bottom", isMobile ? "25px" : "300px")  // Changed from "top" to "bottom"
-        .style("left", isMobile ? "5px" : "20px")
+        .style("bottom", isMobile ? "10px" : "10px")  // Consistent bottom positioning
+        .style("left", "20px")  // Match legend positioning on both mobile and desktop
         .style("background", "white")
-        .style("border-radius", isMobile ? "12px" : "12px")
-        .style("padding", isMobile ? "12px" : "12px")
+        .style("border-radius", "12px")
+        .style("padding", isMobile ? "10px" : "12px")
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("z-index", "1000")
         .style("pointer-events", "all")
-        .style("max-width", isMobile ? "400px" : "300px")  // Increased width
-        .style("width", isMobile ? "360px" : "266px");  // Increased width
+        .style("max-width", isMobile ? "50vw" : "300px")  // 50vw on mobile to match request
+        .style("width", isMobile ? "auto" : "auto")  // Auto width based on content
+        .style("min-width", isMobile ? "200px" : "266px");  // Minimum width to prevent cramping
 
-    // Add title for pie chart - larger and on two lines for mobile
+    // Add title for pie chart - responsive sizing
     const titleContainer = combinedContainer.append("div")
-        .style("font-size", isMobile ? "9em" : "1em")
+        .style("font-size", isMobile ? "0.6em" : "0.9em")  // Fixed: was 9em
         .style("font-weight", "bold")
-        .style("margin-bottom", isMobile ? "4px" : "6px")
+        .style("margin-bottom", isMobile ? "6px" : "6px")
         .style("text-align", "center")
         .style("color", "#333")
-        .style("line-height", isMobile ? "1.4" : "1.3")
-        .style("padding", isMobile ? "0 5px" : "0");
+        .style("line-height", "1.3")
+        .style("padding", "0");
     
-    // Add title text with line break for mobile
-    if (isMobile) {
-        titleContainer.html("Selected<br>Priorities");
-    } else {
-        titleContainer.text("Selected Priorities");
-    }
+    // Add title text
+    titleContainer.text("Selected Priorities");
 
     // Add hover reminder below title
     combinedContainer.append("div")
-        .style("font-size", isMobile ? "8px" : "0.75em")
+        .style("font-size", isMobile ? "0.7em" : "0.75em")  // Using em units
         .style("font-style", "italic")
-        .style("margin-bottom", isMobile ? "4px" : "6px")
+        .style("margin-bottom", isMobile ? "6px" : "6px")
         .style("text-align", "center")
         .style("color", "#666")
-        .text("Hover on each slice");
+        .text(isMobile ? "Tap each slice" : "Hover on each slice");
 
     // Create horizontal container for pie chart and legend
     const horizontalContainer = combinedContainer.append("div")
         .style("display", "flex")
         .style("flex-direction", "row")
         .style("align-items", "center")
-        .style("gap", isMobile ? "8px" : "15px")
-        .style("justify-content", "center");
+        .style("gap", isMobile ? "6px" : "15px")  // Reduced gap for narrower container
+        .style("justify-content", "space-between")  // Better distribution
+        .style("padding", isMobile ? "0 2px" : "0");  // Minimal side padding on mobile
 
     // Left side: Pie chart container
     const pieChartContainer = horizontalContainer.append("div")
@@ -1060,10 +1058,10 @@ function createCriteriaPieChart() {
         .style("flex-direction", "column")
         .style("align-items", "center");
 
-    // Create SVG for pie chart - 80x80px on mobile, fully centered
-    const pieWidth = isMobile ? 70 : 140;
+    // Create SVG for pie chart - responsive sizing
+    const pieWidth = isMobile ? 70 : 140;  // Smaller on mobile to fit 50vw container
     const pieHeight = isMobile ? 70 : 140;
-    const radius = Math.min(pieWidth, pieHeight) / 2 - (isMobile ? 6 : 10);
+    const radius = Math.min(pieWidth, pieHeight) / 2 - (isMobile ? 6 : 10);  // Appropriate padding
 
     const pieSvg = pieChartContainer.append("svg")
         .attr("width", pieWidth)
@@ -1151,14 +1149,14 @@ function createCriteriaPieChart() {
 
     // Add "Index of Choice" title
     legendContainer.append("div")
-        .style("font-size", isMobile ? "10px" : "15px")
+        .style("font-size", isMobile ? "0.75em" : "0.9em")  // Using em units for better scaling
         .style("font-weight", "bold")
-        .style("text-align", "center")
-        .style("color", "#00a04b")
-        .style("margin-bottom", isMobile ? "3px" : "6px")
-        .style("line-height", "1.3")
+        .style("text-align", "left")  // Left align for mobile
+        .style("color", "#000000")
+        .style("margin-bottom", isMobile ? "4px" : "6px")
+        .style("line-height", "1.2")
         .style("width", "100%")
-        .text(isMobile ? "Index" : "Index of Choice");
+        .text("Index");
 
     // Add proportional legend circles container
     const legendCirclesContainer = legendContainer.append("div")
@@ -1166,16 +1164,16 @@ function createCriteriaPieChart() {
         .style("display", "flex")
         .style("flex-direction", "column")
         .style("align-items", "flex-start")
-        .style("gap", isMobile ? "1px" : "3px")
+        .style("gap", isMobile ? "2px" : "3px")  // Tighter spacing for narrower container
         .style("padding", "0");
 
-    // Create legend items with circles - larger and more readable on mobile
+    // Create legend items with circles - optimized for mobile
     const legendValues = isMobile ? [
-        { label: "Highest", size: 16, color: "#2c7bb6" },  // Blue (highest values)
-        { label: "High", size: 14, color: "#abd9e9" },     // Light blue (high values)
-        { label: "Mid", size: 12, color: "#ffffbf" },      // Yellow (mid values)
-        { label: "Low", size: 10, color: "#fdae61" },      // Orange (low values)
-        { label: "Lowest", size: 8, color: "#d7191c" }     // Red (lowest values)
+        { label: "Highest", size: 12, color: "#2c7bb6" },  // Blue (highest values)
+        { label: "High", size: 10, color: "#abd9e9" },     // Light blue (high values)
+        { label: "Mid", size: 9, color: "#ffffbf" },       // Yellow (mid values)
+        { label: "Low", size: 8, color: "#fdae61" },       // Orange (low values)
+        { label: "Lowest", size: 6, color: "#d7191c" }     // Red (lowest values)
     ] : [
         { label: "Highest", size: 20, color: "#2c7bb6"},   // Blue (highest values)
         { label: "High", size: 16, color: "#abd9e9"},      // Light blue (high values)
@@ -1188,9 +1186,10 @@ function createCriteriaPieChart() {
         const legendItem = legendCirclesContainer.append("div")
             .style("display", "flex")
             .style("align-items", "center")
-            .style("gap", isMobile ? "4px" : "6px")
+            .style("gap", isMobile ? "4px" : "6px")  // Reduced gap for narrower container
             .style("width", "100%")
-            .style("justify-content", "flex-start");
+            .style("justify-content", "flex-start")
+            .style("padding", isMobile ? "1px 0" : "0");  // Vertical padding on mobile
 
         // Circle
         legendItem.append("div")
@@ -1198,15 +1197,16 @@ function createCriteriaPieChart() {
             .style("height", item.size + "px")
             .style("background", item.color)
             .style("border-radius", "50%")
-            .style("border", isMobile ? "1px solid #000" : "1px solid #000")
+            .style("border", "1px solid #000")
             .style("flex-shrink", "0");
 
-        // Label - more readable font size on mobile
+        // Label - using em units for better scaling
         legendItem.append("div")
-            .style("font-size", isMobile ? "9px" : "12px")
+            .style("font-size", isMobile ? "0.75em" : "0.8em")  // Smaller for narrower container
             .style("color", "#333")
             .style("font-weight", "500")
-            .style("line-height", "1.3")
+            .style("line-height", "1.2")
+            .style("white-space", "nowrap")  // Prevent wrapping
             .text(item.label);
     });
 
@@ -1322,6 +1322,20 @@ function zoomed(event) {
     
     // Hide tooltip during zoom/pan to prevent it from staying visible
     div.style("opacity", 0).style("display", "none");
+    
+    // Reset mobile tooltip state if it was showing
+    if (typeof window.currentTooltipCity !== 'undefined' && window.currentTooltipCity !== null) {
+        // Reset city highlighting
+        g_cities.selectAll("circle").each(function(cityData) {
+            if (cityData && cityData.properties && cityData.properties.city === window.currentTooltipCity) {
+                d3.select(this)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 0.2)
+                    .style("opacity", 0.8);
+            }
+        });
+        window.currentTooltipCity = null;
+    }
     
     // Update current zoom level
     currentMapZoom = event.transform.k;
@@ -1884,7 +1898,7 @@ function loadCities(currentTransform = null) {
                     subtitleFont: '10px',
                     subtitlePadding: '2px',
                     cellPadding: '3px',
-                    cellFont: '9px',
+                    cellFont: '8px',
                     prioritiesFont: '9px',
                     prioritiesPadding: '3px 3px 3px 3px',
                     iconFont: '10px',
@@ -1902,7 +1916,7 @@ function loadCities(currentTransform = null) {
                     subtitleFont: '16px',
                     subtitlePadding: '4px',
                     cellPadding: '5px',
-                    cellFont: '16px',
+                    cellFont: '14px',
                     prioritiesFont: '16px',
                     prioritiesPadding: '8px 6px 6px 6px',
                     iconFont: '20px',
@@ -1926,7 +1940,7 @@ function loadCities(currentTransform = null) {
 
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString() + '</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Index of Choice:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index Legend:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
                 // Show which criteria contributed with bar charts
                 if (window.userCriteria && window.userCriteria.length > 0) {
@@ -2072,10 +2086,33 @@ function loadCities(currentTransform = null) {
                     .style("display", "none");
             });
 
-            // Mobile touch support - show tooltip on touch
+            // Mobile touch support - show persistent tooltip on touch
+            window.currentTooltipCity = null; // Track which city's tooltip is currently shown (global for zoom handler access)
+            
             cityCircles.on("touchstart", function (event, d) {
                 // Prevent default to avoid ghost clicks
                 event.preventDefault();
+                event.stopPropagation();
+                
+                // If clicking the same city that's already showing, do nothing (keep it open)
+                if (window.currentTooltipCity === d.properties.city) {
+                    return;
+                }
+                
+                // If clicking a different city, hide the previous tooltip first
+                if (window.currentTooltipCity !== null) {
+                    cityCircles.each(function(cityData) {
+                        if (cityData.properties.city === window.currentTooltipCity) {
+                            d3.select(this)
+                                .attr("stroke", "black")
+                                .attr("stroke-width", 0.2)
+                                .style("opacity", 0.8);
+                        }
+                    });
+                }
+                
+                // Update current tooltip city
+                window.currentTooltipCity = d.properties.city;
                 
                 // Highlight the circle
                 d3.select(this)
@@ -2140,7 +2177,7 @@ function loadCities(currentTransform = null) {
 
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString() + '</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Index of Choice:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index Legend:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
                 if (window.userCriteria && window.userCriteria.length > 0) {
                     tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.prioritiesPadding + '; font-weight: bold; font-size: ' + sizes.prioritiesFont + '; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
@@ -2244,15 +2281,31 @@ function loadCities(currentTransform = null) {
                     .style("opacity", 0.98);
             });
 
-            // Hide tooltip on touchend
-            cityCircles.on("touchend", function () {
-                d3.select(this)
-                    .attr("stroke", "black")
-                    .attr("stroke-width", 0.2)
-                    .style("opacity", 0.8);
-                
-                // Hide the tooltip
-                div.style("opacity", 0).style("display", "none");
+            // Remove touchend handler - we want tooltips to persist
+            // Tooltip will be hidden when:
+            // 1. User taps another city (handled in touchstart above)
+            // 2. User taps the map background (handled below)
+            // 3. User starts panning (handled in zoom behavior)
+            
+            // Add handler to hide tooltip when tapping the map background
+            svg.on("touchstart.hidetooltip", function(event) {
+                // Only hide if not tapping on a city circle
+                if (event.target.tagName !== 'circle' && window.currentTooltipCity !== null) {
+                    // Hide tooltip
+                    div.style("opacity", 0).style("display", "none");
+                    
+                    // Reset city highlighting
+                    cityCircles.each(function(cityData) {
+                        if (cityData.properties.city === window.currentTooltipCity) {
+                            d3.select(this)
+                                .attr("stroke", "black")
+                                .attr("stroke-width", 0.2)
+                                .style("opacity", 0.8);
+                        }
+                    });
+                    
+                    window.currentTooltipCity = null;
+                }
             });
 
             // Double-click handler for tourist mode (opens city detail view)
