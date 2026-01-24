@@ -3186,6 +3186,49 @@ instructionsAudio.volume = 1.0;
 let ringtoneHasPlayed = false;
 let audioUnlocked = false;
 let experienceStarted = false;
+let vibrationInterval = null;
+
+// Check if vibration API is supported
+const supportsVibration = 'vibrate' in navigator;
+
+// Vibration pattern - vibrate for 400ms, pause 200ms, vibrate 400ms, pause 1000ms
+// This creates a phone-like vibration pattern
+const vibrationPattern = [400, 200, 400, 1000];
+
+// Function to start vibration loop
+function startVibration() {
+    if (!supportsVibration) {
+        console.log("Vibration API not supported on this device");
+        return;
+    }
+    
+    // Start the vibration pattern
+    navigator.vibrate(vibrationPattern);
+    
+    // Set up interval to repeat the pattern
+    // Total pattern duration is 400 + 200 + 400 + 1000 = 2000ms
+    vibrationInterval = setInterval(() => {
+        navigator.vibrate(vibrationPattern);
+    }, 2000);
+    
+    console.log("Vibration started");
+}
+
+// Function to stop vibration
+function stopVibration() {
+    if (!supportsVibration) return;
+    
+    // Clear the interval
+    if (vibrationInterval) {
+        clearInterval(vibrationInterval);
+        vibrationInterval = null;
+    }
+    
+    // Stop any ongoing vibration
+    navigator.vibrate(0);
+    
+    console.log("Vibration stopped");
+}
 
 // Wait for audio to be loaded
 ringtone.addEventListener('canplaythrough', () => {
@@ -3217,6 +3260,9 @@ startExperienceBtn.addEventListener("click", async () => {
         audioUnlocked = true;
         console.log("✓ Audio unlocked and playing!");
         
+        // Start vibration simultaneously with ringtone
+        startVibration();
+        
         // Show call overlay after a short delay
         setTimeout(() => {
             callOverlay.style.display = "flex";
@@ -3224,7 +3270,8 @@ startExperienceBtn.addEventListener("click", async () => {
         
     } catch (error) {
         console.log("Audio playback error:", error);
-        // Even if audio fails, show the call overlay
+        // Even if audio fails, show the call overlay and try vibration
+        startVibration();
         setTimeout(() => {
             callOverlay.style.display = "flex";
             // Try playing again
@@ -3239,6 +3286,7 @@ function stopRingtone() {
     ringtone.pause();
     ringtone.currentTime = 0;
     ringtoneHasPlayed = true;
+    stopVibration(); // Stop vibration when ringtone stops
     console.log("Ringtone stopped and reset");
 }
 
@@ -3347,4 +3395,5 @@ document.addEventListener("keydown", function (e) {
 window.addEventListener('beforeunload', () => {
     stopRingtone();
     stopInstructionsAudio();
+    stopVibration();
 });
