@@ -571,6 +571,47 @@ function initializeCriteriaPanel() {
         });
 
         checkboxList.appendChild(item);
+        
+        // If this is the climate criterion AND user is tourist, insert season selector right after it
+        if (criterion.id === 'climate' && userType === 'tourist') {
+            const seasonSelectorElement = document.getElementById('seasonSelector');
+            if (seasonSelectorElement) {
+                // Clone the season selector to avoid removing it from DOM completely
+                const seasonClone = seasonSelectorElement.cloneNode(true);
+                
+                // Add class for special styling
+                seasonClone.classList.add('inline-with-climate');
+                
+                // Preserve the select element's value
+                const originalSelect = seasonSelectorElement.querySelector('#seasonSelect');
+                const clonedSelect = seasonClone.querySelector('#seasonSelect');
+                if (originalSelect && clonedSelect) {
+                    clonedSelect.value = originalSelect.value;
+                    
+                    // Re-attach the change event listener to the cloned select
+                    clonedSelect.addEventListener('change', function() {
+                        const previousSeason = selectedSeason;
+                        selectedSeason = this.value;
+                        console.log('Season changed from', previousSeason, 'to:', selectedSeason);
+                        
+                        // Update the original select to keep them in sync
+                        if (originalSelect) {
+                            originalSelect.value = this.value;
+                        }
+                        
+                        // If criteria are selected and user is tourist, update the map
+                        if (userType === 'tourist' && selectedCriteria.length > 0) {
+                            updateMap();
+                        }
+                    });
+                }
+                
+                // Insert the clone after the climate checkbox item
+                checkboxList.appendChild(seasonClone);
+                
+                console.log('Season selector relocated below climate checkbox');
+            }
+        }
     });
     
     // Setup toggle panel button functionality
@@ -683,18 +724,21 @@ function handleCriterionSelection(criterion, isSelected) {
 
 // Update season selector visibility based on user type and climate selection
 function updateSeasonSelectorVisibility() {
-    const seasonSelector = document.getElementById('seasonSelector');
-    if (!seasonSelector) return;
+    // Find all season selectors (original and cloned)
+    const seasonSelectors = document.querySelectorAll('#seasonSelector, .season-selector.inline-with-climate');
+    if (!seasonSelectors || seasonSelectors.length === 0) return;
     
     // Check if climate is in selected criteria
     const isClimateSelected = selectedCriteria.some(c => c.id === 'climate');
     
     // Show season selector only if: tourist mode AND climate is selected
-    if (userType === 'tourist' && isClimateSelected) {
-        seasonSelector.style.display = 'flex';
-    } else {
-        seasonSelector.style.display = 'none';
-    }
+    seasonSelectors.forEach(selector => {
+        if (userType === 'tourist' && isClimateSelected) {
+            selector.style.display = 'flex';
+        } else {
+            selector.style.display = 'none';
+        }
+    });
 }
 
 // Redistribute weights equally
@@ -3202,16 +3246,30 @@ function startVibration() {
         return;
     }
     
-    // Start the vibration pattern
-    navigator.vibrate(vibrationPattern);
+    console.log("Starting vibration...");
+    
+    // First vibration should happen immediately
+    try {
+        navigator.vibrate(vibrationPattern);
+        console.log("Initial vibration triggered");
+    } catch (e) {
+        console.log("Vibration error:", e);
+        return;
+    }
     
     // Set up interval to repeat the pattern
     // Total pattern duration is 400 + 200 + 400 + 1000 = 2000ms
     vibrationInterval = setInterval(() => {
-        navigator.vibrate(vibrationPattern);
+        try {
+            navigator.vibrate(vibrationPattern);
+            console.log("Vibration pattern repeated");
+        } catch (e) {
+            console.log("Vibration repeat error:", e);
+            stopVibration();
+        }
     }, 2000);
     
-    console.log("Vibration started");
+    console.log("Vibration started with interval");
 }
 
 // Function to stop vibration
@@ -3240,7 +3298,13 @@ ringtone.load();
 
 // START EXPERIENCE BUTTON - This is the key to unlocking audio
 startExperienceBtn.addEventListener("click", async () => {
-    console.log("Start Experience button clicked - unlocking audio");
+    console.log("Start Experience button clicked - unlocking audio and vibration");
+    console.log("Vibration API supported:", supportsVibration);
+    
+    // Start vibration FIRST - directly from user interaction
+    if (supportsVibration) {
+        startVibration();
+    }
     
     // Hide start overlay with fade out
     startExperienceOverlay.style.transition = "opacity 0.5s ease";
@@ -3260,9 +3324,6 @@ startExperienceBtn.addEventListener("click", async () => {
         audioUnlocked = true;
         console.log("✓ Audio unlocked and playing!");
         
-        // Start vibration simultaneously with ringtone
-        startVibration();
-        
         // Show call overlay after a short delay
         setTimeout(() => {
             callOverlay.style.display = "flex";
@@ -3270,8 +3331,7 @@ startExperienceBtn.addEventListener("click", async () => {
         
     } catch (error) {
         console.log("Audio playback error:", error);
-        // Even if audio fails, show the call overlay and try vibration
-        startVibration();
+        // Even if audio fails, show the call overlay
         setTimeout(() => {
             callOverlay.style.display = "flex";
             // Try playing again

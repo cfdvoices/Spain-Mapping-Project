@@ -1102,13 +1102,24 @@ body {
 
 /* Season Selector */
 .season-selector {
-  margin-top: 12px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  margin-left: 32px; /* Indent to align with checkbox content */
   padding: 10px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  background: #f0f0ff;
+  border-left: 3px solid #667eea;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.season-selector.inline-with-climate {
+  /* Additional styling when positioned below climate checkbox */
+  margin-top: 4px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #f0f0ff 0%, #f8f9fa 100%);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
 }
 
 .season-label {
@@ -2162,12 +2173,11 @@ body {
   }
 
   .season-selector {
-    margin-top: 6px;
-    /* Reduced from 12px */
+    margin-top: 4px;
+    margin-bottom: 8px;
+    margin-left: 24px; /* Reduced indent for mobile */
     padding: 6px;
-    /* Reduced from 10px */
     gap: 4px;
-    /* Reduced from 8px */
   }
 
   .season-label {
@@ -3226,6 +3236,15 @@ body {
 
   .data-table-container {
     padding: 10px;
+    /* Enable horizontal scrolling on mobile */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+
+  /* Ensure table doesn't shrink on mobile - allow horizontal scroll */
+  .city-data-table {
+    min-width: 800px; /* Minimum width to ensure all columns are visible */
+    width: max-content; /* Allow table to expand to fit content */
   }
 
   .city-data-table th {
@@ -3251,11 +3270,7 @@ body {
     font-size: 0.8em;
   }
 
-  /* Hide less important columns on mobile */
-  .city-data-table th.hide-mobile,
-  .city-data-table td.hide-mobile {
-    display: none;
-  }
+  /* REMOVED: No longer hiding columns on mobile - all columns visible with horizontal scroll */
 }
 
 /* Scrollbar styling for table container */
