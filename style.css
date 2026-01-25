@@ -1104,7 +1104,8 @@ body {
 .season-selector {
   margin-top: 8px;
   margin-bottom: 8px;
-  margin-left: 32px; /* Indent to align with checkbox content */
+  margin-left: 32px;
+  /* Indent to align with checkbox content */
   padding: 10px;
   background: #f0f0ff;
   border-left: 3px solid #667eea;
@@ -1334,11 +1335,6 @@ body {
 
 .credits-subtitle {
   display: inline;
-}
-
-.legend-note {
-  margin: 8px 0 5px 0;
-  font-size: 0.9em;
 }
 
 /* City Search Box */
@@ -1947,7 +1943,7 @@ body {
   }
 
   .legend-title {
-    font-size: 0.8em !important;
+    font-size: 0.9em !important;
     margin: 0 !important;
     line-height: 2;
     font-weight: 700;
@@ -1957,14 +1953,14 @@ body {
   /* Show description and note on mobile, but extremely compact */
   .legend-description {
     display: block !important;
-    font-size: 0.7em !important;
+    font-size: 0.9em !important;
     margin: 0 !important;
     line-height: 1.5 !important;
   }
 
   .legend-credits {
     display: block !important;
-    font-size: 0.7em !important;
+    font-size: 0.8em !important;
     margin: 0 !important;
     line-height: 1.5 !important;
   }
@@ -1973,24 +1969,8 @@ body {
     display: none !important;
   }
 
-  .legend-note {
-    display: block !important;
-    /* Show the note */
-    font-size: 0.7em !important;
-    margin: 0 !important;
-    line-height: 1.5 !important;
-    text-align: left;
-  }
-
   /* Extra specific override */
   #legend .legend-description {
-    display: block !important;
-    font-size: 0.7em !important;
-    margin: 0 !important;
-    line-height: 1.5 !important;
-  }
-
-  #legend .legend-note {
     display: block !important;
     font-size: 0.7em !important;
     margin: 0 !important;
@@ -2034,7 +2014,7 @@ body {
   }
 
   .methodology-label {
-    font-size: 0.8em;
+    font-size: 0.9em;
     /* Hide text on mobile */
   }
 
@@ -2175,7 +2155,8 @@ body {
   .season-selector {
     margin-top: 4px;
     margin-bottom: 8px;
-    margin-left: 24px; /* Reduced indent for mobile */
+    margin-left: 24px;
+    /* Reduced indent for mobile */
     padding: 6px;
     gap: 4px;
   }
@@ -2313,7 +2294,6 @@ body {
     height: 100%;
   }
 
-  /* Pie Chart - make tiny */
   #pieChartContainer {
     top: 130px !important;
     left: 5px !important;
@@ -2332,6 +2312,10 @@ body {
   #pieChartContainer svg {
     width: 70px !important;
     height: 70px !important;
+  }
+
+  #pieChartContainer svg>div {
+    width: 50px !important;
   }
 
   */
@@ -2503,6 +2487,10 @@ body {
     #panelContent {
       max-height: calc(70vh - 40px);
     }
+  }
+
+  #pieChartContainer svg>div {
+    width: 50px !important;
   }
 
   /* ===== LANDSCAPE ORIENTATION ADJUSTMENTS ===== */
@@ -3238,13 +3226,16 @@ body {
     padding: 10px;
     /* Enable horizontal scrolling on mobile */
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
   }
 
   /* Ensure table doesn't shrink on mobile - allow horizontal scroll */
   .city-data-table {
-    min-width: 800px; /* Minimum width to ensure all columns are visible */
-    width: max-content; /* Allow table to expand to fit content */
+    min-width: 800px;
+    /* Minimum width to ensure all columns are visible */
+    width: max-content;
+    /* Allow table to expand to fit content */
   }
 
   .city-data-table th {
@@ -3295,71 +3286,126 @@ body {
 
 /* ===== PIE CHART CONTAINER RESPONSIVE STYLES ===== */
 
-/* Desktop styles for pie chart container */
+/* Main sidebar container - unified vertical stack */
+#pieChartContainer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* 20px vertical gap between sections */
+  width: 250px;
+  /* Consistent width on desktop */
+}
+
+/* Desktop container alignment */
 .pie-container-desktop {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  left:12px;
-  top:75%;
+  align-items: flex-start;
 }
 
-/* Mobile styles for pie chart container */
+/* Mobile container alignment */
 .pie-container-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Individual sections - shrink-wrap content */
+#pieChartSection,
+#cityLegendSection {
+  width: 210px;
+  /* Consistent width */
+  box-sizing: border-box;
+  /* NO fixed heights - shrink-wrap content */
+  height: auto;
+  min-height: auto;
+  max-height: none;
+
+  /* Consistent styling */
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  /* Consistent 20px internal padding */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure content doesn't expand containers */
+#pieChartSection {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Ensure proper sizing on all devices */
-#pieChartContainer {
-  box-sizing: border-box;
+#cityLegendSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Mobile-specific media query for pie chart container */
+/* Mobile-specific media query */
 @media screen and (max-width: 768px) {
   #pieChartContainer {
-    /* Use viewport-based sizing - match legend positioning */
-    max-width: 30vw !important;
-    min-width: 50vw !important;
-    width: 25px !important;
-    
-    /* Match legend positioning - left aligned */
-    bottom: 10px !important;
-    left: 0% !important;
-    transform: none !important;
-    
-    /* Tighter padding on mobile */
-    padding: 8px !important;
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 220px !important;
+    gap: 4px !important;
+    /* Slightly smaller gap on mobile */
   }
-  
-  /* Ensure pie chart is visible and properly sized */
-  #pieChartContainer svg {
+
+  #pieChartSection,
+  #cityLegendSection {
+    width: 100% !important;
+    padding: 15px !important;
+    /* Slightly smaller padding on mobile */
+  }
+
+  /* Ensure pie chart SVG scales properly */
+  #pieChartSection svg {
     max-width: 100%;
     height: auto;
   }
-  
-  /* Better spacing for legend items on mobile */
-  #proportionalLegendInContainer > div {
-    padding: 2px 0;
+
+  /* Compact legend items on mobile */
+  #proportionalLegendInContainer>div {
+    gap: 6px;
+  }
+}
+
+/* Desktop media query for larger screens */
+@media screen and (min-width: 769px) {
+  #pieChartContainer {
+    width: 180px !important;
+  }
+
+  #pieChartSection svg,
+  #cityLegendSection {
+    width: 180px !important;
   }
 }
 
 /* Extra small devices (phones in portrait, less than 375px) */
 @media screen and (max-width: 375px) {
   #pieChartContainer {
-    max-width: 55vw !important;
-    min-width: 180px !important;
-    padding: 6px !important;
-    font-size: 0.8em;
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 180px !important;
+    gap: 4px !important;
+    font-size: 1em;
+  }
+
+  #pieChartSection,
+  #cityLegendSection {
+    padding: 12px !important;
+    font-size: 1em;
   }
 }
 
 /* Landscape orientation on mobile */
 @media screen and (max-width: 768px) and (orientation: landscape) {
   #pieChartContainer {
-    bottom: 10px !important;
-    max-width: 40vw !important;
-    left: 10px !important;
+    width: auto !important;
+    max-width: 210px !important;
+    gap: 15px !important;
   }
 }
