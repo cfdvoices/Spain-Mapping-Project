@@ -261,6 +261,45 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('Page loaded. Waiting for call interaction...');
 });
 
+// ===== DYNAMIC SCREEN SIZE DETECTION =====
+// Track current screen size state
+let currentScreenSize = window.innerWidth <= 768 ? 'mobile' : 'desktop';
+let resizeTimeout;
+
+// Function to handle screen size changes
+function handleScreenSizeChange() {
+    const newScreenSize = window.innerWidth <= 768 ? 'mobile' : 'desktop';
+    
+    // Only update if screen size category actually changed
+    if (newScreenSize !== currentScreenSize) {
+        console.log(`Screen size changed from ${currentScreenSize} to ${newScreenSize}`);
+        currentScreenSize = newScreenSize;
+        
+        // Update pie chart and city legend if they exist
+        if (window.userCriteria && window.userCriteria.length > 0) {
+            console.log('Recreating pie chart and city legend for new screen size...');
+            createCriteriaPieChart();
+        }
+        
+        // No need to reload cities - they scale automatically with D3
+        // Just log the change
+        console.log('Screen size updated. Components adapted to:', newScreenSize);
+    }
+}
+
+// Debounced resize listener - prevents excessive updates during resize
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(handleScreenSizeChange, 250); // Wait 250ms after resize stops
+});
+
+// Also listen for orientation changes on mobile devices
+window.addEventListener('orientationchange', function() {
+    setTimeout(handleScreenSizeChange, 300); // Slight delay for orientation to complete
+});
+
+console.log('Dynamic screen size detection initialized. Current:', currentScreenSize);
+
 // Setup user type filter (tourist/migrant)
 const userTypeRadios = document.querySelectorAll('input[name="userType"]');
 const seasonSelector = document.getElementById('seasonSelector');
@@ -295,11 +334,9 @@ if (seasonSelect) {
         selectedSeason = this.value;
         console.log('Season changed from', previousSeason, 'to:', selectedSeason);
         
-        // If criteria are selected and user is tourist, update the map
-        if (userType === 'tourist' && selectedCriteria.length > 0) {
-            // Recalculate and update cities with new season data
-            updateMap();
-        }
+        // Season change does NOT automatically update the map
+        // User must click "Update Map" button to see changes
+        console.log('Season updated. Click "Update Map" to apply changes.');
     });
 }
 
@@ -599,10 +636,9 @@ function initializeCriteriaPanel() {
                             originalSelect.value = this.value;
                         }
                         
-                        // If criteria are selected and user is tourist, update the map
-                        if (userType === 'tourist' && selectedCriteria.length > 0) {
-                            updateMap();
-                        }
+                        // Season change does NOT automatically update the map
+                        // User must click "Update Map" button to see changes
+                        console.log('Season updated. Click "Update Map" to apply changes.');
                     });
                 }
                 
@@ -1574,7 +1610,7 @@ function loadBaseMapLayers() {
             .append("path")
             .attr("d", path)
             .attr("fill", "rgb(255, 255, 255)")
-            .attr("stroke", "rgb(124, 124, 124)")
+            .attr("stroke", "rgb(177, 177, 177)")
             .attr("stroke-width", 0.2)
             .attr("class", "province-boundary")
             .style("pointer-events", "none"); // Disable province interactivity

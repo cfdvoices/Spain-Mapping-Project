@@ -1285,12 +1285,11 @@ body {
   border: none;
 }
 
-/* Legend styling */
-#legend {
+/* ===== INFO PANEL (Main Header/Title Panel) ===== */
+#infoPanel {
   position: absolute;
   left: 20px;
   top: 10px;
-  /* Changed from "bottom: 160px" to "top: 10px" */
   width: 260px;
   background: white;
   padding: 15px;
@@ -1300,33 +1299,33 @@ body {
   z-index: 100;
 }
 
-/* Legend Header - Desktop */
-.legend-header {
+/* Info Panel Header */
+.info-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
 }
 
-.legend-header .flag-icon {
+.info-header .flag-icon {
   width: 40px;
   height: auto;
 }
 
-.legend-title {
+.info-title {
   margin: 0;
   font-size: 1.2em;
   font-weight: 700;
   line-height: 1.3;
 }
 
-.legend-description {
+.info-description {
   margin: 5px 0;
   font-size: 0.9em;
   line-height: 1.4;
 }
 
-.legend-credits {
+.info-credits {
   margin: 5px 0;
   font-size: 0.85em;
   line-height: 1.4;
@@ -1337,7 +1336,18 @@ body {
   display: inline;
 }
 
-/* City Search Box */
+/* Generic text styles within info panel */
+#infoPanel h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.2em;
+}
+
+#infoPanel p {
+  margin: 5px 0;
+  font-size: 0.9em;
+}
+
+/* ===== CITY SEARCH BOX ===== */
 #citySearchContainer {
   margin-bottom: 15px;
   position: relative;
@@ -1398,18 +1408,7 @@ body {
   border-radius: 0 0 6px 6px;
 }
 
-/* Backwards compatibility for old selectors */
-#legend h2 {
-  margin: 0 0 10px 0;
-  font-size: 1.2em;
-}
-
-#legend p {
-  margin: 5px 0;
-  font-size: 0.9em;
-}
-
-/* Zoom Controls */
+/* ===== ZOOM CONTROLS ===== */
 #zoomControls {
   position: fixed;
   bottom: 20px;
@@ -1910,17 +1909,15 @@ body {
     width: 100%;
   }
 
-  /* ===== LEGEND MOBILE - ULTRA COMPACT ===== */
-  #legend {
+  /* ===== INFO PANEL MOBILE - ULTRA COMPACT ===== */
+  #infoPanel {
     position: fixed;
     top: 0;
     left: 0;
     width: auto;
-    /* Not full width - just content width */
     max-width: 80%;
     height: 110px;
     padding: 2px 4px;
-    /* Minimal padding */
     border-radius: 0 0 6px 6px;
     overflow: visible;
     z-index: 900;
@@ -1928,21 +1925,21 @@ body {
     background: rgba(255, 255, 255, 0.95);
   }
 
-  /* Legend Header - Ultra Compact Mobile Layout */
-  .legend-header {
+  /* Info Panel Header - Ultra Compact Mobile Layout */
+  .info-header {
     display: flex;
     align-items: center;
     gap: 3px;
     margin-bottom: 0;
   }
 
-  .legend-header .flag-icon {
+  .info-header .flag-icon {
     width: 14px !important;
     height: auto;
     flex-shrink: 0;
   }
 
-  .legend-title {
+  .info-title {
     font-size: 0.9em !important;
     margin: 0 !important;
     line-height: 2;
@@ -1950,15 +1947,15 @@ body {
     white-space: nowrap;
   }
 
-  /* Show description and note on mobile, but extremely compact */
-  .legend-description {
+  /* Show description on mobile, but extremely compact */
+  .info-description {
     display: block !important;
-    font-size: 0.9em !important;
+    font-size: 0.7em !important;
     margin: 0 !important;
     line-height: 1.5 !important;
   }
 
-  .legend-credits {
+  .info-credits {
     display: block !important;
     font-size: 0.8em !important;
     margin: 0 !important;
@@ -1969,9 +1966,13 @@ body {
     display: none !important;
   }
 
-  /* Extra specific override */
-  #legend .legend-description {
-    display: block !important;
+  /* Generic text in info panel on mobile */
+  #infoPanel h2 {
+    font-size: 0.9em !important;
+    margin: 0 !important;
+  }
+
+  #infoPanel p {
     font-size: 0.7em !important;
     margin: 0 !important;
     line-height: 1.5 !important;
@@ -2014,7 +2015,7 @@ body {
   }
 
   .methodology-label {
-    font-size: 0.9em;
+    font-size: 1em;
     /* Hide text on mobile */
   }
 
@@ -2462,11 +2463,11 @@ body {
       font-size: 13px;
     }
 
-    #legend {
+    #infoPanel {
       padding: 4px 6px;
     }
 
-    #legend h2 {
+    #infoPanel h2 {
       font-size: 0.7em;
     }
 
@@ -2495,16 +2496,16 @@ body {
 
   /* ===== LANDSCAPE ORIENTATION ADJUSTMENTS ===== */
   @media screen and (max-width: 768px) and (orientation: landscape) {
-    #legend {
+    #infoPanel {
       padding: 3px 6px;
     }
 
-    #legend h2 {
+    #infoPanel h2 {
       font-size: 0.65em;
       margin-bottom: 2px;
     }
 
-    #legend>div:last-of-type>div span {
+    #infoPanel>div:last-of-type>div span {
       font-size: 0.55em !important;
     }
 
@@ -3349,7 +3350,10 @@ body {
     width: 130px !important;
     min-width: 130px !important;
     max-width: 220px !important;
-    gap: 4px !important;
+    gap: 2px !important;
+    font-size: 1.05em !important;
+    padding: 6px !important;
+    line-height: 3px;
     /* Slightly smaller gap on mobile */
   }
 
@@ -3397,7 +3401,7 @@ body {
   #pieChartSection,
   #cityLegendSection {
     padding: 12px !important;
-    font-size: 1em;
+    font-size: 1em !important;
   }
 }
 
