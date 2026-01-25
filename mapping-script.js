@@ -724,8 +724,8 @@ function handleCriterionSelection(criterion, isSelected) {
 
 // Update season selector visibility based on user type and climate selection
 function updateSeasonSelectorVisibility() {
-    // Find all season selectors (original and cloned)
-    const seasonSelectors = document.querySelectorAll('#seasonSelector, .season-selector.inline-with-climate');
+    // Only find the cloned season selector in the criteria list (not the original hidden one)
+    const seasonSelectors = document.querySelectorAll('.season-selector.inline-with-climate');
     if (!seasonSelectors || seasonSelectors.length === 0) return;
     
     // Check if climate is in selected criteria
@@ -735,8 +735,10 @@ function updateSeasonSelectorVisibility() {
     seasonSelectors.forEach(selector => {
         if (userType === 'tourist' && isClimateSelected) {
             selector.style.display = 'flex';
+            selector.style.visibility = 'visible';
         } else {
             selector.style.display = 'none';
+            selector.style.visibility = 'hidden';
         }
     });
 }
@@ -3231,6 +3233,7 @@ let ringtoneHasPlayed = false;
 let audioUnlocked = false;
 let experienceStarted = false;
 let vibrationInterval = null;
+let vibrationPermissionGranted = false;
 
 // Check if vibration API is supported
 const supportsVibration = 'vibrate' in navigator;
@@ -3239,53 +3242,157 @@ const supportsVibration = 'vibrate' in navigator;
 // This creates a phone-like vibration pattern
 const vibrationPattern = [400, 200, 400, 1000];
 
-// Function to start vibration loop
+// Aggressive permission request for vibration
+async function requestVibrationPermission() {
+    console.log("=== REQUESTING VIBRATION PERMISSION ===");
+    
+    if (!supportsVibration) {
+        console.log("❌ Vibration API NOT supported on this device/browser");
+        console.log("Device info:", navigator.userAgent);
+        return false;
+    }
+    
+    console.log("✓ Vibration API is supported");
+    
+    // Try multiple approaches to ensure vibration works
+    try {
+        // Approach 1: Simple immediate vibration test
+        console.log("Attempt 1: Simple vibration test");
+        const result1 = navigator.vibrate(200);
+        console.log("Simple vibrate result:", result1);
+        
+        // Approach 2: Pattern vibration test
+        console.log("Attempt 2: Pattern vibration test");
+        const result2 = navigator.vibrate([100, 50, 100]);
+        console.log("Pattern vibrate result:", result2);
+        
+        // Approach 3: Request notification permission as a proxy (some browsers link these)
+        if ('Notification' in window && Notification.permission === 'default') {
+            console.log("Attempt 3: Requesting notification permission (may help with vibration)");
+            try {
+                await Notification.requestPermission();
+                console.log("Notification permission:", Notification.permission);
+            } catch (e) {
+                console.log("Notification permission not available:", e);
+            }
+        }
+        
+        vibrationPermissionGranted = true;
+        console.log("✓✓✓ Vibration permission granted successfully!");
+        return true;
+        
+    } catch (error) {
+        console.error("❌ Vibration permission error:", error);
+        return false;
+    }
+}
+
+// Function to start vibration loop with multiple fallback attempts
 function startVibration() {
     if (!supportsVibration) {
-        console.log("Vibration API not supported on this device");
+        console.log("❌ Vibration not supported - skipping");
         return;
     }
     
-    console.log("Starting vibration...");
+    console.log("=== STARTING VIBRATION ===");
+    console.log("Permission granted:", vibrationPermissionGranted);
     
-    // First vibration should happen immediately
+    // Stop any existing vibration first
     try {
-        navigator.vibrate(vibrationPattern);
-        console.log("Initial vibration triggered");
+        navigator.vibrate(0);
+        console.log("Cleared any existing vibration");
     } catch (e) {
-        console.log("Vibration error:", e);
-        return;
+        console.log("Could not clear vibration:", e);
     }
     
-    // Set up interval to repeat the pattern
-    // Total pattern duration is 400 + 200 + 400 + 1000 = 2000ms
-    vibrationInterval = setInterval(() => {
-        try {
-            navigator.vibrate(vibrationPattern);
-            console.log("Vibration pattern repeated");
-        } catch (e) {
-            console.log("Vibration repeat error:", e);
-            stopVibration();
-        }
-    }, 2000);
+    // Clear any existing interval
+    if (vibrationInterval) {
+        clearInterval(vibrationInterval);
+        vibrationInterval = null;
+        console.log("Cleared existing vibration interval");
+    }
     
-    console.log("Vibration started with interval");
+    // Attempt 1: Start with a simple strong vibration
+    try {
+        console.log("Vibration Attempt 1: Strong single pulse (500ms)");
+        navigator.vibrate(500);
+    } catch (e) {
+        console.error("Vibration Attempt 1 failed:", e);
+    }
+    
+    // Wait a moment, then start the pattern
+    setTimeout(() => {
+        try {
+            console.log("Vibration Attempt 2: Starting pattern", vibrationPattern);
+            const result = navigator.vibrate(vibrationPattern);
+            console.log("Pattern vibration result:", result);
+            
+            if (!result) {
+                console.warn("⚠️ Pattern vibration returned false");
+            }
+        } catch (e) {
+            console.error("Pattern vibration failed:", e);
+        }
+        
+        // Set up interval to repeat the pattern
+        let repeatCount = 0;
+        vibrationInterval = setInterval(() => {
+            try {
+                repeatCount++;
+                console.log(`Vibration repeat #${repeatCount}`);
+                const result = navigator.vibrate(vibrationPattern);
+                console.log(`Repeat vibration result:`, result);
+                
+                if (!result) {
+                    console.warn(`⚠️ Repeat #${repeatCount} returned false`);
+                }
+            } catch (e) {
+                console.error(`Vibration repeat #${repeatCount} error:`, e);
+                // If we get too many errors, stop trying
+                if (repeatCount > 3) {
+                    console.error("Too many vibration errors, stopping attempts");
+                    stopVibration();
+                }
+            }
+        }, 2000); // Repeat every 2 seconds
+        
+        console.log("✓ Vibration interval set up");
+        
+    }, 600); // Wait 600ms before starting pattern
 }
 
 // Function to stop vibration
 function stopVibration() {
     if (!supportsVibration) return;
     
+    console.log("=== STOPPING VIBRATION ===");
+    
     // Clear the interval
     if (vibrationInterval) {
         clearInterval(vibrationInterval);
         vibrationInterval = null;
+        console.log("Vibration interval cleared");
     }
     
-    // Stop any ongoing vibration
-    navigator.vibrate(0);
+    // Stop any ongoing vibration with multiple attempts
+    try {
+        navigator.vibrate(0);
+        console.log("Vibration stopped (attempt 1)");
+    } catch (e) {
+        console.error("Stop vibration error:", e);
+    }
     
-    console.log("Vibration stopped");
+    // Backup attempt
+    setTimeout(() => {
+        try {
+            navigator.vibrate(0);
+            console.log("Vibration stopped (backup attempt)");
+        } catch (e) {
+            console.error("Backup stop error:", e);
+        }
+    }, 100);
+    
+    console.log("✓ Vibration fully stopped");
 }
 
 // Wait for audio to be loaded
@@ -3296,14 +3403,28 @@ ringtone.addEventListener('canplaythrough', () => {
 // Force load the audio
 ringtone.load();
 
-// START EXPERIENCE BUTTON - This is the key to unlocking audio
+// START EXPERIENCE BUTTON - This is the key to unlocking audio and vibration
 startExperienceBtn.addEventListener("click", async () => {
-    console.log("Start Experience button clicked - unlocking audio and vibration");
-    console.log("Vibration API supported:", supportsVibration);
+    console.log("=".repeat(50));
+    console.log("🎯 START EXPERIENCE BUTTON CLICKED");
+    console.log("=".repeat(50));
+    console.log("Device User Agent:", navigator.userAgent);
+    console.log("Vibration API available:", supportsVibration);
     
-    // Start vibration FIRST - directly from user interaction
+    // FIRST PRIORITY: Request and test vibration permission IMMEDIATELY from user click
     if (supportsVibration) {
+        console.log("📳 Requesting vibration permission...");
+        await requestVibrationPermission();
+        
+        // Start vibration right away
+        console.log("📳 Starting vibration...");
         startVibration();
+    } else {
+        console.log("⚠️ Vibration not supported on this device");
+        console.log("This typically means:");
+        console.log("- You're on iOS (Safari/Chrome) - iOS doesn't support Vibration API");
+        console.log("- You're on desktop");
+        console.log("- Your browser doesn't support it");
     }
     
     // Hide start overlay with fade out
@@ -3339,6 +3460,8 @@ startExperienceBtn.addEventListener("click", async () => {
             ringtone.play().catch(e => console.log("Second play attempt failed:", e));
         }, 800);
     }
+    
+    console.log("=".repeat(50));
 });
 
 // Function to stop ringtone
