@@ -33,7 +33,6 @@ var selectedSeason = 'summer'; // Default season
 const TOURIST_ALLOWED_CRITERIA = [
     'transport',     // Stop Remoteness
     'housing',       // Housing Cost
-    'food',          // Food Cost
     'climate',       // Climate Quality
     'crime',         // Criminality Rate
     'water',         // Water Quality
@@ -89,8 +88,6 @@ const criteria = [
     { id: 'population', name: 'Population Density', icon: '👥' },
     { id: 'transport', name: 'Stop Remoteness', icon: '🚇' },
     { id: 'housing', name: 'Housing Cost', icon: '🏠' },
-    { id: 'food', name: 'Food Cost', icon: '🍽️' },
-    { id: 'services', name: 'Service Cost', icon: '🛍️' },
     { id: 'climate', name: 'Climate Quality', icon: '☀️' },
     { id: 'crime', name: 'Criminality Rate', icon: '🛡️' },
     { id: 'water', name: 'Water Quality', icon: '💧' },
@@ -155,20 +152,6 @@ function getCityDataAttributes(userType = 'migrant', season = 'general') {
             real: housingReal,
             unit: '€',
             label: 'Housing Cost',
-            inverse: true
-        },
-        'food': {
-            normalized: 'norm_Food_cost',
-            real: 'real_Food_cost',
-            unit: '€',
-            label: 'Food Cost',
-            inverse: true
-        },
-        'services': {
-            normalized: 'norm_Services_cost',
-            real: 'real_Services_cost',
-            unit: '€',
-            label: 'Service Cost',
             inverse: true
         },
         'climate': {
@@ -1243,28 +1226,23 @@ function createCriteriaPieChart() {
         .style("width", "100%")
         .text("City Index");
 
-    // Add proportional legend circles container
+    // Add color legend container (fixed size circles, only color varies)
     const legendCirclesContainer = cityLegendSection.append("div")
         .attr("id", "proportionalLegendInContainer")
         .style("display", "flex")
         .style("flex-direction", "column")
         .style("align-items", "flex-start")
-        .style("gap", isMobile ? "6px" : "8px")  // Tight line spacing
+        .style("gap", isMobile ? "6px" : "8px")
         .style("width", "100%");
 
-    // Create legend items with circles - compact sizing
-    const legendValues = isMobile ? [
-        { label: "Highest", size: 14, color: "#2c7bb6" },
-        { label: "High", size: 12, color: "#abd9e9" },
-        { label: "Mid", size: 10, color: "#ffffbf" },
-        { label: "Low", size: 9, color: "#fdae61" },
-        { label: "Lowest", size: 7, color: "#d7191c" }
-    ] : [
-        { label: "Highest", size: 18, color: "#2c7bb6"},
-        { label: "High", size: 15, color: "#abd9e9"},
-        { label: "Mid", size: 12, color: "#ffffbf"},
-        { label: "Low", size: 10, color: "#fdae61"},
-        { label: "Lowest", size: 8, color: "#d7191c"}
+    // Create legend items with fixed-size circles - only colors vary
+    const fixedCircleSize = isMobile ? 12 : 14; // Same size for all circles
+    const legendValues = [
+        { label: "Highest", color: "#2c7bb6" },
+        { label: "High", color: "#abd9e9" },
+        { label: "Mid", color: "#ffffbf" },
+        { label: "Low", color: "#fdae61" },
+        { label: "Lowest", color: "#d7191c" }
     ];
 
     legendValues.forEach(item => {
@@ -1274,21 +1252,21 @@ function createCriteriaPieChart() {
             .style("gap", isMobile ? "8px" : "10px")
             .style("width", "100%");
 
-        // Circle
+        // Circle - fixed size for all
         legendItem.append("div")
-            .style("width", item.size + "px")
-            .style("height", item.size + "px")
+            .style("width", fixedCircleSize + "px")
+            .style("height", fixedCircleSize + "px")
             .style("background", item.color)
             .style("border-radius", "50%")
             .style("border", "1px solid #333")
             .style("flex-shrink", "0");
 
-        // Label - compact sizing
+        // Label
         legendItem.append("div")
             .style("font-size", isMobile ? "0.8em" : "0.9em")
             .style("color", "#333")
             .style("font-weight", "500")
-            .style("line-height", "1.2")  // Tight line spacing
+            .style("line-height", "1.2")
             .text(item.label);
     });
 
@@ -1918,13 +1896,11 @@ function loadCities(currentTransform = null) {
             console.log('Index of Choice range:', minIndex.toFixed(2), 'to', maxIndex.toFixed(2));
             console.log('All index values:', indexValues.map(v => v.toFixed(2)));
 
-            // Create radius scale based on index of choice (reduced max size)
-            const radiusScale = d3.scaleSqrt()
-                .domain([minIndex, maxIndex])
-                .range([1, 5]); // Reduced from [2, 10] to [1, 5]
+            // Fixed radius for all cities (no proportional scaling)
+            const fixedRadius = 3.5; // Single fixed radius for all cities
 
-            // Store globally for legend
-            window.currentRadiusScale = radiusScale;
+            // Store globally for legend (though not used for sizing anymore)
+            window.currentRadiusScale = null; // No longer needed
 
             // Creation of the color scale for the circles representation
             // 5-class color ramp: red (low) to blue (high)
@@ -1945,9 +1921,7 @@ function loadCities(currentTransform = null) {
                     const coords = projection(d.geometry.coordinates);
                     return coords ? coords[1] : 0;
                 })
-                .attr("r", function (d) {
-                    return radiusScale(d.properties.indexOfChoice);
-                })
+                .attr("r", fixedRadius) // Fixed radius for all cities
                 .attr("fill", function (d) {
                     return colorScale(d.properties.indexOfChoice);
                 })
@@ -2852,20 +2826,6 @@ const methodologyData = [
         name: "Cost of housing",
         source: "Idealista Scraper (Apify) and Inside Airbnb Data",
         methodology: "1) Scrape housing rent prices for one bedroom on each city inside Idealista, one of the largest Proptechs in Spain, (at least 300 places per city)\n2) Calculate the average price per city - specify that it corresponds to only one single bedroom per city\n3) Repeat the same process but instead of using Airbnb or Booking.com, data which will be used solely for touristic purposes."
-    },
-    {
-        link: "https://www.ine.es/jaxiT3/Tabla.htm?t=76092",
-        code: "real_Food_cost",
-        name: "Cost of food",
-        source: "National Institute of Statistics Spain / Numbeo",
-        methodology: "1) Access each city cost of food in numbeo and calculate a average for every city.\n2) Compile the data for each city in a separate table."
-    },
-    {
-        link: "https://www.numbeo.com/cost-of-living/",
-        code: "real_Services_cost",
-        name: "Cost of basic services (utilities)",
-        source: "Numbeo",
-        methodology: "1) Access the average of utilities under \"Utilities (Monthly)\" for each city\n2) Collect all of the data for each city"
     },
     {
         link: "https://www.kaggle.com/datasets/alexgczs/monthly-temperature-in-spain-1996-2023",
