@@ -2008,11 +2008,11 @@ function loadCities(currentTransform = null) {
                     window.userCriteria.forEach(criterion => {
                         const attributeInfo = currentAttributes[criterion.id];
 
-                        // Get NORMALIZED value for bar chart (0-10 scale typically)
+                        // Get NORMALIZED value for bar chart (0-1000 scale)
                         const normalizedValue = d.properties[attributeInfo.normalized];
                         const scoreValue = parseEuropeanFloat(normalizedValue);
-                        // Convert to percentage (0-100) for bar width, assuming 0-10 scale
-                        const scorePercent = Math.min(100, Math.max(0, (scoreValue / 10) * 100));
+                        // Convert to percentage (0-100) for bar width, using 0-1000 scale
+                        const scorePercent = Math.min(100, Math.max(0, (scoreValue / 1000) * 100));
 
                         // Get REAL value for display
                         const realValue = d.properties[attributeInfo.real];
@@ -2037,17 +2037,17 @@ function loadCities(currentTransform = null) {
                             }) + unit;
                         }
 
-                        // Determine bar color based on normalized score (0-10 scale)
-                        // 4-class color scheme: 1-2.5=red, 2.5-5=yellow, 5-7.5=blue, 7.5-10=green
+                        // Determine bar color based on normalized score (0-1000 scale)
+                        // 4-class color scheme: 0-250=red, 250-500=yellow, 500-750=blue, 750-1000=green
                         let barColor;
-                        if (scoreValue < 2.5) {
-                            barColor = '#ff4444'; // Red for low scores (1-2.5)
-                        } else if (scoreValue < 5) {
-                            barColor = '#ffcc00'; // Yellow for medium-low scores (2.5-5)
-                        } else if (scoreValue < 7.5) {
-                            barColor = '#71a3f9'; // Blue for medium-high scores (5-7.5)
+                        if (scoreValue < 250) {
+                            barColor = '#ff4444'; // Red for low scores (0-250)
+                        } else if (scoreValue < 500) {
+                            barColor = '#ffcc00'; // Yellow for medium-low scores (250-500)
+                        } else if (scoreValue < 750) {
+                            barColor = '#71a3f9'; // Blue for medium-high scores (500-750)
                         } else {
-                            barColor = '#44ff44'; // Green for high scores (7.5-10)
+                            barColor = '#44ff44'; // Green for high scores (750-1000)
                         }
 
                         // Prepare bar content - show relationship indicator
@@ -2058,8 +2058,8 @@ function loadCities(currentTransform = null) {
                             barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher is better</span>';
                         }
 
-                        // Always show normalized score on the right side
-                        const normalizedScoreText = scoreValue.toFixed(1) + '/10000';
+                        // Show normalized score on the right side (0-1000 scale)
+                        const normalizedScoreText = scoreValue.toFixed(0) + '/1000';
 
                         tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.cellPadding + ';">';
                         tooltipHTML += '<div style="display: flex; align-items: center; gap: ' + sizes.gap + ';">';
@@ -2846,7 +2846,7 @@ const methodologyData = [
         code: "real_Criminality_rate",
         name: "Criminality rates",
         source: "Ministry of Interior Spain",
-        methodology: "1) Download the official data of census population from the National Institute From Statistics\n2) Compile the crimes count of 2022, from the Ministry of the Interior, only considering the categories against people, sexual liberty and \n3) Dissagregate crimes data per Municipality using the Urban Scale Law proportionally to the Population inside each City for each Province. The power used is the 1.15, according to bibliography and the thesis that most populated areas attarct the most criminal activities"
+        methodology: "1) Download the official data of census population from the National Institute From Statistics\n2) Compile the crimes count of 2022, from the Ministry of the Interior, only considering the categories against people, against sexual liberty and against assets\n3) Dissagregate crimes data per Municipality using the Urban Scale Law proportionally to the Population inside each City for each Province. The power used is the 1.15, according to bibliography and the thesis that most populated areas attract the most criminal activities"
     },
     {
         link: "https://sinac.sanidad.gob.es/CiudadanoWeb/ciudadano/informacionAbastecimientoActionEntrada.do",
