@@ -129,7 +129,7 @@ function getCityDataAttributes(userType = 'migrant', season = 'general') {
         'gdp': {
             normalized: 'norm_GDP_percapita',
             real: 'real_GDP_percapita',
-            unit: '€',
+            unit: '€/year',
             label: 'GDP per Capita',
             inverse: false
         },
@@ -1087,7 +1087,7 @@ function createCriteriaPieChart() {
         .attr("id", "pieChartSection")
         .style("background", "white")
         .style("border-radius", "12px")
-        .style("padding", "10px")  // Consistent 20px padding
+        .style("padding", "7px")  // Reduced from 10px (30% reduction)
         .style("box-shadow", "0 4px 12px rgba(0,0,0,0.15)")
         .style("width", isMobile ? "auto" : "300px")  // Consistent width
         .style("box-sizing", "border-box")
@@ -1099,7 +1099,7 @@ function createCriteriaPieChart() {
     pieChartSection.append("div")
         .style("font-size", isMobile ? "0.75em" : "1em")
         .style("font-weight", "bold")
-        .style("margin-bottom", "10px")
+        .style("margin-bottom", "7px")  // Reduced from 10px (30% reduction)
         .style("text-align", "center")
         .style("color", "#333")
         .style("line-height", "1.3")
@@ -1110,7 +1110,7 @@ function createCriteriaPieChart() {
     pieChartSection.append("div")
         .style("font-size", isMobile ? "0.7em" : "0.8em")
         .style("font-style", "italic")
-        .style("margin-bottom", "4px")
+        .style("margin-bottom", "3px")  // Reduced from 4px (25% reduction for smaller value)
         .style("text-align", "center")
         .style("color", "#666")
         .style("width", "100%")
@@ -1123,17 +1123,18 @@ function createCriteriaPieChart() {
         .style("align-items", "center")
         .style("width", "100%");
 
-    // Create SVG for pie chart - optimized size
-    const pieWidth = isMobile ? 80 : 180;
-    const pieHeight = isMobile ? 80 : 180;
-    const radius = Math.min(pieWidth, pieHeight) / 2 -  10;
+    // Create SVG for pie chart - optimized size (reduced by 30%)
+    const pieWidth = isMobile ? 70 : 120;  // Reduced from 80 and 180 (30% reduction)
+    const pieHeight = isMobile ? 70 : 120;  // Reduced from 80 and 180 (30% reduction)
+    const pieadjust = isMobile ? 0 : 30;  // Reduced from 80 and 180 (30% reduction)
+    const radius = Math.min(pieWidth, pieHeight) / 2 -  7;  // Reduced from 10 (30% reduction)
 
     const pieSvg = pieContainer.append("svg")
         .attr("width", pieWidth)
         .attr("height", pieHeight)
         .style("display", "block")
         .append("g")
-        .attr("transform", `translate(${pieWidth / 2}, ${pieHeight / 2})`);
+        .attr("transform", `translate(${(pieWidth / 2)+pieadjust}, ${pieHeight / 2})`);
 
     // Create color scale
     const colorScale = d3.scaleOrdinal()
