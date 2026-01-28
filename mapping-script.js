@@ -962,9 +962,9 @@ function initializeMapStructure() {
         .attr("title", "Which Spain is calling you? 🇪🇸");
 
     // Define SVG Groups for layered drawing (Order matters: first appended is bottom layer)
-    g_map = svg.append("g").attr("class", "layer-regions");   // Base map (Background)
     g_autonomas = svg.append("g").attr("class", "layer-autonomas"); // Autonomous Communities
     g_prov = svg.append("g").attr("class", "layer-provinces"); // Provinces (on top of autonomas)
+    g_map = svg.append("g").attr("class", "layer-regions");   // Base map (Background)
     g_labels = svg.append("g").attr("class", "layer-labels"); // Text labels
     g_cities = svg.append("g").attr("class", "layer-cities"); // Cities (Top)
     s = svg.append("g").attr("class", "scale-bar");
@@ -979,10 +979,10 @@ function initializeMapStructure() {
     /* D3 ZOOM CONTROL */
     // Define the zoom behavior with tighter limits
     zoom = d3.zoom()
-        .scaleExtent([0.75, 3.5]) // Restricted zoom: slightly out to moderately in
+        .scaleExtent([0.5, 4]) // Restricted zoom: slightly out to moderately in
         .translateExtent([
-            [-width * 0.25, -height * 0.25],  // Top-left limit (20% beyond)
-            [width * 1.25, height * 1.25]      // Bottom-right limit (20% beyond)
+            [-width * 1.4, -height * 1.85],  // Top-left limit (20% beyond)
+            [width * 1.8, height * 1.9]      // Bottom-right limit (20% beyond)
         ])
         .on("zoom", zoomed); // Specify the function to call on zoom events
 
@@ -1545,6 +1545,7 @@ function updateScaleBar(transform) {
 }
 
 // --- CENTRALIZED BASE MAP LOADING (without cities) ---
+// --- CENTRALIZED BASE MAP LOADING (without cities) ---
 function loadBaseMapLayers() {
     Promise.all([
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/Spain.geojson"),
@@ -1552,19 +1553,33 @@ function loadBaseMapLayers() {
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/spainprovinces.geojson")
     ]).then(function ([regionData, autonomasData, provinceData]) {
 
-        // 1. Set the projection using the main country shape
-        projection.fitSize([width, height], regionData);
+        // 1. FILTER: Create a subset of provinces excluding Canary Islands for the view calculation.
+        // The Canary Islands (Lat ~28) force the map to zoom out too far.
+        // We filter for provinces with a centroid Latitude > 34 degrees (Peninsula + Balearics).
+        const featuresForFit = provinceData.features.filter(function(d) {
+            return d3.geoCentroid(d)[1] > 34; 
+        });
 
-        // 2. Draw the Base Regions (Spain.geojson) - Background Layer
+        const fitCollection = {
+            type: "FeatureCollection",
+            features: featuresForFit
+        };
+
+        // 2. Set the projection using the FILTERED provinces layer
+        // This ensures the map is zoomed in on the peninsula in planimetric coordinates
+        projection.fitSize([width, height], fitCollection);
+
+        // 3. Draw the Base Regions (Spain.geojson) - Border Layer (Polyline)
         g_map.selectAll("path")
             .data(regionData.features)
             .enter()
             .append("path")
             .attr("d", path)
-            .attr("fill", "#e0e0e0")
-            .attr("stroke", "none");
+            .attr("fill", "none")  // No fill for polyline
+            .attr("stroke", "pink")  // Pink stroke color
+            .attr("stroke-width", 2);// Visible stroke width for borders
 
-        // 3. Draw the Comunidades Autónomas - Middle Layer (no interactivity)
+        // 4. Draw the Comunidades Autónomas - Middle Layer (no interactivity)
         g_autonomas.selectAll("path")
             .data(autonomasData.features)
             .enter()
@@ -1577,7 +1592,7 @@ function loadBaseMapLayers() {
             .style("fill-opacity", 1)
             .style("pointer-events", "none"); // Disable autonoma interactivity
 
-        // 4. Draw the Provinces - Detail Layer on top
+        // 5. Draw the Provinces - Detail Layer on top
         const validProvinces = provinceData.features.filter(function (d) {
             const area = d3.geoArea(d);
             return area < 1;
