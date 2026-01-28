@@ -164,7 +164,7 @@ function getCityDataAttributes(userType = 'migrant', season = 'general') {
         'crime': {
             normalized: 'norm_Criminality_rate',
             real: 'real_Criminality_rate',
-            unit: '',
+            unit: ' crimes/100K inhab.',
             label: 'Criminality Rate',
             inverse: true
         },
@@ -178,14 +178,14 @@ function getCityDataAttributes(userType = 'migrant', season = 'general') {
         'recycling': {
             normalized: 'norm_Recycling_rate',
             real: 'real_Recycling_rate',
-            unit: '%',
+            unit: '% classified waste',
             label: 'Recycling Rate',
             inverse: false
         },
         'greenspace': {
             normalized: 'norm_Green_space_per_capita',
             real: 'real_Green_space_per_capita',
-            unit: ' m²',
+            unit: ' m²/person',
             label: 'Green Space',
             inverse: false
         },
@@ -199,14 +199,14 @@ function getCityDataAttributes(userType = 'migrant', season = 'general') {
         'education': {
             normalized: 'norm_Education_years',
             real: 'real_Education_years',
-            unit: ' years',
+            unit: '',
             label: 'Education Level',
             inverse: false
         },
         'jobs': {
             normalized: 'norm_Job_offers',
             real: 'real_Job_offers',
-            unit: '',
+            unit: ' jobs/24h',
             label: 'Job Opportunities',
             inverse: false
         },
@@ -2059,7 +2059,7 @@ function loadCities(currentTransform = null) {
                         }
 
                         // Always show normalized score on the right side
-                        const normalizedScoreText = scoreValue.toFixed(1) + '/10';
+                        const normalizedScoreText = scoreValue.toFixed(1) + '/10000';
 
                         tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.cellPadding + ';">';
                         tooltipHTML += '<div style="display: flex; align-items: center; gap: ' + sizes.gap + ';">';
@@ -2280,7 +2280,7 @@ function loadCities(currentTransform = null) {
                             barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher is better</span>';
                         }
 
-                        const normalizedScoreText = scoreValue.toFixed(1) + '/10';
+                        const normalizedScoreText = scoreValue.toFixed(1) + '/10000';
 
                         tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.cellPadding + ';">';
                         tooltipHTML += '<div style="display: flex; align-items: center; gap: ' + sizes.gap + ';">';
