@@ -3294,7 +3294,7 @@ body {
   flex-direction: column;
   gap: 20px;
   /* 20px vertical gap between sections */
-  width: 250px;
+  width: 210px;
   /* Consistent width on desktop */
 }
 
@@ -3313,7 +3313,8 @@ body {
 }
 
 /* Individual sections - shrink-wrap content */
-#pieChartSection,
+#pieChartSection{
+  height: 180px;}
 #cityLegendSection {
   width: 210px;
   /* Consistent width */
