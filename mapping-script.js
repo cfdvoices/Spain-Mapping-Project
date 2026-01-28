@@ -69,6 +69,49 @@ const tourismEmojis = {
     'zoo': '🦁'
 };
 
+// TripAdvisor URLs mapping for major Spanish cities
+const tripAdvisorUrls = {
+    'Madrid': 'https://www.tripadvisor.com/Tourism-g187514-Madrid-Vacations.html',
+    'Barcelona': 'https://www.tripadvisor.com/Tourism-g187497-Barcelona_Catalonia-Vacations.html',
+    'Sevilla': 'https://www.tripadvisor.com/Tourism-g187443-Seville_Province_of_Seville_Andalucia-Vacations.html',
+    'Valencia': 'https://www.tripadvisor.com/Tourism-g187529-Valencia_Province_of_Valencia_Valencian_Country-Vacations.html',
+    'Santiago de Compostela': 'https://www.tripadvisor.com/Tourism-g187508-Santiago_de_Compostela_Province_of_A_Coruna_Galicia-Vacations.html',
+    'Valladolid': 'https://www.tripadvisor.com/Tourism-g187495-Valladolid_Province_of_Valladolid_Castile_and_Leon-Vacations.html',
+    'Las Palmas de Gran Canaria': 'https://www.tripadvisor.com/Tourism-g187472-Las_Palmas_de_Gran_Canaria_Gran_Canaria_Canary_Islands-Vacations.html',
+    'Santa Cruz de Tenerife': 'https://www.tripadvisor.com/Tourism-g187482-Santa_Cruz_de_Tenerife_Tenerife_Canary_Islands-Vacations.html',
+    'Vitoria-Gasteiz': 'https://www.tripadvisor.com/Tourism-g187458-Vitoria_Gasteiz_Province_of_Alava_Basque_Country-Vacations.html',
+    'Toledo': 'https://www.tripadvisor.com/Tourism-g187518-Toledo_Province_of_Toledo_Castile_La_Mancha-Vacations.html',
+    'Murcia': 'https://www.tripadvisor.com/Tourism-g187518-Murcia-Vacations.html',
+    'Zaragoza': 'https://www.tripadvisor.com/Tourism-g187448-Zaragoza_Province_of_Zaragoza_Aragon-Vacations.html',
+    'Palma de Mallorca': 'https://www.tripadvisor.com/Tourism-g187463-Palma_de_Mallorca_Majorca_Balearic_Islands-Vacations.html',
+    'Mérida': 'https://www.tripadvisor.com/Tourism-g227871-Merida_Province_of_Badajoz_Extremadura-Vacations.html',
+    'Oviedo': 'https://www.tripadvisor.com/Tourism-g187452-Oviedo_Asturias-Vacations.html',
+    'Pamplona': 'https://www.tripadvisor.com/Tourism-g187520-Pamplona_Navarre-Vacations.html',
+    'Santander': 'https://www.tripadvisor.com/Tourism-g187484-Santander_Cantabria-Vacations.html',
+    'Logroño': 'https://www.tripadvisor.com/Tourism-g187513-Logrono_La_Rioja-Vacations.html',
+    'Bilbao': 'https://www.tripadvisor.com/Tourism-g187454-Bilbao_Province_of_Vizcaya_Basque_Country-Vacations.html',
+    'Málaga': 'https://www.tripadvisor.com/Tourism-g187438-Malaga_Costa_del_Sol_Province_of_Malaga_Andalucia-Vacations.html'
+};
+
+// Helper function to get TripAdvisor URL for a city
+function getTripAdvisorUrl(cityName) {
+    // Try exact match first
+    if (tripAdvisorUrls[cityName]) {
+        return tripAdvisorUrls[cityName];
+    }
+    
+    // Try case-insensitive match
+    const cityNameLower = cityName.toLowerCase();
+    for (const [key, url] of Object.entries(tripAdvisorUrls)) {
+        if (key.toLowerCase() === cityNameLower) {
+            return url;
+        }
+    }
+    
+    // Fallback to search if city not in our list
+    return `https://www.tripadvisor.com/Search?q=${encodeURIComponent(cityName + " Spain")}`;
+}
+
 // Helper function to parse European-formatted numbers (comma as decimal separator)
 function parseEuropeanFloat(value) {
     if (value === undefined || value === null) return 0;
@@ -970,7 +1013,10 @@ function initializeMapStructure() {
     s = svg.append("g").attr("class", "scale-bar");
 
     // Define Projection and Path Generator
+    // CRITICAL FIX: For azimuthal projections, we must set the center to Spain's coordinates
+    // BEFORE calling fitSize() in loadBaseMapLayers
     projection = d3.geoAzimuthalEqualArea()
+        .center([0, 40])  // Pre-center on approximate Spain latitude
         .scale(1)
         .translate([0, 0]);
 
@@ -979,10 +1025,10 @@ function initializeMapStructure() {
     /* D3 ZOOM CONTROL */
     // Define the zoom behavior with tighter limits
     zoom = d3.zoom()
-        .scaleExtent([0.5, 4]) // Restricted zoom: slightly out to moderately in
+        .scaleExtent([0.8, 4]) // Restricted zoom: slightly out to moderately in
         .translateExtent([
-            [-width * 1.4, -height * 1.85],  // Top-left limit (20% beyond)
-            [width * 1.8, height * 1.9]      // Bottom-right limit (20% beyond)
+            [-width * 0.4, -height * 0.5],  // Top-left limit (20% beyond)
+            [width * 1.4, height * 1.4]      // Bottom-right limit (20% beyond)
         ])
         .on("zoom", zoomed); // Specify the function to call on zoom events
 
@@ -1553,21 +1599,22 @@ function loadBaseMapLayers() {
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/spainprovinces.geojson")
     ]).then(function ([regionData, autonomasData, provinceData]) {
 
-        // 1. FILTER: Create a subset of provinces excluding Canary Islands for the view calculation.
-        // The Canary Islands (Lat ~28) force the map to zoom out too far.
-        // We filter for provinces with a centroid Latitude > 34 degrees (Peninsula + Balearics).
-        const featuresForFit = provinceData.features.filter(function(d) {
-            return d3.geoCentroid(d)[1] > 34; 
+        // 1. Filter valid provinces first (remove world-sized artifacts)
+        const validProvinces = provinceData.features.filter(function (d) {
+            const area = d3.geoArea(d);
+            // Keep only provinces with reasonable area (not world-sized)
+            return area > 0 && area < 1;
         });
 
-        const fitCollection = {
+        // Create a feature collection with only valid provinces
+        const validProvincesCollection = {
             type: "FeatureCollection",
-            features: featuresForFit
+            features: validProvinces
         };
 
-        // 2. Set the projection using the FILTERED provinces layer
-        // This ensures the map is zoomed in on the peninsula in planimetric coordinates
-        projection.fitSize([width, height], fitCollection);
+        // 2. CRITICAL FIX: Set the projection using ONLY the valid provinces
+        // This ensures we fit to Spain, not the entire world
+        projection.fitSize([width, height], validProvincesCollection);
 
         // 3. Draw the Base Regions (Spain.geojson) - Border Layer (Polyline)
         g_map.selectAll("path")
@@ -1593,11 +1640,6 @@ function loadBaseMapLayers() {
             .style("pointer-events", "none"); // Disable autonoma interactivity
 
         // 5. Draw the Provinces - Detail Layer on top
-        const validProvinces = provinceData.features.filter(function (d) {
-            const area = d3.geoArea(d);
-            return area < 1;
-        });
-
         g_prov.selectAll("path")
             .data(validProvinces)
             .enter()
@@ -1647,7 +1689,9 @@ function loadInitialCityMarkers() {
                     if (userType === 'tourist') {
                         const cityName = d.properties.city || "";
                         if (cityName) {
-                            showCityDetailView(cityName);
+                            // Open TripAdvisor page for the city using specific URL
+                            const tripadvisorUrl = getTripAdvisorUrl(cityName);
+                            window.open(tripadvisorUrl, '_blank');
                         }
                     }
                 });
@@ -2010,7 +2054,7 @@ function loadCities(currentTransform = null) {
 
                 tooltipHTML += '<tr><td colspan="2" style="font-size: ' + sizes.subtitleFont + '; font-style: italic; padding: ' + sizes.subtitlePadding + '; text-align: center; color: #666;">Ciudad</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString() + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString('en-US') + '</td></tr>';
 
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
@@ -2047,7 +2091,7 @@ function loadCities(currentTransform = null) {
                                 unit = userType === 'tourist' ? '€/night' : '€/month';
                             }
                             
-                            displayValue = realValueParsed.toLocaleString(undefined, {
+                            displayValue = realValueParsed.toLocaleString('en-US', {
                                 minimumFractionDigits: 0,
                                 maximumFractionDigits: 2
                             }) + unit;
@@ -2247,7 +2291,7 @@ function loadCities(currentTransform = null) {
 
                 tooltipHTML += '<tr><td colspan="2" style="font-size: ' + sizes.subtitleFont + '; font-style: italic; padding: ' + sizes.subtitlePadding + '; text-align: center; color: #666;">Ciudad</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString() + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString('en-US') + '</td></tr>';
 
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
@@ -2272,7 +2316,7 @@ function loadCities(currentTransform = null) {
                             if (criterion.id === 'housing') {
                                 unit = userType === 'tourist' ? '€/night' : '€/month';
                             }
-                            displayValue = realValueParsed.toLocaleString(undefined, {
+                            displayValue = realValueParsed.toLocaleString('en-US', {
                                 minimumFractionDigits: 0,
                                 maximumFractionDigits: 2
                             }) + unit;
@@ -2380,12 +2424,14 @@ function loadCities(currentTransform = null) {
                 }
             });
 
-            // Double-click handler for tourist mode (opens city detail view)
+            // Double-click handler for tourist mode (opens TripAdvisor)
             cityCircles.on("dblclick", function (event, d) {
                 if (userType === 'tourist') {
                     const cityName = d.properties.city || "";
                     if (cityName) {
-                        showCityDetailView(cityName);
+                        // Open TripAdvisor page for the city using specific URL
+                        const tripadvisorUrl = getTripAdvisorUrl(cityName);
+                        window.open(tripadvisorUrl, '_blank');
                     }
                 }
             });
