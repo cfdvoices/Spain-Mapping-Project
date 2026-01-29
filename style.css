@@ -2657,6 +2657,24 @@ body {
   font-style: italic;
 }
 
+/* Logo Footer Styles */
+.start-logos-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.footer-logo {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+  opacity: 1;
+}
+
 /* Mobile responsiveness for start overlay */
 @media screen and (max-width: 768px) {
   .start-experience-container {
@@ -2680,6 +2698,16 @@ body {
     padding: 15px 35px;
     font-size: 1.1em;
   }
+
+  .start-logos-footer {
+    gap: 20px;
+    margin-top: 25px;
+    padding-top: 20px;
+  }
+
+  .footer-logo {
+    height: 40px;
+  }
 }
 
 @media screen and (max-width: 400px) {
@@ -2694,6 +2722,16 @@ body {
   .start-experience-btn {
     padding: 12px 30px;
     font-size: 1em;
+  }
+
+  .start-logos-footer {
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 15px;
+  }
+
+  .footer-logo {
+    height: 35px;
   }
 }
 
