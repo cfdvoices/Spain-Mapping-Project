@@ -77,13 +77,13 @@ const tripAdvisorUrls = {
     'Valencia': 'https://www.tripadvisor.com/Tourism-g187529-Valencia_Province_of_Valencia_Valencian_Country-Vacations.html',
     'Santiago de Compostela': 'https://www.tripadvisor.com/Tourism-g187508-Santiago_de_Compostela_Province_of_A_Coruna_Galicia-Vacations.html',
     'Valladolid': 'https://www.tripadvisor.com/Tourism-g187495-Valladolid_Province_of_Valladolid_Castile_and_Leon-Vacations.html',
-    'Las Palmas de Gran Canaria': 'https://www.tripadvisor.com/Tourism-g187472-Las_Palmas_de_Gran_Canaria_Gran_Canaria_Canary_Islands-Vacations.html',
-    'Santa Cruz de Tenerife': 'https://www.tripadvisor.com/Tourism-g187482-Santa_Cruz_de_Tenerife_Tenerife_Canary_Islands-Vacations.html',
+    'Las Palmas': 'https://www.tripadvisor.com/Tourism-g187472-Las_Palmas_de_Gran_Canaria_Gran_Canaria_Canary_Islands-Vacations.html',
+    'Santa Cruz': 'https://www.tripadvisor.com/Tourism-g187482-Santa_Cruz_de_Tenerife_Tenerife_Canary_Islands-Vacations.html',
     'Vitoria-Gasteiz': 'https://www.tripadvisor.com/Tourism-g187458-Vitoria_Gasteiz_Province_of_Alava_Basque_Country-Vacations.html',
-    'Toledo': 'https://www.tripadvisor.com/Tourism-g187518-Toledo_Province_of_Toledo_Castile_La_Mancha-Vacations.html',
+    'Toledo': 'https://www.tripadvisor.com/Tourism-g187489-Toledo_Province_of_Toledo_Castile_La_Mancha-Vacations.html',
     'Murcia': 'https://www.tripadvisor.com/Tourism-g187518-Murcia-Vacations.html',
     'Zaragoza': 'https://www.tripadvisor.com/Tourism-g187448-Zaragoza_Province_of_Zaragoza_Aragon-Vacations.html',
-    'Palma de Mallorca': 'https://www.tripadvisor.com/Tourism-g187463-Palma_de_Mallorca_Majorca_Balearic_Islands-Vacations.html',
+    'Palma': 'https://www.tripadvisor.com/Tourism-g187463-Palma_de_Mallorca_Majorca_Balearic_Islands-Vacations.html',
     'Mérida': 'https://www.tripadvisor.com/Tourism-g227871-Merida_Province_of_Badajoz_Extremadura-Vacations.html',
     'Oviedo': 'https://www.tripadvisor.com/Tourism-g187452-Oviedo_Asturias-Vacations.html',
     'Pamplona': 'https://www.tripadvisor.com/Tourism-g187520-Pamplona_Navarre-Vacations.html',
@@ -336,6 +336,12 @@ userTypeRadios.forEach(radio => {
         const previousUserType = userType;
         userType = this.value;
         console.log('User type changed from', previousUserType, 'to:', userType);
+
+        // Show/hide TripAdvisor note based on user type
+        const tripadvisorNote = document.getElementById('tripadvisorNote');
+        if (tripadvisorNote) {
+            tripadvisorNote.style.display = userType === 'tourist' ? 'block' : 'none';
+        }
 
         // Reset map and criteria if there was a previous selection
         if (selectedCriteria.length > 0) {
@@ -1623,8 +1629,8 @@ function loadBaseMapLayers() {
             .append("path")
             .attr("d", path)
             .attr("fill", "none")  // No fill for polyline
-            .attr("stroke", "pink")  // Pink stroke color
-            .attr("stroke-width", 2);// Visible stroke width for borders
+            .attr("stroke", "gray")  // Pink stroke color
+            .attr("stroke-width", 1);// Visible stroke width for borders
 
         // 4. Draw the Comunidades Autónomas - Middle Layer (no interactivity)
         g_autonomas.selectAll("path")
@@ -1739,7 +1745,7 @@ function addCityLabels(cityFeatures, currentZoom = 1) {
         "Logroño",                  // La Rioja
         "Toledo",                   // Castilla-La Mancha
         "Mérida",                   // Extremadura
-        "Santa Cruz de Tenerife",   // Canary Islands
+        "Santa Cruz",   // Canary Islands
         "Madrid",                   // Madrid
         "Barcelona",                // Catalonia
         "Valencia",                 // Valencia
@@ -2056,7 +2062,7 @@ function loadCities(currentTransform = null) {
 
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString('en-US') + '</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + '; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
                 // Show which criteria contributed with bar charts
                 if (window.userCriteria && window.userCriteria.length > 0) {
@@ -2098,24 +2104,24 @@ function loadCities(currentTransform = null) {
                         }
 
                         // Determine bar color based on normalized score (0-1000 scale)
-                        // 4-class color scheme: 0-250=red, 250-500=yellow, 500-750=blue, 750-1000=green
+                        // 4-class pastel color scheme for better contrast with black text
                         let barColor;
                         if (scoreValue < 250) {
-                            barColor = '#ff4444'; // Red for low scores (0-250)
+                            barColor = '#ffb3ba'; // Pastel red for low scores (0-250)
                         } else if (scoreValue < 500) {
-                            barColor = '#ffcc00'; // Yellow for medium-low scores (250-500)
+                            barColor = '#ffffba'; // Pastel yellow for medium-low scores (250-500)
                         } else if (scoreValue < 750) {
-                            barColor = '#71a3f9'; // Blue for medium-high scores (500-750)
+                            barColor = '#bae1ff'; // Pastel blue for medium-high scores (500-750)
                         } else {
-                            barColor = '#44ff44'; // Green for high scores (750-1000)
+                            barColor = '#baffc9'; // Pastel green for high scores (750-1000)
                         }
 
                         // Prepare bar content - show relationship indicator
                         let barContent = '';
                         if (attributeInfo.inverse) {
-                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">⚠ lower is better</span>';
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">⚠ lower real value = higher norm. score</span>';
                         } else {
-                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher is better</span>';
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher real values = higher norm. score</span>';
                         }
 
                         // Show normalized score on the right side (0-1000 scale)
@@ -2293,7 +2299,7 @@ function loadCities(currentTransform = null) {
 
                 tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Population:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-size: ' + sizes.cellFont + ';">' + d.properties.population.toLocaleString('en-US') + '</td></tr>';
 
-                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + ';">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
+                tooltipHTML += '<tr style="border-top: 1px solid #eee;"><td style="padding: ' + sizes.cellPadding + '; font-weight: bold; font-size: ' + sizes.cellFont + ';">Map Index:</td><td style="padding: ' + sizes.cellPadding + '; text-align: right; font-weight: bold; color: ' + bgColor + '; font-size: ' + sizes.cellFont + '; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">' + d.properties.indexOfChoice.toFixed(1) + '</td></tr>';
 
                 if (window.userCriteria && window.userCriteria.length > 0) {
                     tooltipHTML += '<tr><td colspan="2" style="padding: ' + sizes.prioritiesPadding + '; font-weight: bold; font-size: ' + sizes.prioritiesFont + '; border-top: 2px solid #ccc;">Your priorities:</td></tr>';
@@ -2324,20 +2330,20 @@ function loadCities(currentTransform = null) {
 
                         let barColor;
                         if (scoreValue < 2.5) {
-                            barColor = '#ff4444';
+                            barColor = '#ffb3ba'; // Pastel red for low scores
                         } else if (scoreValue < 5) {
-                            barColor = '#ffcc00';
+                            barColor = '#ffffba'; // Pastel yellow for medium-low scores
                         } else if (scoreValue < 7.5) {
-                            barColor = '#4488ff';
+                            barColor = '#bae1ff'; // Pastel blue for medium-high scores
                         } else {
-                            barColor = '#44ff44';
+                            barColor = '#baffc9'; // Pastel green for high scores
                         }
 
                         let barContent = '';
                         if (attributeInfo.inverse) {
-                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">⚠ lower is better</span>';
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">⚠ lower real value = higher norm. score</span>';
                         } else {
-                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher is better</span>';
+                            barContent = '<span style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: ' + sizes.indicatorFont + '; font-weight: bold; color: #333;">✓ higher real values = higher norm. score</span>';
                         }
 
                         const normalizedScoreText = scoreValue.toFixed(1) + '/10000';
