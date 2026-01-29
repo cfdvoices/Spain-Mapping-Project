@@ -2854,95 +2854,130 @@ document.addEventListener('DOMContentLoaded', function () {
 
 const methodologyData = [
     {
-        link: "https://es.wikipedia.org/wiki/Anexo:Provincias_de_Espa%C3%B1a_por_PIB",
+        link: "https://www.ine.es/dyngs/Prensa/es/ADRH2022.htm",
         code: "real_GDP_percapita",
         name: "GDP per capita",
-        source: "Wikipedia",
-        methodology: "1) Acess the Province level data for all the selected provinces from our cities.\n2) Collect the data in a table"
+        source: "National Institute of Statistics Spain",
+        lastUpdate: "2022",
+        geographicScale: "Municipality",
+        methodology: "1) Acess the municipality level data from the Household Income Distribution Atlas 2022.\n2) Collect the data in a table from the selected cities."
     },
     {
         link: "https://www.ine.es/jaxiT3/Tabla.htm?t=30687&L=0",
         code: "real_Life_expectancy",
         name: "Life expectancy",
         source: "National Institute of Statistics Spain",
-        methodology: "1) Compile all the data of each city's newborns life expectancies from the original source (no adjustments required)"
+        lastUpdate: "2022",
+        geographicScale: "Municipality",
+        methodology: "1) All data regarding each city's newborn life expectancy were collected from the original source (no adjustments or post-processing required)."
     },
     {
         link: "https://www.elconfidencial.com/espana/2023-03-26/el-mapa-de-la-educacion-en-espana-descubre-el-nivel-de-estudios-de-tus-vecinos-calle-a-calle_3598890/",
         code: "real_Education_years",
-        name: "Education years",
+        name: "Education level",
         source: "El Confidencial",
-        methodology: "1) Compile all the data of average education years from the original source (no adjustments required)"
+        lastUpdate: "2022",
+        geographicScale: "Province",
+        methodology: "1) All data regarding average education levels were compiled from the original source (no adjustments required).\n2) Only individuals in the 40–44 age range with a bachelor's degree were considered."
     },
     {
         link: "https://atlasau.mitma.gob.es/#bbox=-847794,5370217,1810191,995874&c=indicator&i=pobevo.densidad&s=2022&view=map4",
         code: "real_Population_density",
         name: "Population density",
         source: "Ministry of Housing and Urban Agenda Spain",
+        lastUpdate: "2022",
+        geographicScale: "Municipality",
         methodology: "1) Acess the Digital Atlas of Urban Areas of Spain\n2) Collect population density values for the corresponding Municipalities / Cities during 2022"
     },
     {
         link: "https://centrodedescargas.cnig.es/CentroDescargas/redes-transporte",
         code: "real_Avg_Closest_station",
-        name: "Station Remoteness",
-        source: "Open Street Maps and Public Opendatasoft Data",
-        methodology: "1) Download OSM data for each city, as well as the train/tram stops (using the OSM Downloader extension within QGIS)\n2) Download the administrative borders of all Municipalities within Spain\n3) Filter and export relevant features from the OSM main layer (general points and polygons layer) using QGIS and export them in geographic coordinates WGS 84\n4) Create a new model within Model Builder from ArcGIS\n5) Preprocess all features: Reproject all of them to ETRS 1989 LAEA (European Standard, equal area projection). Repair geometry for all polygon feeatures. Filter out the specific points features from OSM contained within the municipality polygon\n3) Filter \"stop_position\" within the \"other tags\" attribute for the points features, to extract only public transport stops. Repeat to filter out only buildings from the polygons layer\n4) Create random points inside each Municipality according to their area and a density of 0,0001 points per square meter. Calculate the distance to the closest neighbour inside the bus stops layer, for each feature\n5) Calculate aggregate statistics in order to get the average distance to get to the closest stop."
+        name: "Stop remoteness",
+        source: "Open Street Maps - Geofabrik",
+        lastUpdate: "2025",
+        geographicScale: "Municipality",
+        methodology: "1) Download OSM data for each city, as well as the train/tram stops (using the OSM Downloader extension within QGIS)\n2) Download the administrative borders of all Municipalities within Spain\n3) Filter and export relevant features from the OSM main layer (general points and polygons layers) using QGIS, in geographic coordinates -WGS 84\n4) Create a new model within Model Builder from ArcGIS (better for complex queries with OSM attributes)\n5) Preprocess all features: Reproject all of them to ETRS 1989 LAEA (European Standard, equal area projection). Repair geometry for all polygon features. Filter out the specific points features from OSM contained within the municipality polygon\n3) Filter \"stop_position\" within the \"other tags\" attribute for the points features, to extract only public transport stops. Repeat to filter out only buildings from the polygons layer\n4) Create random points inside each Municipality according to their area and a density of 0,0001 points per square meter. Calculate the distance to the closest neighbour inside the bus stops layer, for each feature\n5) Calculate aggregate statistics in order to get the average distance to get to the closest stop.\n6) Repeat the same process for all cities and compile the average distance values."
     },
     {
         link: "https://console.apify.com/actors/REcGj6dyoIJ9Z7aE6/input",
-        code: "real_Rent_cost",
-        name: "Cost of housing",
+        code: "real_Rent_cost_migrants",
+        name: "Cost of housing (renting) - Migrants",
         source: "Idealista Scraper (Apify) and Inside Airbnb Data",
-        methodology: "1) Scrape housing rent prices for one bedroom on each city inside Idealista, one of the largest Proptechs in Spain, (at least 300 places per city)\n2) Calculate the average price per city - specify that it corresponds to only one single bedroom per city\n3) Repeat the same process but instead of using Airbnb or Booking.com, data which will be used solely for touristic purposes."
+        lastUpdate: "2025",
+        geographicScale: "Municipality",
+        methodology: "1) Scrape housing rent prices for one bedroom on each city inside Idealista, one of the largest Proptechs in Spain for housing sales and rentals, (at least 300 places per city)\n2) Calculate the average price per city - specify that it corresponds to only one single bedroom per city.\n3) Repeat the same process but now using Airbnb data, as short rentals are usually more common to be used solely for touristic purposes."
     },
     {
-        link: "https://www.kaggle.com/datasets/alexgczs/monthly-temperature-in-spain-1996-2023",
-        code: "real_Weather",
-        name: "Climate (T/H/P)",
-        source: "Kaggle",
-        methodology: "1) Collect the values of all main variables for all"
+        link: "https://insideairbnb.com/get-the-data/",
+        code: "real_Rent_cost_tourists",
+        name: "Cost of housing (renting) - Tourists",
+        source: "Idealista Scraper (Apify) and Inside Airbnb Data",
+        lastUpdate: "2025",
+        geographicScale: "Municipality",
+        methodology: "1) Scrape housing rent prices for one bedroom on each city inside Idealista, one of the largest Proptechs in Spain for housing sales and rentals, (at least 300 places per city)\n2) Calculate the average price per city - specify that it corresponds to only one single bedroom per city.\n3) Repeat the same process but now using Airbnb data, as short rentals are usually more common to be used solely for touristic purposes."
+    },
+    {
+        link: "https://www.aemet.es/",
+        code: "real_Weather_general",
+        name: "Temperature/humidity/precipitation",
+        source: "AEMET, Windfinder, and Climate-Data",
+        lastUpdate: "2025",
+        geographicScale: "Municipality",
+        methodology: "1) Several measurement parameters were used to create the climate index: air temperature (average, average maximum, average minimum), precipitation, days with rain, hours of sunshine, wind strength, days with uncomfortable temperatures (below +10 degrees Celsius and above +25 degrees Celsius), and humidity. The values were calculated for each of the four seasons in each city.\n2) After obtaining the initial values, indices of sufficiently favorable weather for being outdoors in light clothing were calculated. To do this, both individual values and their combinations (e.g., temperature and humidity) were weighted. Thus, the index reflects the overall favorability of the climate in each season in Spanish cities, based not on differences between cities, as in many other indices, but on actual perception. This can be illustrated by the fact that in winter, the weather in almost all cities in mainland Spain is unfavorable and falls within a limited range of the index, despite the fact that climatic indicators vary."
     },
     {
         link: "https://apify.com/bebity/linkedin-jobs-scraper",
         code: "real_Job_offers",
         name: "Job opportunities",
-        source: "LinkedIn Jobs Scraper (Apify)",
-        methodology: "1) Scrape the max possible number of LinkedIn job offers using Apify free credits for each city\n2) Divide the amount of job offers for each city by the population of each city."
+        source: "LinkedIn",
+        lastUpdate: "2026",
+        geographicScale: "Municipality",
+        methodology: "1) LinkedIn was accessed, and a search was performed using the name of each city.\n2) Job offers were filtered to include only those posted in the last 24 hours.\n3) The number of pages resulting from each search and the number of offers on the last page were counted.\n4) The final value was added to the database, and the process was repeated until complete for all cities.\nNote: This process was carried out in January 2026."
     },
     {
         link: "https://estadisticasdecriminalidad.ses.mir.es/publico/portalestadistico/datos.html?type=jaxi&title=Hechos%20conocidos&path=/Datos1/",
         code: "real_Criminality_rate",
-        name: "Criminality rates",
+        name: "Criminality rates (by type)",
         source: "Ministry of Interior Spain",
-        methodology: "1) Download the official data of census population from the National Institute From Statistics\n2) Compile the crimes count of 2022, from the Ministry of the Interior, only considering the categories against people, against sexual liberty and against assets\n3) Dissagregate crimes data per Municipality using the Urban Scale Law proportionally to the Population inside each City for each Province. The power used is the 1.15, according to bibliography and the thesis that most populated areas attract the most criminal activities"
+        lastUpdate: "2022",
+        geographicScale: "Province",
+        methodology: "1) Official census population data were downloaded from the National Institute of Statistics.\n2) Crime counts for 2022 were compiled from the Ministry of the Interior, considering only the categories of crimes against persons, sexual liberty and assets.\n3) Crime data were disaggregated per municipality using the Urban Scaling Law, proportional to the population within each city for each province. A power of 1.15 was used, in accordance with bibliographic sources and the thesis that more populated areas attract higher criminal activity."
     },
     {
         link: "https://sinac.sanidad.gob.es/CiudadanoWeb/ciudadano/informacionAbastecimientoActionEntrada.do",
         code: "real_Water_quality",
         name: "Water quality",
         source: "Ministry of Health Spain",
-        methodology: "1) Access the Ministry of Health portal to get each city data for the specified criteria (fecal coliforms, conductivity, pH, turbidity and chlorine)\n2) Copy the data into the proper format\n3) Calculate the indexes using the permitted values and the"
+        lastUpdate: "Variable",
+        geographicScale: "Districts",
+        methodology: "1) The Ministry of Health portal was accessed to obtain data for each city regarding the specified criteria (fecal coliforms, conductivity, pH, turbidity, and chlorine).\n2) The data were copied into the proper format for all selected cities.\n3) Indexes were calculated using the equations for each value.\n4) Values for each index were averaged across all sampling points within every municipality (ranging from a single point to dozens per city)."
     },
     {
         link: "https://www.miteco.gob.es/content/dam/miteco/es/calidad-y-evaluacion-ambiental/sgecocir/residuos-municipales/Memoria%20anual%20de%20generaci%C3%B3n%20y%20gesti%C3%B3n%20de%20residuos%202022.pdf",
         code: "real_Recycling_rate",
         name: "Recycling rates",
         source: "Ministry For Ecological Transition And The Demographic Challenge",
-        methodology: "1) Collect the recycling rate, measured as the quantity of waste separated at source before collection, divided by the overall solid waste collected, per autonomous community\n2) Apply the same rate that exist on a broader Autonomous Community level to the Municipality"
+        lastUpdate: "2022",
+        geographicScale: "Autonomous Communities",
+        methodology: "1) The recycling rate was collected per autonomous community, measured as the quantity of waste separated at the source before collection divided by the overall solid waste collected.\n2) The rate existing at the broader Autonomous Community level was applied to the municipality, as no specific data were available for individual cities."
     },
     {
-        link: "https://atlasau.mitma.gob.es/#bbox=-661621,5096106,559723,401808&c=indicator&i=sueocup.ocupa024&s=2016&view=map5",
+        link: "https://code.earthengine.google.com/",
         code: "real_Green_space_per_capita",
         name: "Green Space per Capita",
-        source: "Ministry of Housing and Urban Agenda Spain",
-        methodology: "1) We uploaded your custom administrative boundaries (municipalities) to Google Earth Engine Assets as a Shapefile, after cleaning the geometry and attributes (specifically creating the Official_4 column for city names) to avoid upload errors.\n2) Instead of raw satellite imagery, we loaded the Dynamic World V1 dataset for the year 2022, which provides high-resolution (10m) land cover probabilities derived from Sentinel-2 data.\n3) We created a \"Mode Composite\" to determine the most frequent land cover class for each pixel in 2022 and defined a \"Green Mask\" by isolating pixels classified as Trees (Class 1) or Grass (Class 2).\n4) We applied a spatial reducer (reduceRegions) to sum the area of the masked green pixels within each city boundary, using the EPSG:3035 (European Equal Area) projection and a high tileScale to ensure accuracy and prevent processing timeouts.\n5) Finally, we formatted the output to include only the relevant city names and calculated green areas (in square meters) and exported the results as a clean CSV file to Google Drive for further analysis.\n6) We finalized the analysis checking if the results made sense, by dividing the overall green cover by the total area of each municipality, and then after checking that all values made sense, the green area in square metes was divided by the overall population of each area from 2022."
+        source: "Google Earth Engine",
+        lastUpdate: "2022",
+        geographicScale: "Municipality",
+        methodology: "1) Spanish municipality borders were uploaded to Google Earth Engine Assets as a Shapefile, following geometry and attribute cleaning (specifically, the creation of an \"Official_4\" column for city names) to avoid upload errors.\n2) Instead of raw satellite imagery, the Dynamic World V1 dataset for the year 2022 was utilized, providing high-resolution (10 m) land cover probabilities derived from Sentinel-2 data.\n3) A \"Mode Composite\" was created to determine the most frequent land cover class for each pixel in 2022, and a \"Green Mask\" was defined by isolating pixels classified as Trees (Class 1) or Grass (Class 2).\n4) A spatial reducer (reduceRegions) was applied to sum the area of the masked green pixels within each city boundary, using the EPSG:3035 (European Equal Area) projection and a high tileScale to ensure accuracy and prevent processing timeouts.\n5) Finally, the output was formatted to include only the relevant city names and calculated green areas (in square meters), and the results were exported as a clean CSV file to Google Drive for further analysis.\n6) The analysis was validated by dividing the overall green cover by the total area of each municipality. Upon verification that all values were logical, the green area in square meters was divided by the overall population of each area from 2022."
     },
     {
         link: "https://www.ign.es/web/resources/sismologia/www/dir_images_terremotos/mapas_sismicidad/peligrosidadaceleracion.jpg",
         code: "real_Natural_risks",
-        name: "Natural hazard risks",
+        name: "Natural hazard risks (earthquakes)",
         source: "Geographic Institute Spain",
-        methodology: "1) Open the latest sismic and flooding risks maps provided by the official Spanish institutions (updated to 2015)\n2) Use the available data and points in order to get the latest information about the sismic and flooding risk for each city."
+        lastUpdate: "2015",
+        geographicScale: "Neighborhood",
+        methodology: "1) The latest seismic risk map provided by official Spanish institutions (updated to 2015 but valid for 400 years) was opened.\n2) The .PNG file was imported into QGIS and georeferenced to Spain using the standard CRS (WGS 1984).\n3) The available locations of each city were used to retrieve the latest seismic risk information for each site.\n4) The map legend was interpreted, and an approximate value between the isolines was transcribed."
     }
 ];
 
@@ -3255,6 +3290,16 @@ function loadMethodologyContent() {
                 </div>
             </div>
             <div class="source-name">📚 ${item.source}</div>
+            <div class="metadata-info">
+                <div class="metadata-item">
+                    <span class="metadata-label">📅 Last Update:</span>
+                    <span class="metadata-value">${item.lastUpdate}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">🗺️ Geographic Scale:</span>
+                    <span class="metadata-value">${item.geographicScale}</span>
+                </div>
+            </div>
             <div class="methodology-text">${item.methodology}</div>
             <a href="${item.link}" target="_blank" class="source-link">
                 🔗 View Source

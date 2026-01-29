@@ -1742,6 +1742,33 @@ body {
   margin-bottom: 10px;
 }
 
+.methodology-card .metadata-info {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.methodology-card .metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+.methodology-card .metadata-label {
+  color: #14519A;
+  font-weight: 600;
+}
+
+.methodology-card .metadata-value {
+  color: #333;
+  font-weight: 500;
+}
+
 .methodology-card .methodology-text {
   color: #333;
   line-height: 1.6;
@@ -2442,6 +2469,16 @@ body {
   .methodology-card .source-name {
     font-size: 0.75em;
     margin-bottom: 6px;
+  }
+
+  .methodology-card .metadata-info {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .methodology-card .metadata-item {
+    font-size: 0.7em;
+    padding: 4px 8px;
   }
 
   .methodology-card .methodology-text {
