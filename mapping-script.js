@@ -2025,12 +2025,12 @@ function loadCities(currentTransform = null) {
                     prioritiesPadding: '3px 3px 3px 3px',
                     iconFont: '10px',
                     nameFont: '9px',
-                    barHeight: '6px',
-                    barRadius: '2px',
+                    barHeight: '16px',  // Increased to 16px for better text accommodation
+                    barRadius: '3px',   // Increased from 2px for better appearance
                     valueFont: '7px',
-                    valuePadding: '1px',
-                    indicatorFont: '7px',
-                    gap: '2px'
+                    valuePadding: '2px', // Increased from 1px for better spacing
+                    indicatorFont: '5px', // Reduced to 5px to fit within bar
+                    gap: '3px'  // Increased from 2px for better spacing
                 } : {
                     minWidth: '250px',
                     headerPadding: '7px',
@@ -2132,8 +2132,8 @@ function loadCities(currentTransform = null) {
                         tooltipHTML += '<span style="font-size: ' + sizes.iconFont + ';">' + criterion.icon + '</span>';
                         tooltipHTML += '<div style="flex: 1;">';
                         tooltipHTML += '<div style="font-size: ' + sizes.nameFont + '; font-weight: 600; margin-bottom: 1px;">' + criterion.name + '</div>';
-                        tooltipHTML += '<div style="background: #e9ecef; height: ' + sizes.barHeight + '; border-radius: ' + sizes.barRadius + '; overflow: hidden; position: relative;">';
-                        tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
+                        tooltipHTML += '<div style="background: #e9ecef; height: ' + sizes.barHeight + '; border-radius: ' + sizes.barRadius + '; overflow: visible; position: relative; line-height: ' + sizes.barHeight + ';">';
+                        tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease; border-radius: ' + sizes.barRadius + ';"></div>';
                         tooltipHTML += barContent;
                         tooltipHTML += '</div>';
                         tooltipHTML += '<div style="font-size: ' + sizes.valueFont + '; color: #666; margin-top: ' + sizes.valuePadding + '; display: flex; justify-content: space-between;">';
@@ -2353,8 +2353,8 @@ function loadCities(currentTransform = null) {
                         tooltipHTML += '<span style="font-size: ' + sizes.iconFont + ';">' + criterion.icon + '</span>';
                         tooltipHTML += '<div style="flex: 1;">';
                         tooltipHTML += '<div style="font-size: ' + sizes.nameFont + '; font-weight: 600; margin-bottom: 1px;">' + criterion.name + '</div>';
-                        tooltipHTML += '<div style="background: #e9ecef; height: ' + sizes.barHeight + '; border-radius: ' + sizes.barRadius + '; overflow: hidden; position: relative;">';
-                        tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease;"></div>';
+                        tooltipHTML += '<div style="background: #e9ecef; height: ' + sizes.barHeight + '; border-radius: ' + sizes.barRadius + '; overflow: visible; position: relative; line-height: ' + sizes.barHeight + ';">';
+                        tooltipHTML += '<div style="background: ' + barColor + '; height: 100%; width: ' + scorePercent + '%; transition: width 0.3s ease; border-radius: ' + sizes.barRadius + ';"></div>';
                         tooltipHTML += barContent;
                         tooltipHTML += '</div>';
                         tooltipHTML += '<div style="font-size: ' + sizes.valueFont + '; color: #666; margin-top: ' + sizes.valuePadding + '; display: flex; justify-content: space-between;">';

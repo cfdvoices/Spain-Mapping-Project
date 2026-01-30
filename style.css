@@ -28,6 +28,39 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 10000;
   font-size: 14px;
+  max-width: 90vw; /* Prevent tooltip from being wider than viewport on mobile */
+}
+
+/* Mobile tooltip adjustments */
+@media screen and (max-width: 768px) {
+  .tooltip {
+    max-width: 95vw;
+    padding: 6px;
+    font-size: 12px;
+  }
+  
+  /* Ensure bar chart containers don't overflow */
+  .tooltip table {
+    width: 100%;
+    table-layout: auto;
+  }
+  
+  /* Prevent text overflow in tooltip cells */
+  .tooltip td,
+  .tooltip th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Ensure bar chart rows have adequate spacing */
+  .tooltip tr {
+    line-height: 1.4;
+  }
+  
+  /* Add extra bottom padding to rows containing bar charts */
+  .tooltip tr td[colspan="2"] {
+    padding-bottom: 4px !important;
+  }
 }
 
 .tooltip table {
