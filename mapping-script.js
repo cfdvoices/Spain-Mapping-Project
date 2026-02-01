@@ -1601,7 +1601,7 @@ function updateScaleBar(transform) {
 function loadBaseMapLayers() {
     Promise.all([
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/Spain.geojson"),
-        d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/ID_autonomous_communities_all.geojson"),
+        d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/countries.geojson"),
         d3.json("https://raw.githubusercontent.com/cfdvoices/Spain-Mapping-Project/main/spainprovinces.geojson")
     ]).then(function ([regionData, autonomasData, provinceData]) {
 
